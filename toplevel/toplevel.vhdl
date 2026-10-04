@@ -28,34 +28,28 @@ architecture rtl of toplevel is
     signal sadvp : std_ulogic; -- clock rise advance signal
     signal sadvn : std_ulogic; -- clock fall advance signal
     signal clkon : std_ulogic; -- slow clock on signal
-    signal inten : std_ulogic; -- internal enable signal
 
-    signal pc_ctrl :  std_ulogic_vector(1 downto 0);
-    signal pc_ovr  :  unsigned(INST_DEPTH-1 downto 0) := (others => '0');
-    signal pc      :  unsigned(INST_DEPTH-1 downto 0);
 
     signal ins_fin  :  std_ulogic;
     signal ins_cmd  :  std_ulogic_vector(1 downto 0);
     signal ins_addr :  unsigned(INST_DEPTH-1 downto 0);
     signal ins_i :  std_ulogic_vector(INST_WIDTH-1 downto 0);
     signal ins_o :  inst_rec_t;
-    --signal ins_o :  std_ulogic_vector(INST_WIDTH-1 downto 0);
     
     signal reg_cmd  : std_ulogic_vector(1 downto 0);
     signal reg_addr : unsigned(REGDEPTH-1 downto 0);
     signal reg_i :  std_ulogic_vector(REGWIDTH-1 downto 0);
     signal reg_o :  std_ulogic_vector(REGWIDTH-1 downto 0);
 
-    signal arif_en   : std_ulogic;
-    signal arif_fin   : std_ulogic;
-    signal arif_rd    : std_ulogic;
-    signal arif_addr  : unsigned(REGDEPTH-1 downto 0);
-    signal arif_ins_r :  inst_rec_t;
-
-    signal exu_en   : std_ulogic;
-    signal exu_cmd  : std_ulogic_vector(1 downto 0);  
-    signal exu_pc_ctrl : std_ulogic_vector(1 downto 0);   
-    signal exu_addr : unsigned(REGDEPTH - 1 downto 0);
+    
+    signal pe_ins_clk :  clk_record_t;
+    signal pe_ins_cmd  :  std_ulogic_vector(1 downto 0);
+    signal pe_ins_addr :  unsigned(INST_DEPTH-1 downto 0);
+    signal pe_ins_o :  inst_rec_t;
+    signal pe_reg_cmd  : std_ulogic_vector(1 downto 0);
+    signal pe_reg_addr : unsigned(REGDEPTH-1 downto 0);
+    signal pe_reg_i :  std_ulogic_vector(REGWIDTH-1 downto 0);
+    signal pe_reg_o :  std_ulogic_vector(REGWIDTH-1 downto 0);
 
 begin
     -- Low-Level components
@@ -68,19 +62,10 @@ begin
                 clkin  => clk,
                 rst    => rst,
                 clkout => clk_s,
-                clkon => clkon,
-                advp    => sadvp,
-                advn    => sadvn
+                clkon  => clkon,
+                advp   => sadvp,
+                advn   => sadvn
             );  
-
-            pcshift : entity work.n_shift
-                generic map(WIDTH => 2, DELAY => 1)
-                port map(
-                    clk => clk,
-                    rst => rst,
-                    i   => exu_pc_ctrl,
-                    o   => pc_ctrl
-              );
 
             
     -- Banks
@@ -107,59 +92,32 @@ begin
                 rego => reg_o
         );
 
-    -- Modules       
-
+    -- Modules     
     
-        pcif : entity work.ProgramCounterIf
+        i_ProceesingElement : entity work.ProceesingElement
             port map(
-                clk  => clk_s,
-                rst  => rst,
-                en   => inten,
-                ctrl => pc_ctrl,
-                ovr  => pc_ovr,
-                pc   => pc
-            );
-
-        arif : entity work.AddressResolutionIf
-            port map(
-                clk   => clk,
-                rst   => sadvp,
-                en    => arif_en,
-                fin   => arif_fin,
-                ins_i => ins_o,
-                rd    => arif_rd,
-                addr  => arif_addr,
-                regi  => reg_o,
-                ins_o => arif_ins_r
+                clk      => pe_ins_clk,
+                rst      => rst,
+                en       => en,
+                reg_cmd  => pe_reg_cmd,
+                reg_addr => pe_reg_addr,
+                reg_o    => pe_reg_o,
+                reg_i    => pe_reg_i,
+                ins_cmd  => pe_ins_cmd,
+                ins_addr => pe_ins_addr,
+                ins_i    => pe_ins_o
         );
-
-        i_ExecutionUnit : entity work.ExecutionUnit
-            port map(
-                clk      => clk,
-                rst      => sadvn,
-                en       => exu_en,
-                ins_i    => arif_ins_r,
-                reg_cmd  => exu_cmd,
-                reg_addr => exu_addr,
-                reg_o    => reg_i,
-                reg_i    => reg_o,
-                pc_ctrl  => exu_pc_ctrl,
-                pc_ovr   => pc_ovr
-        );
-
-        
-        
+            
     -- Combinatorial logic
         done <= ins_fin;
-        inten <= clkon and en;
+ 
+        pe_ins_clk <= (clk => clk, clk_s => clk_s, clkon => clkon, sadvp => sadvp, sadvn => sadvn);
+        reg_cmd  <= pe_reg_cmd;
+        reg_addr <= pe_reg_addr;
+        pe_reg_i    <= reg_o;
+        reg_i    <= pe_reg_o;
+        ins_cmd  <= pe_ins_cmd;
+        ins_addr <= pe_ins_addr;
+        pe_ins_o    <= ins_o;
 
-        ins_cmd <= inten & '0';
-        ins_addr <= pc;
-
-        arif_en <= clk_s and inten;
-
-        reg_cmd <= (arif_rd & '0') when clk_s = '1' else exu_cmd;
-        reg_addr <= arif_addr when clk_s = '1' else exu_addr;
-
-        exu_en <= (not clk_s) and inten;
 end architecture rtl;
