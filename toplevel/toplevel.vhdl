@@ -34,12 +34,15 @@ entity toplevel is
 end entity toplevel;
 
 architecture rtl of toplevel is
-    signal clk_s   : std_ulogic;
+    signal clk_s : std_ulogic;
     signal sadvp : std_ulogic; 
     signal sadvn : std_ulogic; 
     signal clkon : std_ulogic; 
 
+    signal fin : std_ulogic;
+
     signal err : std_ulogic;
+    signal inten : std_ulogic;
 
     signal ins_fin  :  std_ulogic;
     signal ins_cmd  :  std_ulogic_vector(1 downto 0) := (others => '0');
@@ -71,12 +74,24 @@ begin
             port map(
                 clkin  => clk,
                 rst    => rst,
-                en     => en,
+                en     => inten,
                 clkout => clk_s,
                 clkon  => clkon,
                 advp   => sadvp,
                 advn   => sadvn
             );  
+
+        finshift : entity work.n_shift1b
+            generic map(
+                DELAY => 1
+            )
+            port map(
+                clk => clk,
+                rst => rst,
+                i   => ins_fin,
+                o   => fin
+        );
+
             
     -- Banks
         instbank : entity work.InstructionBank
@@ -105,7 +120,7 @@ begin
             port map(
                 clk      => pe_ins_clk,
                 rst      => rst,
-                en       => en,
+                en       => inten,
                 reg_cmd  => pe_reg_cmd,
                 reg_addr => pe_reg_addr,
                 reg_o    => pe_reg_o,
@@ -116,20 +131,21 @@ begin
         );
             
     -- Combinatorial logic
-        o <= err & ins_fin;
+        o <= err & fin when fin = '1' else "00";
+        inten <= en when fin = '0' else '0';
  
         pe_ins_clk <= (clk => clk, clk_s => clk_s, clkon => clkon, sadvp => sadvp, sadvn => sadvn);
         pe_ins_o    <= ins_o;
 
-        reg_cmd  <= pe_reg_cmd when en = '1' else re_cmd;
-        reg_addr <= pe_reg_addr when en = '1' else re_addr;
+        pe_reg_i <= reg_o when inten = '1' else REGNULL;
+        re_rego  <= reg_o when inten = '0' else REGNULL;
+
+        reg_cmd  <= pe_reg_cmd when  inten = '1' else re_cmd;
+        reg_addr <= pe_reg_addr when inten = '1' else re_addr;
         reg_i    <= pe_reg_o when clkon = '1' else re_regi when en = '0' else (others => '0');
 
-        pe_reg_i <= reg_o when en = '1' else REGNULL;
-        re_rego  <= reg_o when en = '0' else REGNULL;
-
-        ins_cmd  <= (pe_ins_rd & '0') when en = '1' else ('0' & inst_wr);
-        ins_addr <= pe_ins_addr when en = '1' else inst_addr;
-        ins_i <= inst_i when en = '0' else INSTNULL;
+        ins_cmd  <= (pe_ins_rd & '0') when inten = '1' else ('0' & inst_wr);
+        ins_addr <= pe_ins_addr when inten = '1' else inst_addr;
+        ins_i <= inst_i when inten = '0' else INSTNULL;
 
 end architecture rtl;
