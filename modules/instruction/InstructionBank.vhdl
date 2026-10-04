@@ -31,7 +31,7 @@ architecture mock of InstructionBank is
                 newinst(3, isz, 0),
                 newinst(0, jmp, 3),
                 newinst(0, stp, 0),
-                newinst(2, nop, 0),
+                newinst(2, dec, 0),
                 newinst(2, inc, 4),
                 newinst(0, jmp, 0),
         others => INSTNULL
