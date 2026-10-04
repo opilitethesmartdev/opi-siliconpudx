@@ -17,7 +17,8 @@ entity toplevel is
         clk : in std_ulogic; -- fast clock
         rst : in std_ulogic;
         en : in std_ulogic;
-        done : out std_ulogic
+        done : out std_ulogic;
+        err : out std_ulogic
     );
 
 end entity toplevel;
@@ -27,6 +28,7 @@ architecture rtl of toplevel is
     signal sadvp : std_ulogic; -- clock rise advance signal
     signal sadvn : std_ulogic; -- clock fall advance signal
     signal clkon : std_ulogic; -- slow clock on signal
+    signal inten : std_ulogic; -- internal enable signal
 
     signal pc_ctrl :  std_ulogic_vector(1 downto 0);
     signal pc_ovr  :  unsigned(INST_DEPTH-1 downto 0) := (others => '0');
@@ -44,6 +46,7 @@ architecture rtl of toplevel is
     signal reg_i :  std_ulogic_vector(REGWIDTH-1 downto 0);
     signal reg_o :  std_ulogic_vector(REGWIDTH-1 downto 0);
 
+    signal arif_en   : std_ulogic;
     signal arif_fin   : std_ulogic;
     signal arif_rd    : std_ulogic;
     signal arif_addr  : unsigned(REGDEPTH-1 downto 0);
@@ -86,6 +89,7 @@ begin
             port map(
                 clk  => clk,
                 rst  => rst,
+                err  => err,
                 fin  => ins_fin,
                 cmd  => ins_cmd,
                 addr => ins_addr,
@@ -110,7 +114,7 @@ begin
             port map(
                 clk  => clk_s,
                 rst  => rst,
-                en   => clkon,
+                en   => inten,
                 ctrl => pc_ctrl,
                 ovr  => pc_ovr,
                 pc   => pc
@@ -120,7 +124,7 @@ begin
             port map(
                 clk   => clk,
                 rst   => sadvp,
-                en    => clk_s,
+                en    => arif_en,
                 fin   => arif_fin,
                 ins_i => ins_o,
                 rd    => arif_rd,
@@ -147,12 +151,15 @@ begin
         
     -- Combinatorial logic
         done <= ins_fin;
+        inten <= clkon and en;
 
-        ins_cmd <= "10";
+        ins_cmd <= inten & '0';
         ins_addr <= pc;
+
+        arif_en <= clk_s and inten;
 
         reg_cmd <= (arif_rd & '0') when clk_s = '1' else exu_cmd;
         reg_addr <= arif_addr when clk_s = '1' else exu_addr;
 
-        exu_en <= not clk_s;
+        exu_en <= (not clk_s) and inten;
 end architecture rtl;
