@@ -20,7 +20,7 @@ package instruction_pkg is
     constant INST_WIDTH : natural := IPTR_WIDTH + ICMD_WIDTH + PARAM_WIDTH;
 
     -- Instruction Array
-    type inst_array_t is array(0 to INST_DEPTH**2-1) of std_ulogic_vector(INST_WIDTH - 1 downto 0);
+    type inst_array_t is array(0 to 2**INST_DEPTH-1) of std_ulogic_vector(INST_WIDTH - 1 downto 0);
     constant INSTNULL  : std_ulogic_vector(INST_WIDTH - 1 downto 0) := (others => '0'); 
 
     -- Command helper types
@@ -32,7 +32,7 @@ package instruction_pkg is
         prm : std_ulogic_vector(PARAM_WIDTH - 1 downto 0);
     end record;
 
-    type cmd_array_t is array (0 to ICMD_WIDTH**2-1) of command_t;
+    type cmd_array_t is array (0 to 2**ICMD_WIDTH-1) of command_t;
     constant COMMANDS : cmd_array_t := (nop, inc, dec, jmp, isz, stp, others => nop);
 
 

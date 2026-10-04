@@ -19,5 +19,5 @@ package register_pkg is
     constant REGNULL  : std_ulogic_vector(REGWIDTH - 1 downto 0) := (others => '0');  
 
     -- Register array
-    type reg_array_t is array(0 to REGDEPTH**2-1) of std_ulogic_vector(REGWIDTH - 1 downto 0);
+    type reg_array_t is array(0 to 2**REGDEPTH-1) of std_ulogic_vector(REGWIDTH - 1 downto 0);
 end package register_pkg;
