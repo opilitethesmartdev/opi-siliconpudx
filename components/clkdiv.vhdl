@@ -15,6 +15,7 @@ entity clkdiv is
     port(
         clkin  : in std_ulogic;
         rst    : in std_ulogic;
+        en     : in std_ulogic;
         clkout : out std_ulogic;
         clkon  : out std_ulogic; -- clock on signal
         advp    : out std_ulogic; -- pre-rising signal
@@ -37,20 +38,22 @@ begin
             advp <= '0';
             advn <= '0';
 
-            if cnt = CLOCKDIV - 1 then  
-                clkon <= '1';
-                cnt <= (others => '0');
-                ci <= not ci;
-            else
-                if cnt = CLOCKDIV - 2 then
-                    if ci = '0' then 
-                        advp <= '1';
-                    else
-                        advn <= '1';
+            if en = '1' then
+                if cnt = CLOCKDIV - 1 then  
+                    clkon <= '1';
+                    cnt <= (others => '0');
+                    ci <= not ci;
+                else
+                    if cnt = CLOCKDIV - 2 then
+                        if ci = '0' then 
+                            advp <= '1';
+                        else
+                            advn <= '1';
+                        end if;
                     end if;
-                end if;
 
-                cnt <= cnt + 1;
+                    cnt <= cnt + 1;
+                end if;
             end if;
         end if;
     end process;

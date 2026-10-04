@@ -27,13 +27,14 @@ end entity InstructionBank;
 
 architecture bhv of InstructionBank is
     signal en : std_ulogic;
-    signal inst : inst_array_t := (others => INSTNULL);
+    signal inst : inst_array_t;
 begin
     seq : process(rst, clk)
     begin
         if rst = '1' then
+            inst <= (others => INSTNULL);
         elsif rising_edge(clk) then
-            if en = '1' and cmd = "01" then
+            if cmd = "01" then
                 inst(to_integer(addr)) <= insi;
             end if;
         end if;

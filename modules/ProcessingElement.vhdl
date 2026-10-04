@@ -11,7 +11,7 @@ use work.core_pkg.all;
 use work.register_pkg.all;
 use work.instruction_pkg.all;
 
-entity ProceesingElement is
+entity ProcessingElement is
     port(
         -- Fundamental signals
         clk : in clk_record_t;
@@ -25,14 +25,14 @@ entity ProceesingElement is
         reg_i : in std_ulogic_vector(REGWIDTH - 1 downto 0);
 
         -- Instruction interface
-        ins_cmd  : out std_ulogic_vector(1 downto 0);        -- read / write cmd ([read][write], xor = enable)
+        ins_rd  : out std_ulogic;        -- read / write cmd ([read][write], xor = enable)
         ins_addr : out unsigned(INST_DEPTH - 1 downto 0);
         ins_i : in inst_rec_t
     );
 
-end entity ProceesingElement;
+end entity ProcessingElement;
 
-architecture rtl of ProceesingElement is
+architecture rtl of ProcessingElement is
     signal inten : std_ulogic;
     --signal interr : std_ulogic;
 
@@ -105,7 +105,7 @@ begin
     -- Combinatorial logic
         inten <= clk.clkon and en;
 
-        ins_cmd <= inten & '0';
+        ins_rd <= inten;
         ins_addr <= pc;
 
         arif_en <= clk.clk_s and inten;
