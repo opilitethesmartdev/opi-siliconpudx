@@ -1,7 +1,7 @@
 ----------------------------------------------------------------------------
 -- Project		:	OPI-siliconPUdx
 -- Authors		:	opilitethesmartdev
--- Description	:	Processing Unit toplevel
+-- Description	:	siliconpudx toplevel
 ----------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
