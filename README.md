@@ -11,13 +11,13 @@ Simple 8-bit microcontroller architecure based on the WDR Paper computer ISA, ex
   - Integrated address resolution interface
   - up to two levels of indirection (pointer to pointer to value)
   - (indirection expandable at price of less commands)
-- 256-word instruction storage
-- 32 registers
+- 256-word instruction storage and 32 registers
+- External program loading from host (to be tested)
 
 ## To be implemented (post emulation):
 - MMIO: Memory-mapped IO
   - Interfacing with free pins (GPIO)
   - Parallel 4-bit duplex protocol
   - Specialized ISA extensions
-- Proper storage loading
+- External (persistent) storage
 - Adjustment to ASIC constraints
