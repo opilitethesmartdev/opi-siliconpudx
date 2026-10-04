@@ -1,0 +1,15 @@
+[libraries]
+
+lib.files = [
+"toplevel/*.vhdl",
+"components/*.vhdl",
+"components/**/*.vhdl",
+"modules/*.vhdl",
+"modules/**/*.vhdl",
+]
+
+STANDARD.files = [
+  'C:\Users\opilite\.vscode\extensions\p2l2.vhdl-by-hgb-1.0.2\server\vhdl_ls\0.88.0\vhdl_ls-x86_64-pc-windows-msvc\vhdl_libraries\std\standard.vhd',
+  'C:\Users\opilite\.vscode\extensions\p2l2.vhdl-by-hgb-1.0.2\server\vhdl_ls\0.88.0\vhdl_ls-x86_64-pc-windows-msvc\vhdl_libraries\ieee2008\numeric_bit.vhdl'
+]
+STANDARD.is_third_party = true
