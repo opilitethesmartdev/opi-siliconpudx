@@ -56,11 +56,11 @@ i_n_shift1b : entity work.n_shift1b
             pc_ctrl <= "10";
             pc_ovr <= (others => '0');
 
-            rmphase <= '0';
-
             reg_cmd <=  "00";
             reg_addr <= (others => '0');
             reg_o <=    (others => '0');
+            
+            rmphase <= '0';
         elsif rising_edge(clk) then
             if en = '1' then
                 pc_ctrl <= "10";

@@ -50,6 +50,7 @@ architecture rtl of ProcessingElement is
     signal exu_cmd  : std_ulogic_vector(1 downto 0) := (others => '0');  
     signal exu_pc_ctrl : std_ulogic_vector(1 downto 0) := (others => '0');   
     signal exu_addr : unsigned(REGDEPTH - 1 downto 0) := (others => '0');
+    signal exu_reg_o : std_ulogic_vector(REGWIDTH - 1 downto 0) := (others => '0');
 
 begin
     -- Low-Level components
@@ -94,13 +95,11 @@ begin
                 ins_i    => arif_ins_r,
                 reg_cmd  => exu_cmd,
                 reg_addr => exu_addr,
-                reg_o    => reg_o,
+                reg_o    => exu_reg_o,
                 reg_i    => reg_i,
                 pc_ctrl  => exu_pc_ctrl,
                 pc_ovr   => pc_ovr
-        );
-
-        
+        );        
         
     -- Combinatorial logic
         inten <= clk.clkon and en;
@@ -110,8 +109,10 @@ begin
 
         arif_en <= clk.clk_s and inten;
 
-        reg_cmd <= (arif_rd & '0') when clk.clk_s = '1' else exu_cmd;
-        reg_addr <= arif_addr when clk.clk_s = '1' else exu_addr;
+        reg_cmd <= (arif_rd & '0') when clk.clk_s = '1' else exu_cmd when clk.clkon = '1' else (others => '0');
+        reg_addr <= arif_addr when clk.clk_s = '1' else exu_addr when clk.clkon = '1' else (others => '0');
+        reg_o  <= exu_reg_o when clk.clk_s = '0' else (others => '0');
 
         exu_en <= (not clk.clk_s) and inten;
+
 end architecture rtl;

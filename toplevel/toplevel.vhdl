@@ -42,24 +42,24 @@ architecture rtl of toplevel is
     signal err : std_ulogic;
 
     signal ins_fin  :  std_ulogic;
-    signal ins_cmd  :  std_ulogic_vector(1 downto 0);
-    signal ins_addr :  unsigned(INST_DEPTH-1 downto 0);
-    signal ins_i :  std_ulogic_vector(INST_WIDTH-1 downto 0);
+    signal ins_cmd  :  std_ulogic_vector(1 downto 0) := (others => '0');
+    signal ins_addr :  unsigned(INST_DEPTH-1 downto 0) := (others => '0');
+    signal ins_i :  std_ulogic_vector(INST_WIDTH-1 downto 0) := (others => '0');
     signal ins_o :  inst_rec_t;
     
-    signal reg_cmd  : std_ulogic_vector(1 downto 0);
-    signal reg_addr : unsigned(REGDEPTH-1 downto 0);
-    signal reg_i :  std_ulogic_vector(REGWIDTH-1 downto 0);
-    signal reg_o :  std_ulogic_vector(REGWIDTH-1 downto 0);
+    signal reg_cmd  : std_ulogic_vector(1 downto 0) := (others => '0');
+    signal reg_addr : unsigned(REGDEPTH-1 downto 0) := (others => '0');
+    signal reg_i :  std_ulogic_vector(REGWIDTH-1 downto 0) := (others => '0');
+    signal reg_o :  std_ulogic_vector(REGWIDTH-1 downto 0) := (others => '0');
     
     signal pe_ins_clk :  clk_record_t;
     signal pe_ins_rd  :  std_ulogic;
-    signal pe_ins_addr :  unsigned(INST_DEPTH-1 downto 0);
+    signal pe_ins_addr :  unsigned(INST_DEPTH-1 downto 0) := (others => '0');
     signal pe_ins_o :  inst_rec_t;
-    signal pe_reg_cmd  : std_ulogic_vector(1 downto 0);
-    signal pe_reg_addr : unsigned(REGDEPTH-1 downto 0);
-    signal pe_reg_i :  std_ulogic_vector(REGWIDTH-1 downto 0);
-    signal pe_reg_o :  std_ulogic_vector(REGWIDTH-1 downto 0);
+    signal pe_reg_cmd  : std_ulogic_vector(1 downto 0) := (others => '0');
+    signal pe_reg_addr : unsigned(REGDEPTH-1 downto 0) := (others => '0');
+    signal pe_reg_i :  std_ulogic_vector(REGWIDTH-1 downto 0) := (others => '0');
+    signal pe_reg_o :  std_ulogic_vector(REGWIDTH-1 downto 0) := (others => '0');
 
 begin
     -- Low-Level components
@@ -123,7 +123,7 @@ begin
 
         reg_cmd  <= pe_reg_cmd when en = '1' else re_cmd;
         reg_addr <= pe_reg_addr when en = '1' else re_addr;
-        reg_i    <= pe_reg_o when en = '1' else re_regi;
+        reg_i    <= pe_reg_o when clkon = '1' else re_regi when en = '0' else (others => '0');
 
         pe_reg_i <= reg_o when en = '1' else REGNULL;
         re_rego  <= reg_o when en = '0' else REGNULL;

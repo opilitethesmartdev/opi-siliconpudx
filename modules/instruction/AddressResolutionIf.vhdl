@@ -36,13 +36,14 @@ end entity AddressResolutionIf;
 architecture bhv of AddressResolutionIf is
     signal d : std_ulogic;
     signal depth : unsigned(IPTR_WIDTH downto 0); -- we want the extra bit
-    --signal int : std_ulogic_vector(PARAM_WIDTH - 1 downto 0);
 begin
     seq : process(rst, clk)
     variable int : std_ulogic_vector(PARAM_WIDTH - 1 downto 0);
     begin
         if rst = '1' then
             d <= '0';
+            rd <= '0';
+            addr <= (others => '0');
             depth <= (others => '0');
             int := (others => '0');
             ins_o <= v2inst(INSTNULL);
