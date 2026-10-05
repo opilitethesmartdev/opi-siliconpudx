@@ -33,7 +33,7 @@ architecture rtl of tt_um_opi_siliconpudx is
     signal addr : std_ulogic_vector(REGDEPTH - 1 downto 0);
     signal doe : std_ulogic;
     signal di  : std_ulogic_vector(WORDWIDTH - 1 downto 0);
-    signal do  : std_ulogic_vector(WORDWIDTH - 1 downto 0);
+    signal dout : std_ulogic_vector(WORDWIDTH - 1 downto 0);
 begin
     -- Reset polarity conversion (active low rst_n to active high rst)
     rst <= not rst_n;
@@ -48,7 +48,7 @@ begin
     uo_out(7 downto 2) <= (others => '0');
 
     -- Map bidirectional IOs (uio) to dio
-    uio_out <= do;
+    uio_out <= dout;
     uio_oe  <= (others => doe);
     di <= uio_in;
 
@@ -61,8 +61,8 @@ begin
             tick => tick,
             rw   => rw,
             addr => addr,
-            di  => di,
-            do  => do,
+            di   => di,
+            dout => dout,
             doe  => doe
     );
 
