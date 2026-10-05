@@ -72,7 +72,7 @@ begin
                 o   => phase
         );
 
-    do <= re_rego(WORDWIDTH - 1 downto 0) 
+    do <= re_rego(WORDWIDTH - 1 downto 0);
     doe <= '1' when rw = "10" else '0';
 
     re_addr <= unsigned(addr) when rw = "10" else reg_addr;
