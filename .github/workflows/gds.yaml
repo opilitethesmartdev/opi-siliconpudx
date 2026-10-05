@@ -55,15 +55,15 @@ jobs:
 
       - name: Debug Tiny Tapeout tools
         run: |
-          git clone --depth 1 --branch ttgf26c `
+          git clone --depth 1 --branch ttgf26c \
             https://github.com/TinyTapeout/tt-gds-action.git /tmp/tt-gds-action
 
           echo "=== action.yml ==="
           cat /tmp/tt-gds-action/action.yml
 
           echo "=== support-tools references ==="
-          grep -R -n -E "tt-support-tools|tools-ref|tools-repo" `
-            /tmp/tt-gds-action `
+          grep -R -n -E "tt-support-tools|tools-ref|tools-repo" \
+            /tmp/tt-gds-action \
             --exclude-dir=.git
 
       - name: Build GDS
