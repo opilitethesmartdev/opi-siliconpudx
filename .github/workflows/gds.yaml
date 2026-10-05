@@ -20,7 +20,7 @@ jobs:
       - name: Combine VHDL sources
         run: python3 .github/scripts/combine_vhdl.py
 
-              - name: Debug generated VHDL
+      - name: Debug generated VHDL
         run: |
           echo "=== info.yaml ==="
           cat info.yaml
