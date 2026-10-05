@@ -24,7 +24,9 @@ entity asic_harness is
         rw : in std_ulogic_vector(1 downto 0); -- read / write cmd ([read][write], xor = enable, and = inst_wr)
         addr : in std_ulogic_vector(REGDEPTH - 1 downto 0);
 
-        dio : inout std_ulogic_vector(WORDWIDTH - 1 downto 0)
+        di : in std_ulogic_vector(WORDWIDTH - 1 downto 0);
+        do : out std_ulogic_vector(WORDWIDTH - 1 downto 0);
+        doe : out std_ulogic
         
     );
 
@@ -70,7 +72,8 @@ begin
                 o   => phase
         );
 
-    dio <= re_rego(WORDWIDTH - 1 downto 0) when rw = "10" else (others => 'Z');
+    do <= re_rego(WORDWIDTH - 1 downto 0) 
+    doe <= '1' when rw = "10" else '0';
 
     re_addr <= unsigned(addr) when rw = "10" else reg_addr;
 
@@ -101,24 +104,24 @@ begin
             case(rw) is
                 when "01" =>
                     if tick = '1' then
-                        intpl <= dio;
+                        intpl <= di;
                     else 
                         intpl <= (others => '0');
 
                         re_cmd <= "10";
                         reg_addr <= unsigned(addr);
-                        re_regi <= intpl(CFGWIDTH - 1 downto 0) & dio;
+                        re_regi <= intpl(CFGWIDTH - 1 downto 0) & di;
                     end if;
                 when "11" =>
                     if tick = '1' then
-                        intpl <= dio;
+                        intpl <= di;
                     else 
                         intpl <= (others => '0');
 
                         inst_wr <= '1';
                         instaddr <= instaddr + 1;
                         inst_addr <= instaddr;
-                        inst_i <= intpl & dio;
+                        inst_i <= intpl & di;
                     end if;
                 when others =>
             end case;

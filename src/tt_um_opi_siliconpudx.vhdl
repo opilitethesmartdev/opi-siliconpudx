@@ -46,9 +46,9 @@ begin
     uo_out(7 downto 2) <= (others => '0');
 
     -- Map bidirectional IOs (uio) to dio
-    uio_out <= dio;
-    uio_oe  <= "11111111" when rw = "10" else "00000000";
-    dio     <= uio_in when rw /= "10" else (others => 'Z');
+    uio_out <= do;
+    uio_oe  <= (others => doe);
+    di <= uio_in;
 
     i_asic_harness : entity work.asic_harness
         port map(
@@ -59,7 +59,9 @@ begin
             tick => tick,
             rw   => rw,
             addr => addr,
-            dio  => dio
+            di  => di,
+            do  => do,
+            doe  => doe
     );
 
 end architecture rtl;
