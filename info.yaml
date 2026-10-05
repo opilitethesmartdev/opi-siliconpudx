@@ -3,7 +3,7 @@ project:
   title:        "OPI-SiliconPUDx"        # Project title
   author:       "opilitethesmartdev"        # Your name
   discord:      "opilitethesmartdev"        # Your discord username, for communication and automatically assigning you a Tapeout role (optional)
-  description:  "Simple 8-bit Microcontroller using minimal WDR Paper computer ISA" # One line description of what your project does
+  description:  "Simple 8-bit processor using minimal WDR Paper computer ISA" # One line description of what your project does
   language:     "VHDL"    # other examples include SystemVerilog, Amaranth, VHDL, etc
   clock_hz:     100000000 # Clock frequency in Hz (or 0 if not applicable)
 
