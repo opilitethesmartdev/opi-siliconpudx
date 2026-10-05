@@ -6,13 +6,26 @@ SIM ?= icarus
 FST ?= -fst # Use more efficient FST format
 TOPLEVEL_LANG ?= verilog
 SRC_DIR = $(PWD)/../src
-PROJECT_SOURCES = project.v
 
 ifneq ($(GATES),yes)
 
 # RTL simulation:
 SIM_BUILD				= sim_build/rtl
-VERILOG_SOURCES += $(addprefix $(SRC_DIR)/,$(PROJECT_SOURCES))
+VHDL_SOURCES += $(SRC_DIR)/core.pkg.vhdl
+VHDL_SOURCES += $(SRC_DIR)/ff.pkg.vhdl
+VHDL_SOURCES += $(SRC_DIR)/instruction.pkg.vhdl
+VHDL_SOURCES += $(SRC_DIR)/register.pkg.vhdl
+VHDL_SOURCES += $(SRC_DIR)/AddressResolutionIf.vhdl
+VHDL_SOURCES += $(SRC_DIR)/clkdiv.vhdl
+VHDL_SOURCES += $(SRC_DIR)/ExecutionUnit.vhdl
+VHDL_SOURCES += $(SRC_DIR)/InstructionBank.vhdl
+VHDL_SOURCES += $(SRC_DIR)/ProcessingElement.vhdl
+VHDL_SOURCES += $(SRC_DIR)/ProgramCounterIf.vhdl
+VHDL_SOURCES += $(SRC_DIR)/RegisterBank.vhdl
+VHDL_SOURCES += $(SRC_DIR)/spislave.vhdl
+VHDL_SOURCES += $(SRC_DIR)/toplevel.vhdl
+VHDL_SOURCES += $(SRC_DIR)/asic.harness.vhdl
+VHDL_SOURCES += $(SRC_DIR)/tt_um_opi_siliconpudx.vhdl
 
 else
 
