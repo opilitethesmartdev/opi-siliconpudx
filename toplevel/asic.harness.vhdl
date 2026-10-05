@@ -19,35 +19,29 @@ entity asic_harness is
         en : in std_ulogic;
         o  : out std_ulogic_vector(1 downto 0); -- ([done][error])
 
-        -- Serial IO Interface
-        --ti : in std_ulogic; -- transfer init
+        -- Data IO Interface
+        tick : in std_ulogic;
         rw : in std_ulogic_vector(1 downto 0); -- read / write cmd ([read][write], xor = enable, and = inst_wr)
-        --addr : in std_ulogic_vector(REGDEPTH - 1 downto 0);
-        mosi : in std_ulogic;
-        miso : out std_ulogic
+        addr : in std_ulogic_vector(REGDEPTH - 1 downto 0);
 
-        --dio : inout std_ulogic_vector(WORDWIDTH - 1 downto 0)
+        dio : inout std_ulogic_vector(WORDWIDTH - 1 downto 0)
         
     );
 
 end entity asic_harness;
 
 architecture rtl of asic_harness is
-    signal rwop : std_ulogic; -- r/w operaion ongoing
-    signal rwfn : std_ulogic; -- r/w operation finish
-    signal rwei : std_ulogic; -- r/w edge detector in
-    signal rwdel : std_ulogic_vector(1 downto 0); -- delayed rw signal
-
-    signal dmiso : std_ulogic_vector(WORDWIDTH*2-1 downto 0);
-    signal dmosi : std_ulogic_vector(WORDWIDTH*3-1 downto 0);
-    signal spien : std_ulogic_vector(1 downto 0);
+    signal phase : std_ulogic; 
+    signal intpl : std_ulogic_vector(WORDWIDTH-1 downto 0);
+    signal instaddr : unsigned(INST_DEPTH-1 downto 0);
  
-    signal proc_en   : std_ulogic;
+    --signal proc_en   : std_ulogic;
     signal inst_wr   : std_ulogic;
     signal inst_addr : unsigned(INST_DEPTH-1 downto 0);
     signal inst_i    : std_ulogic_vector(INST_WIDTH-1 downto 0);
     signal re_cmd    : std_ulogic_vector(1 downto 0);
     signal re_addr   : unsigned(REGDEPTH-1 downto 0);
+    signal reg_addr   : unsigned(REGDEPTH-1 downto 0);
     signal re_regi   : std_ulogic_vector(REGWIDTH-1 downto 0);
     signal re_rego   : std_ulogic_vector(REGWIDTH-1 downto 0);
 
@@ -57,7 +51,7 @@ begin
             port map(
                 clk       => clk,
                 rst       => rst,
-                en        => proc_en,
+                en        => en,
                 o         => o,
                 inst_wr   => inst_wr,
                 inst_addr => inst_addr,
@@ -68,49 +62,66 @@ begin
                 re_rego   => re_rego
         );
 
-        i_spislave : entity work.spislave
-            port map(
-                clk   => clk,
-                rst   => rst,
-                en    => spien,
-                mosi  => mosi,
-                miso  => miso,
-                dmiso => dmiso,
-                dmosi => dmosi
-            );
-        
     -- Logic
-        spien <= rwop & '0';
-
-        rwei <= or rw;
-
-        rwedge : entity work.edgend
-            generic map(
-                polarity => "falling"
-            )
+        tickff : entity work.t_ff
             port map(
                 clk => clk,
-                i   => rwei,
-                o   => rwfn
-            );
+                i   => tick,
+                o   => phase
+        );
 
-        rwff : entity work.sr_ff
-            port map(
-                clk => clk,
-                s   => mosi,
-                r   => rwfn,
-                o   => rwop
-            );
+    dio <= re_rego when rw = "10" else (others => 'Z');
 
-        rwshift : entity work.n_shift
-            generic map( WIDTH => 2, DELAY => 1 )
-            port map(
-                clk => clk,
-                rst => rst,
-                i   => rw,
-                o   => rwdel
-            );
+    re_addr <= unsigned(addr) when rw = "10" else reg_addr;
 
+    seq : process (clk, rst)
+    begin
+        if rst = '1' then
+            intpl <= (others => '0');
+            
+            re_cmd <= "00";
+            reg_addr <= (others => '0');
+            re_regi <= (others => '0');
+            
+            inst_wr <= '0';
+            instaddr <= (others => '0');
+            inst_addr <= (others => '0');
+            inst_i <= (others => '0');
+        elsif rising_edge(clk) then
+            intpl <= (others => '0');
+            
+            re_cmd <= "00";
+            reg_addr <= (others => '0');
+            re_regi <= (others => '0');
+            
+            inst_wr <= '0';
+            inst_addr <= (others => '0');
+            inst_i <= (others => '0');
 
+            case(rw) is
+                when "01" =>
+                    if tick = '1' then
+                        intpl <= dio;
+                    else 
+                        intpl <= (others => '0');
 
+                        re_cmd <= "10";
+                        reg_addr <= unsigned(addr);
+                        re_regi <= intpl & dio;
+                    end if;
+                when "11" =>
+                    if tick = '1' then
+                        intpl <= dio;
+                    else 
+                        intpl <= (others => '0');
+
+                        inst_wr <= '1';
+                        instaddr <= instaddr + 1;
+                        inst_addr <= instaddr;
+                        inst_i <= intpl & dio;
+                    end if;
+                when others =>
+            end case;
+        end if;
+    end process seq;
 end architecture rtl;
