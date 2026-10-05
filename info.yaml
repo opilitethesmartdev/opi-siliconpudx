@@ -11,7 +11,11 @@ project:
   tiles: "1x1"          # Valid values: 1x1, 1x2, 2x2, 3x2, 4x2, 3x4 or 4x4
 
   top_module: "tt_um_opi_siliconpudx"
+
   source_files:
+    - "generated.vhdl"
+
+  source_sources:
     - "core.pkg.vhdl"
     - "ff.pkg.vhdl"
     - "instruction.pkg.vhdl"
