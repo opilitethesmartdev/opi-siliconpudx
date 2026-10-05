@@ -53,6 +53,20 @@ jobs:
           wc -l /tmp/siliconpudx.v
           head -n 30 /tmp/siliconpudx.v
 
+      - name: Debug Tiny Tapeout tools
+        run: |
+          git clone --depth 1 --branch ttgf26c \
+            https://github.com/TinyTapeout/tt-support-tools.git /tmp/tt-support-tools
+
+          echo "=== project.py VHDL handling ==="
+          grep -n -A80 -B10 "transpile_vhdl" \
+            /tmp/tt-support-tools/project.py
+
+          echo "=== top module handling ==="
+          grep -R -n -E "top_module|source_files" \
+            /tmp/tt-support-tools \
+            --include="*.py" | head -n 100
+            
       - name: Build GDS
         uses: TinyTapeout/tt-gds-action@ttgf26c
         with:
