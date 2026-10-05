@@ -75,6 +75,8 @@ jobs:
         uses: TinyTapeout/tt-gds-action@ttgf26c
         with:
           pdk: gf180mcuD
+          tools-repo: opilitethesmartdev/tt-support-tools-gds-vhdl-patch
+          tools-ref: fix/vhdl-top-selection
 
   precheck:
     needs: gds
