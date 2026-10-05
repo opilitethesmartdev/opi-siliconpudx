@@ -11,7 +11,7 @@ use work.core_pkg.all;
 use work.register_pkg.all;
 use work.instruction_pkg.all;
 
-entity asic_interface is
+entity tt_um_opi_siliconpudx is
     port(
         -- Tiny Tapeout standard signals
         clk     : in  std_ulogic;
@@ -23,9 +23,9 @@ entity asic_interface is
         uio_out : out std_ulogic_vector(7 downto 0);
         uio_oe  : out std_ulogic_vector(7 downto 0)
     );
-end entity asic_interface;
+end entity tt_um_opi_siliconpudx;
 
-architecture rtl of asic_interface is
+architecture rtl of tt_um_opi_siliconpudx is
     signal rst  : std_ulogic;
     signal o    : std_ulogic_vector(1 downto 0);
     signal tick : std_ulogic;
