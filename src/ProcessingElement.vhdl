@@ -40,11 +40,11 @@ architecture rtl of ProcessingElement is
     signal pc_ovr  :  unsigned(INST_DEPTH-1 downto 0) := (others => '0');
     signal pc      :  unsigned(INST_DEPTH-1 downto 0) := (others => '0');
 
-    signal arif_en   : std_ulogic;
-    signal arif_fin   : std_ulogic;
-    signal arif_rd    : std_ulogic;
-    signal arif_addr  : unsigned(REGDEPTH-1 downto 0) := (others => '0');
-    signal arif_ins_r :  inst_rec_t;
+    signal arif_en      : std_ulogic;
+    signal arif_fin     : std_ulogic;
+    signal arif_rd_i    : std_ulogic;
+    signal arif_addr_i  : unsigned(REGDEPTH-1 downto 0) := (others => '0');
+    signal arif_ins_r   : inst_rec_t;
 
     signal exu_en   : std_ulogic;
     signal exu_cmd  : std_ulogic_vector(1 downto 0) := (others => '0');  
@@ -81,8 +81,8 @@ begin
                 en    => arif_en,
                 fin   => arif_fin,
                 ins_i => ins_i,
-                rd    => arif_rd,
-                addr  => arif_addr,
+                rd    => arif_rd_i,
+                addr  => arif_addr_i,
                 regi  => reg_i,
                 ins_o => arif_ins_r
         );
@@ -109,8 +109,8 @@ begin
 
         arif_en <= clk.clk_s and inten;
 
-        reg_cmd <= (arif_rd & '0') when clk.clk_s = '1' else exu_cmd when clk.clkon = '1' else (others => '0');
-        reg_addr <= arif_addr when clk.clk_s = '1' else exu_addr when clk.clkon = '1' else (others => '0');
+        reg_cmd <= (arif_rd_i & '0') when clk.clk_s = '1' else exu_cmd when clk.clkon = '1' else (others => '0');
+        reg_addr <= arif_addr_i when clk.clk_s = '1' else exu_addr when clk.clkon = '1' else (others => '0');
         reg_o  <= exu_reg_o when clk.clk_s = '0' else (others => '0');
 
         exu_en <= (not clk.clk_s) and inten;
