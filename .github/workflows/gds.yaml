@@ -55,18 +55,17 @@ jobs:
 
       - name: Debug Tiny Tapeout tools
         run: |
-          git clone --depth 1 --branch ttgf26c \
-            https://github.com/TinyTapeout/tt-support-tools.git /tmp/tt-support-tools
+          git clone --depth 1 --branch ttgf26c `
+            https://github.com/TinyTapeout/tt-gds-action.git /tmp/tt-gds-action
 
-          echo "=== project.py VHDL handling ==="
-          grep -n -A80 -B10 "transpile_vhdl" \
-            /tmp/tt-support-tools/project.py
+          echo "=== action.yml ==="
+          cat /tmp/tt-gds-action/action.yml
 
-          echo "=== top module handling ==="
-          grep -R -n -E "top_module|source_files" \
-            /tmp/tt-support-tools \
-            --include="*.py" | head -n 100
-            
+          echo "=== support-tools references ==="
+          grep -R -n -E "tt-support-tools|tools-ref|tools-repo" `
+            /tmp/tt-gds-action `
+            --exclude-dir=.git
+
       - name: Build GDS
         uses: TinyTapeout/tt-gds-action@ttgf26c
         with:
