@@ -70,7 +70,7 @@ begin
                 o   => phase
         );
 
-    dio <= re_rego when rw = "10" else (others => 'Z');
+    dio <= re_rego(WORDWIDTH - 1 downto 0) when rw = "10" else (others => 'Z');
 
     re_addr <= unsigned(addr) when rw = "10" else reg_addr;
 
@@ -107,7 +107,7 @@ begin
 
                         re_cmd <= "10";
                         reg_addr <= unsigned(addr);
-                        re_regi <= intpl & dio;
+                        re_regi <= intpl(CFGWIDTH - 1 downto 0) & dio;
                     end if;
                 when "11" =>
                     if tick = '1' then
