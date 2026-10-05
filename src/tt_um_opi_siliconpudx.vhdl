@@ -31,7 +31,9 @@ architecture rtl of tt_um_opi_siliconpudx is
     signal tick : std_ulogic;
     signal rw   : std_ulogic_vector(1 downto 0);
     signal addr : std_ulogic_vector(REGDEPTH - 1 downto 0);
-    signal dio  : std_ulogic_vector(WORDWIDTH - 1 downto 0);
+    signal doe : std_ulogic;
+    signal di  : std_ulogic_vector(WORDWIDTH - 1 downto 0);
+    signal do  : std_ulogic_vector(WORDWIDTH - 1 downto 0);
 begin
     -- Reset polarity conversion (active low rst_n to active high rst)
     rst <= not rst_n;
