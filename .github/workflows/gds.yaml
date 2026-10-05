@@ -20,6 +20,11 @@ jobs:
       - name: Combine VHDL sources
         run: python3 .github/scripts/combine_vhdl.py
 
+      - name: Install GHDL
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ghdl-llvm
+
       - name: Debug generated VHDL
         run: |
           echo "=== info.yaml ==="
