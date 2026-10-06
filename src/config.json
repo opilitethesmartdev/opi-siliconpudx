@@ -42,7 +42,7 @@
         "dir::../components/sram/macros/gf180mcu_fd_ip_sram__sram256x8m8wm1.lef"
       ],
       "vh": [
-        "dir::../components/sram/macros/gf180mcu_fd_ip_sram__sram256x8m8wm1.v"
+        "dir::../components/sram/macros/gf180mcu_fd_ip_sram__sram256x8m8wm1.blackbox.v"
       ]
     }
   },
