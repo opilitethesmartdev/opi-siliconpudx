@@ -46,4 +46,4 @@ output	[7:0]	Q;
 inout		VDD;
 inout		VSS;
 
-endmodule;
+endmodule
