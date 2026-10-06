@@ -4,7 +4,7 @@ import yaml
 ROOT = Path(__file__).resolve().parents[2]
 INFO = ROOT / "info.yaml"
 SRC = ROOT # /  "src"
-GENERATED = SRC / "generated.vhdl"
+GENERATED = ROOT / "src/generated.vhdl"
 
 with INFO.open("r", encoding="utf-8") as f:
     info = yaml.safe_load(f)
