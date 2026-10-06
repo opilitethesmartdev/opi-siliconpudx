@@ -7,6 +7,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+use work.core_pkg.all;
 use work.instruction_pkg.all;
 
 entity InstructionBank is
@@ -27,19 +28,10 @@ end entity InstructionBank;
 
 architecture bhv of InstructionBank is
     signal en : std_ulogic;
-    signal inst : inst_array_t;
 
-    signal s0_en :  std_ulogic;
-    signal s0_wren :  std_ulogic;
-    signal s0_mask :  std_ulogic_vector(7 downto 0);
-    signal s0_addr :  unsigned(7 downto 0);
+    signal wren :  std_ulogic;
     signal s0_din  :  std_ulogic_vector(7 downto 0);
     signal s0_dout :  std_ulogic_vector(7 downto 0);
-
-    signal s1_en :  std_ulogic;
-    signal s1_wren :  std_ulogic;
-    signal s1_mask :  std_ulogic_vector(7 downto 0);
-    signal s1_addr :  unsigned(7 downto 0);
     signal s1_din  :  std_ulogic_vector(7 downto 0);
     signal s1_dout :  std_ulogic_vector(7 downto 0);
 
@@ -51,10 +43,10 @@ begin
         )
         port map(
             clk  => clk,
-            en   => s0_en,
-            wren => s0_wren,
-            mask => s0_mask,
-            addr => s0_addr,
+            en   => en,
+            wren => wren,
+            mask => (others => '1'),
+            addr => addr,
             din  => s0_din,
             dout => s0_dout
     );
@@ -65,20 +57,18 @@ begin
         )
         port map(
             clk  => clk,
-            en   => s1_en,
-            wren => s1_wren,
-            mask => s1_mask,
-            addr => s1_addr,
+            en   => en,
+            wren => wren,
+            mask => (others => '1'),
+            addr => addr,
             din  => s1_din,
             dout => s1_dout
     );
-    en <= cmd(1) and not (rst or cmd(0));
 
-    inso <= v2inst(s1_dout & s0_dout) when en = '1' else v2inst(INSTNULL);
+    en <= xor cmd;
 
-    fin  <= '1' when en = '1' and (
-        inst2cmd(inst(to_integer(addr))) = stp or 
-        inst2cmd(inst(to_integer(addr))) = nop
-        ) else '0';
-    err  <= '1' when en = '1' and inst2cmd(inst(to_integer(addr))) = nop else '0';
+    s0_din  <= insi(WORDWIDTH*2-1 downto WORDWIDTH);
+    s1_din  <= insi(WORDWIDTH-1 downto 0);
+
+    inso <= v2inst(s1_dout & s0_dout);
 end architecture bhv;

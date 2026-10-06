@@ -25,7 +25,7 @@ entity ProcessingElement is
         reg_i : in std_ulogic_vector(REGWIDTH - 1 downto 0);
 
         -- Instruction interface
-        ins_rd  : out std_ulogic;        -- read / write cmd ([read][write], xor = enable)
+        ins_rd  : out std_ulogic;
         ins_addr : out unsigned(INST_DEPTH - 1 downto 0);
         ins_i : in inst_rec_t
     );
@@ -54,14 +54,16 @@ architecture rtl of ProcessingElement is
 
 begin
     -- Low-Level components
-        pcshift : entity work.n_shift
-            generic map(WIDTH => 2, DELAY => 1)
-            port map(
-                clk => clk.clk,
-                rst => rst,
-                i   => exu_pc_ctrl,
-                o   => pc_ctrl
-            );
+        --pcshift : entity work.n_shift
+        --    generic map(WIDTH => 2, DELAY => 1)
+        --    port map(
+        --        clk => clk.clk,
+        --        rst => rst,
+        --        i   => exu_pc_ctrl,
+        --        o   => pc_ctrl
+        --    );
+
+        pc_ctrl <= exu_pc_ctrl;
 
     -- Modules           
         pcif : entity work.ProgramCounterIf
