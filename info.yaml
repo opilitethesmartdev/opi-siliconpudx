@@ -8,7 +8,7 @@ project:
   clock_hz:     100000000 # Clock frequency in Hz (or 0 if not applicable)
 
   # How many tiles your design occupies? A single tile is about 340x160 uM.
-  tiles: "1x1"          # Valid values: 1x1, 1x2, 2x2, 3x2, 4x2, 3x4 or 4x4
+  tiles: "4x4"          # Valid values: 1x1, 1x2, 2x2, 3x2, 4x2, 3x4 or 4x4
 
   top_module: "tt_um_opi_siliconpudx"
 
@@ -16,21 +16,21 @@ project:
     - "generated.vhdl"
 
   source_sources:
-    - "core.pkg.vhdl"
-    - "ff.pkg.vhdl"
-    - "instruction.pkg.vhdl"
-    - "register.pkg.vhdl"
-    - "AddressResolutionIf.vhdl"
-    - "clkdiv.vhdl"
-    - "ExecutionUnit.vhdl"
-    - "InstructionBank.vhdl"
-    - "ProcessingElement.vhdl"
-    - "ProgramCounterIf.vhdl"
-    - "RegisterBank.vhdl"
-    - "spislave.vhdl"
-    - "toplevel.vhdl"
-    - "asic.harness.vhdl"
-    - "tt_um_opi_siliconpudx.vhdl"
+    - "components/ff.pkg.vhdl"
+    - "components/clkdiv.vhdl"
+    - "components/spconverter.vhdl"
+    - "components/packages/core.pkg.vhdl"
+    - "components/packages/instruction.pkg.vhdl"
+    - "components/packages/register.pkg.vhdl"
+    - "modules/execution/ExecutionUnit.vhdl"
+    - "modules/execution/ProgramCounterIf.vhdl"
+    - "modules/instruction/AddressResolutionIf.vhdl"
+    - "modules/instruction/InstructionBank.vhdl"
+    - "modules/register/RegisterBank.vhdl"
+    - "modules/ProcessingElement.vhdl"
+    - "toplevel/toplevel.vhdl"
+    - "toplevel/asic.harness.vhdl"
+    - "toplevel/tt_um_opi_siliconpudx.vhdl"
 
 # The pinout of your project. Leave unused pins blank. DO NOT delete or add any pins.
 # This section is for the datasheet/website. Use descriptive names (e.g., RX, TX, MOSI, SCL, SEG_A, etc.).
