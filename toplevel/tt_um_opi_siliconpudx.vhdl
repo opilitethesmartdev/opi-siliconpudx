@@ -11,7 +11,7 @@ use work.core_pkg.all;
 use work.register_pkg.all;
 use work.instruction_pkg.all;
 
-entity asic_interface is
+entity tt_um_opi_siliconpudx is
     port(
         -- Tiny Tapeout standard signals
         clk     : in  std_ulogic;
@@ -23,15 +23,17 @@ entity asic_interface is
         uio_out : out std_ulogic_vector(7 downto 0);
         uio_oe  : out std_ulogic_vector(7 downto 0)
     );
-end entity asic_interface;
+end entity tt_um_opi_siliconpudx;
 
-architecture rtl of asic_interface is
+architecture rtl of tt_um_opi_siliconpudx is
     signal rst  : std_ulogic;
     signal o    : std_ulogic_vector(1 downto 0);
     signal tick : std_ulogic;
     signal rw   : std_ulogic_vector(1 downto 0);
     signal addr : std_ulogic_vector(REGDEPTH - 1 downto 0);
-    signal dio  : std_ulogic_vector(WORDWIDTH - 1 downto 0);
+    signal doe : std_ulogic;
+    signal di  : std_ulogic_vector(WORDWIDTH - 1 downto 0);
+    signal dout : std_ulogic_vector(WORDWIDTH - 1 downto 0);
 begin
     -- Reset polarity conversion (active low rst_n to active high rst)
     rst <= not rst_n;
@@ -46,9 +48,9 @@ begin
     uo_out(7 downto 2) <= (others => '0');
 
     -- Map bidirectional IOs (uio) to dio
-    uio_out <= dio;
-    uio_oe  <= "11111111" when rw = "10" else "00000000";
-    dio     <= uio_in when rw /= "10" else (others => 'Z');
+    uio_out <= dout;
+    uio_oe  <= (others => doe);
+    di <= uio_in;
 
     i_asic_harness : entity work.asic_harness
         port map(
@@ -59,7 +61,9 @@ begin
             tick => tick,
             rw   => rw,
             addr => addr,
-            dio  => dio
+            di   => di,
+            dout => dout,
+            doe  => doe
     );
 
 end architecture rtl;

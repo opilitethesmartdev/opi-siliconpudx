@@ -7,33 +7,92 @@ on:
 jobs:
   gds:
     runs-on: ubuntu-24.04
+
     steps:
-      - name: checkout repo
+      - name: Checkout repo
         uses: actions/checkout@v6
         with:
           submodules: recursive
+
+      - name: Install PyYAML
+        run: python3 -m pip install pyyaml
+
+      - name: Combine VHDL sources
+        run: python3 .github/scripts/combine_vhdl.py
+
+      - name: Install GHDL
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ghdl-llvm
+
+      - name: Debug generated VHDL
+        run: |
+          echo "=== info.yaml ==="
+          cat info.yaml
+
+          echo "=== generated.vhdl ==="
+          cat src/generated.vhdl
+
+          echo "=== top entity ==="
+          grep -n "entity tt_um_opi_siliconpudx" src/generated.vhdl
+
+      - name: Test GHDL synthesis
+        run: |
+          echo "=== GHDL version ==="
+          ghdl --version
+
+          echo "=== GHDL synthesis ==="
+          ghdl synth \
+            --std=08 \
+            --out=verilog \
+            src/generated.vhdl \
+            -e tt_um_opi_siliconpudx \
+            > /tmp/siliconpudx.v
+
+          echo "=== generated Verilog ==="
+          wc -l /tmp/siliconpudx.v
+          head -n 30 /tmp/siliconpudx.v
+
+      - name: Debug tt-support-tools
+        run: |
+          git clone --depth 1 \
+            https://github.com/TinyTapeout/tt-support-tools.git \
+            /tmp/tt-support-tools
+
+          echo "=== commit ==="
+          git -C /tmp/tt-support-tools rev-parse HEAD
+
+          echo "=== transpile_vhdl ==="
+          grep -n -A60 -B10 "def transpile_vhdl" \
+            /tmp/tt-support-tools/project.py
+
+          echo "=== GHDL references ==="
+          grep -R -n "ghdl" \
+            /tmp/tt-support-tools \
+            --include="*.py"
 
       - name: Build GDS
         uses: TinyTapeout/tt-gds-action@ttgf26c
         with:
           pdk: gf180mcuD
+          tools-repo: opilitethesmartdev/tt-support-tools-gds-vhdl-patch
+          tools-ref: fix/vhdl-top-selection
 
   precheck:
     needs: gds
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     steps:
-      - name: Run Tiny Tapeout Precheck
+      - name: Precheck
         uses: TinyTapeout/tt-gds-action/precheck@ttgf26c
 
   gl_test:
     needs: gds
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     steps:
-      - name: checkout repo
-        uses: actions/checkout@v6
-        with:
-          submodules: recursive
-
       - name: GL test
         uses: TinyTapeout/tt-gds-action/gl_test@ttgf26c
 
@@ -41,7 +100,8 @@ jobs:
     needs: gds
     runs-on: ubuntu-24.04
     permissions:
-      pages: write      # to deploy to Pages
-      id-token: write   # to verify the deployment originates from an appropriate source
+      pages: write
+      id-token: write
     steps:
-      - uses: TinyTapeout/tt-gds-action/viewer@ttgf26c
+      - name: Viewer
+        uses: TinyTapeout/tt-gds-action/viewer@ttgf26c

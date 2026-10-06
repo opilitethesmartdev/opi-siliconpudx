@@ -1,0 +1,69 @@
+# Tiny Tapeout project information
+project:
+  title:        "OPI-SiliconPUDx"        # Project title
+  author:       "opilitethesmartdev"        # Your name
+  discord:      "opilitethesmartdev"        # Your discord username, for communication and automatically assigning you a Tapeout role (optional)
+  description:  "Simple 8-bit processor using minimal WDR Paper computer ISA" # One line description of what your project does
+  language:     "VHDL"    # other examples include SystemVerilog, Amaranth, VHDL, etc
+  clock_hz:     100000000 # Clock frequency in Hz (or 0 if not applicable)
+
+  # How many tiles your design occupies? A single tile is about 340x160 uM.
+  tiles: "1x1"          # Valid values: 1x1, 1x2, 2x2, 3x2, 4x2, 3x4 or 4x4
+
+  top_module: "tt_um_opi_siliconpudx"
+
+  source_files:
+    - "generated.vhdl"
+
+  source_sources:
+    - "core.pkg.vhdl"
+    - "ff.pkg.vhdl"
+    - "instruction.pkg.vhdl"
+    - "register.pkg.vhdl"
+    - "AddressResolutionIf.vhdl"
+    - "clkdiv.vhdl"
+    - "ExecutionUnit.vhdl"
+    - "InstructionBank.vhdl"
+    - "ProcessingElement.vhdl"
+    - "ProgramCounterIf.vhdl"
+    - "RegisterBank.vhdl"
+    - "spislave.vhdl"
+    - "toplevel.vhdl"
+    - "asic.harness.vhdl"
+    - "tt_um_opi_siliconpudx.vhdl"
+
+# The pinout of your project. Leave unused pins blank. DO NOT delete or add any pins.
+# This section is for the datasheet/website. Use descriptive names (e.g., RX, TX, MOSI, SCL, SEG_A, etc.).
+pinout:
+  # Inputs
+  ui[0]: "r" #
+  ui[1]: "w" # r + w = inst
+  ui[2]: "addr0"
+  ui[3]: "addr1"
+  ui[4]: "addr2"
+  ui[5]: "addr3"
+  ui[6]: "addr4"
+  ui[7]: "tick"
+
+  # Outputs
+  uo[0]: "done"
+  uo[1]: "err"
+  uo[2]: ""
+  uo[3]: ""
+  uo[4]: ""
+  uo[5]: ""
+  uo[6]: ""
+  uo[7]: ""
+
+  # Bidirectional pins
+  uio[0]: "DIO0"
+  uio[1]: "DIO1"
+  uio[2]: "DIO2"
+  uio[3]: "DIO3"
+  uio[4]: "DIO4"
+  uio[5]: "DIO5"
+  uio[6]: "DIO6"
+  uio[7]: "DIO7"
+
+# Do not change!
+yaml_version: 6
