@@ -25,7 +25,7 @@ entity asic_harness is
         addr : in std_ulogic_vector(REGDEPTH - 1 downto 0);
 
         di : in std_ulogic_vector(WORDWIDTH - 1 downto 0);
-        do : out std_ulogic_vector(WORDWIDTH - 1 downto 0);
+        dout : out std_ulogic_vector(WORDWIDTH - 1 downto 0);
         doe : out std_ulogic
         
     );
@@ -72,7 +72,7 @@ begin
                 o   => phase
         );
 
-    do <= re_rego(WORDWIDTH - 1 downto 0);
+    dout <= re_rego(WORDWIDTH - 1 downto 0);
     doe <= '1' when rw = "10" else '0';
 
     re_addr <= unsigned(addr) when rw = "10" else reg_addr;
