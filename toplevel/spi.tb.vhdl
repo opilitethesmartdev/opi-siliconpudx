@@ -27,7 +27,7 @@ begin
 
     clk <= not clk after 5 ns;
 
-    dut : entity work.spislave
+    dut : entity work.spconverter
         port map(
             clk   => clk,
             rst   => rst,

@@ -1,16 +1,16 @@
 ----------------------------------------------------------------------------
 -- Project		:	Generic
 -- Authors		:	opilitethesmartdev
--- Description	:	Data deserializer
+-- Description	:	Data serial / parallel converter
 ----------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
 
-use work.core_pkg.all;
-use work.register_pkg.all;
-use work.instruction_pkg.all;
-
-entity spislave is
+entity spconverter is
+    generic(
+        ADDRW : natural := 8;
+        WORDW : natural := 16
+    );
     port(
         clk : in std_ulogic;
         rst : in std_ulogic;
@@ -20,15 +20,17 @@ entity spislave is
         mosi : in std_ulogic;
         miso : out std_ulogic;
 
-        dmiso : in  std_ulogic_vector(WORDWIDTH*2 - 1 downto 0); -- assert en(1)
-        dmosi : out std_ulogic_vector(WORDWIDTH*3 - 1 downto 0)  -- assert en(0)
+        dmiso : in  std_ulogic_vector((ADDRW + WORDW) - 1 downto 0); -- assert en(1)
+        dmosi : out std_ulogic_vector((ADDRW + WORDW) - 1 downto 0)  -- assert en(0)
     );
-end entity spislave;
+end entity spconverter;
 
-architecture rtl of spislave is
+architecture rtl of spconverter is
+    constant DW : natural := (ADDRW + WORDW);
+
     signal soload : std_ulogic;
-    signal sishift : std_ulogic_vector(WORDWIDTH*3 - 1 downto 0);
-    signal soshift : std_ulogic_vector(WORDWIDTH*2 - 1 downto 0);
+    signal sishift : std_ulogic_vector(DW - 1 downto 0);
+    signal soshift : std_ulogic_vector(DW - 1 downto 0);
 begin
     seq : process(rst, clk)
     begin
@@ -42,7 +44,7 @@ begin
             dmosi <= (others => '0');
         elsif rising_edge(clk) then
             if en(0) = '1' then
-                sishift <= sishift(WORDWIDTH*3 - 2 downto 0) & mosi;
+                sishift <= sishift(DW - 2 downto 0) & mosi;
             else
                 dmosi <= sishift;
             end if;
@@ -51,8 +53,8 @@ begin
             if en(1) = '1' and soload = '0' then
                 soshift <= dmiso;
             elsif soload = '1' then
-                miso <= soshift(WORDWIDTH*2 - 1);
-                soshift <= soshift(WORDWIDTH*2 - 2 downto 0) & '0';
+                miso <= soshift(DW - 1);
+                soshift <= soshift(DW - 2 downto 0) & '0';
             end if;
 
         end if;
