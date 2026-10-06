@@ -12,7 +12,7 @@ use work.core_pkg.all;
 
 package instruction_pkg is
     -- Constants
-    constant INST_DEPTH : natural := 4;
+    constant INST_DEPTH : natural := WORDWIDTH;
 
     constant IPTR_WIDTH  : natural := 2;  
     constant ICMD_WIDTH  : natural := 6;    
