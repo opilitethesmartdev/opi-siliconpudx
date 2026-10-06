@@ -22,6 +22,7 @@ project:
     - "components/packages/core.pkg.vhdl"
     - "components/packages/instruction.pkg.vhdl"
     - "components/packages/register.pkg.vhdl"
+    - "components/sram/sram.macro.vhdl"
     - "modules/execution/ExecutionUnit.vhdl"
     - "modules/execution/ProgramCounterIf.vhdl"
     - "modules/instruction/AddressResolutionIf.vhdl"
