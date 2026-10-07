@@ -27,8 +27,8 @@ entity InstructionBank is
 end entity InstructionBank;
 
 architecture bhv of InstructionBank is
-
     signal en : std_ulogic;
+    signal e  : std_ulogic;
 
     signal wren :  std_ulogic;
     signal s_addr  :  unsigned(7 downto 0);
@@ -68,10 +68,16 @@ begin
     );
 
     en <= xor cmd;
+    wren <= '1' when cmd = "01" else '0';
 
     s_addr <= resize(addr, WORDWIDTH);
     s0_din  <= insi(WORDWIDTH*2-1 downto WORDWIDTH);
     s1_din  <= insi(WORDWIDTH-1 downto 0);
 
     inso <= v2inst(s1_dout & s0_dout);
+
+    fin <= '1' when (e = '1' or v2inst(s1_dout & s0_dout).cmd = stp) else '0';
+    e <= '1' when v2inst(s1_dout & s0_dout).cmd = nop else '0';
+    err <= e;
+
 end architecture bhv;
