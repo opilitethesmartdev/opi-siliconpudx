@@ -20,11 +20,6 @@ jobs:
       - name: Combine VHDL sources
         run: python3 .github/scripts/combine_vhdl.py
 
-      - name: Install GHDL
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y ghdl-llvm
-
       - name: Debug generated VHDL
         run: |
           echo "=== info.yaml ==="
@@ -35,23 +30,6 @@ jobs:
 
           echo "=== top entity ==="
           grep -n "entity tt_um_opi_siliconpudx" src/generated.vhdl
-
-      - name: Test GHDL synthesis
-        run: |
-          echo "=== GHDL version ==="
-          ghdl --version
-
-          echo "=== GHDL synthesis ==="
-          ghdl synth \
-            --std=08 \
-            --out=verilog \
-            src/generated.vhdl \
-            -e tt_um_opi_siliconpudx \
-            > /tmp/siliconpudx.v
-
-          echo "=== generated Verilog ==="
-          wc -l /tmp/siliconpudx.v
-          head -n 30 /tmp/siliconpudx.v
 
       - name: Debug tt-support-tools
         run: |
