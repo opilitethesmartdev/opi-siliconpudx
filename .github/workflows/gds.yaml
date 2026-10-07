@@ -33,21 +33,26 @@ jobs:
 
       - name: Debug tt-support-tools
         run: |
-          git clone --depth 1 \
-            https://github.com/TinyTapeout/tt-support-tools.git \
-            /tmp/tt-support-tools
+          git clone --depth 1             https://github.com/TinyTapeout/tt-support-tools.git             /tmp/tt-support-tools
 
           echo "=== commit ==="
           git -C /tmp/tt-support-tools rev-parse HEAD
 
           echo "=== transpile_vhdl ==="
-          grep -n -A60 -B10 "def transpile_vhdl" \
-            /tmp/tt-support-tools/project.py
+          grep -n -A60 -B10 "def transpile_vhdl"             /tmp/tt-support-tools/project.py
 
           echo "=== GHDL references ==="
-          grep -R -n "ghdl" \
-            /tmp/tt-support-tools \
-            --include="*.py"
+          grep -R -n "ghdl"             /tmp/tt-support-tools             --include="*.py"
+
+      - name: Install GF180 PDK
+        uses: TinyTapeout/ciel-action@v1
+        with:
+          pdk_name: gf180mcu
+          pdk_version: e8daeda73ca8f5814dbc0b11d1d05802251a3750
+          pdk_root: /home/runner/pdk
+
+      - name: Export PDK_ROOT
+        run: echo "PDK_ROOT=/home/runner/pdk" >> "$GITHUB_ENV"
 
       - name: Build GDS
         uses: TinyTapeout/tt-gds-action@ttgf26c
