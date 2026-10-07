@@ -37,9 +37,7 @@ architecture rtl of sram_macro is
             WEN  : in std_ulogic_vector(7 downto 0);
             A : in std_ulogic_vector(7 downto 0);
             D : in std_ulogic_vector(7 downto 0);
-            Q : out std_ulogic_vector(7 downto 0);
-            VDD : inout std_ulogic;
-            VSS : inout std_ulogic
+            Q : out std_ulogic_vector(7 downto 0)
         );
     end component;
 
@@ -49,8 +47,6 @@ architecture rtl of sram_macro is
     signal A    :  std_ulogic_vector(7 downto 0);
     signal D    :  std_ulogic_vector(7 downto 0);
     signal Q    :  std_ulogic_vector(7 downto 0);
-    signal VDD  :  std_ulogic;
-    signal VSS  :  std_ulogic;
 
 begin
     sram256x8m8wm1 : if CONFIG = "sram256x8m8wm1" generate
@@ -62,9 +58,7 @@ begin
                 WEN  => WEN,
                 A    => A,
                 D    => D,
-                Q    => Q,
-                VDD => VDD,
-                VSS => VSS
+                Q    => Q
         );
     end generate;
 

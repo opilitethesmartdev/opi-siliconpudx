@@ -50,8 +50,8 @@
     }
   },
 
-  "FP_PDN_MACRO_HOOKS": [
-    ".*sram256x8m8wm1_sram VDD VSS VDD VSS"
+  "PDN_MACRO_CONNECTIONS": [
+      ".*sram256x8m8wm1_sram VDD VSS VDD VSS"
   ],
 
   "//": "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",
