@@ -46,4 +46,16 @@ output	[7:0]	Q;
 inout		VDD;
 inout		VSS;
 
+gf180mcu_fd_ip_sram__sram256x8m8wm1 sram(
+    .CLK(CLK),
+    .CEN(CEN),
+    .GWEN(GWEN),
+    .WEN(WEN),
+    .A(A),
+    .D(D),
+    .Q(Q),
+    .VDD(VDD),
+    .VSS(VSS)
+);
+
 endmodule

@@ -29,7 +29,7 @@ entity sram_macro is
 end entity sram_macro;
 
 architecture rtl of sram_macro is
-    component \gf180mcu_fd_ip_sram__sram256x8m8wm1\ is
+    component gf180mcu_fd_ip_sram_sram256x8m8wm1 is
         port(
             CLK : in std_ulogic;
             CEN : in std_ulogic;
@@ -50,7 +50,7 @@ architecture rtl of sram_macro is
 
 begin
     sram256x8m8wm1 : if CONFIG = "sram256x8m8wm1" generate
-        sram : \gf180mcu_fd_ip_sram__sram256x8m8wm1\
+        sram : gf180mcu_fd_ip_sram_sram256x8m8wm1
             port map(
                 CLK  => CLK,
                 CEN  => CEN,
