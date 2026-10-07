@@ -27,6 +27,21 @@ entity InstructionBank is
 end entity InstructionBank;
 
 architecture bhv of InstructionBank is
+    component sram_macro is
+        generic(
+            CONFIG : string
+        );
+        port(
+            clk  : in std_ulogic;
+            en   : in std_ulogic;
+            wren : in std_ulogic;
+            mask : in std_ulogic_vector(7 downto 0);
+            addr : in unsigned(7 downto 0);
+            din  : in std_ulogic_vector(7 downto 0);
+            dout : out std_ulogic_vector(7 downto 0)
+        );
+    end component sram_macro;
+
     signal en : std_ulogic;
 
     signal wren :  std_ulogic;
@@ -38,7 +53,7 @@ architecture bhv of InstructionBank is
 
 
 begin
-    sram0 : entity work.sram_macro
+    sram0 : sram_macro
         generic map(
             CONFIG => "sram256x8m8wm1"
         )
@@ -52,7 +67,7 @@ begin
             dout => s0_dout
     );
 
-    sram1 : entity work.sram_macro
+    sram1 : sram_macro
         generic map(
             CONFIG => "sram256x8m8wm1"
         )
