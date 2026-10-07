@@ -24,7 +24,7 @@
 
 `timescale 1 ps / 1 ps
 
-module gf180mcu_fd_ip_sram_sram256x8m8wm1 (
+module gf180mcu_fd_ip_sram__sram256x8m8wm1 (
 	CLK,
 	CEN,
 	GWEN,
