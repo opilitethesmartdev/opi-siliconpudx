@@ -1,0 +1,1 @@
+../components/sram/macros/gf180mcu_fd_ip_sram__sram256x8m8wm1.vhdl-compat.v
