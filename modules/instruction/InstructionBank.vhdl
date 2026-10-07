@@ -30,6 +30,7 @@ architecture bhv of InstructionBank is
     signal en : std_ulogic;
 
     signal wren :  std_ulogic;
+    signal s_addr  :  unsigned(7 downto 0);
     signal s0_din  :  std_ulogic_vector(7 downto 0);
     signal s0_dout :  std_ulogic_vector(7 downto 0);
     signal s1_din  :  std_ulogic_vector(7 downto 0);
@@ -46,7 +47,7 @@ begin
             en   => en,
             wren => wren,
             mask => (others => '1'),
-            addr => addr,
+            addr => s_addr,
             din  => s0_din,
             dout => s0_dout
     );
@@ -60,13 +61,14 @@ begin
             en   => en,
             wren => wren,
             mask => (others => '1'),
-            addr => addr,
+            addr => s_addr,
             din  => s1_din,
             dout => s1_dout
     );
 
     en <= xor cmd;
 
+    s_addr <= resize(addr, WORDWIDTH);
     s0_din  <= insi(WORDWIDTH*2-1 downto WORDWIDTH);
     s1_din  <= insi(WORDWIDTH-1 downto 0);
 
