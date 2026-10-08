@@ -34,6 +34,8 @@ end entity asic_harness;
 
 architecture rtl of asic_harness is
     signal phase : std_ulogic; 
+    signal o_nxt :  std_ulogic_vector(1 downto 0);
+    signal o_ff  :  std_ulogic_vector(1 downto 0);
     signal intpl : std_ulogic_vector(WORDWIDTH-1 downto 0);
     signal instaddr : unsigned(INST_DEPTH-1 downto 0);
  
@@ -54,7 +56,7 @@ begin
                 clk       => clk,
                 rst       => rst,
                 en        => en,
-                o         => o,
+                o         => o_nxt,
                 inst_wr   => inst_wr,
                 inst_addr => inst_addr,
                 inst_i    => inst_i,
@@ -72,6 +74,14 @@ begin
                 o   => phase
         );
 
+        o_seq : process(rst, clk)
+        begin
+            if rst = '1' then o_ff <= "00";
+            elsif rising_edge(clk) then o_ff <= o_nxt;
+            end if;
+        end process o_seq;
+
+    o <= o_ff;
     dout <= re_rego(WORDWIDTH - 1 downto 0);
     doe <= '1' when rw = "10" else '0';
 
