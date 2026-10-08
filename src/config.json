@@ -29,7 +29,7 @@
     }
   },
   "PDN_MACRO_CONNECTIONS": [
-    ".*sram256x8m8wm1_sram VDD VSS VPWR VGND"
+    ".*sram256x8m8wm1_sram VPWR VGND VDD VSS"
   ],
   "RUN_KLAYOUT_XOR": 0,
   "RUN_KLAYOUT_DRC": 0,
@@ -52,5 +52,7 @@
   ],
   "MAGIC_EXT_ABSTRACT_CELLS": [
     "^gf180mcu_fd_ip_sram__sram256x8m8wm1$"
-  ]
+  ],
+  "PDN_CONNECT_MACROS_TO_GRID": true,
+  "PDN_ENABLE_GLOBAL_CONNECTIONS": true
 }
