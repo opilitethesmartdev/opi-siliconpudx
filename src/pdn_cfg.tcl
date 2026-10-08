@@ -3,7 +3,7 @@ source $::env(SCRIPTS_DIR)/openroad/common/pdn_cfg.tcl
 
 define_pdn_grid \
     -macro \
-    -instances i_asic_harness.i_toplevel.instbank.sram0.sram256x8m8wm1_sram i_asic_harness.i_toplevel.instbank.sram1.sram256x8m8wm1_sram \
+    -instances {i_asic_harness.i_toplevel.instbank.sram0.sram256x8m8wm1_sram i_asic_harness.i_toplevel.instbank.sram1.sram256x8m8wm1_sram} \
     -name sram_grid \
     -starts_with POWER \
     -grid_over_pg_pins \
