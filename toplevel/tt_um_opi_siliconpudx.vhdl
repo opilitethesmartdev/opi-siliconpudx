@@ -26,6 +26,7 @@ entity tt_um_opi_siliconpudx is
 end entity tt_um_opi_siliconpudx;
 
 architecture rtl of tt_um_opi_siliconpudx is
+    signal en   : std_ulogic;
     signal rst  : std_ulogic;
     signal o    : std_ulogic_vector(1 downto 0);
     signal tick : std_ulogic;
@@ -52,11 +53,21 @@ begin
     uio_oe  <= (others => doe);
     di <= uio_in;
 
+    -- clock ena to prevent setup violation
+    enaff : entity work.sr_ff
+        port map(
+            clk => clk,
+            s   => ena,
+            r   => rst,
+            o   => en
+    );
+    
+
     i_asic_harness : entity work.asic_harness
         port map(
             clk  => clk,
             rst  => rst,
-            en   => ena,
+            en   => en,
             o    => o,
             tick => tick,
             rw   => rw,
