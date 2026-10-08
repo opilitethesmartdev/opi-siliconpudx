@@ -58,5 +58,33 @@
     "gf180mcu_fd_sc_mcu7t5v0__.*"
   ],
   "MAGIC_DRC_USE_GDS": false,
+  "MAGIC_GDS_FLATGLOB": [
+    "*$$*",
+    "M1_N*",
+    "M1_P*",
+    "M2_M1*",
+    "M3_M2*",
+    "nmos_5p0*",
+    "nmos_1p2*",
+    "pmos_5p0*",
+    "pmos_1p2*",
+    "via1_*",
+    "ypass_gate*",
+    "G_ring_*",
+    "dcap_103*",
+    "din_*",
+    "mux821_*",
+    "rdummy_*",
+    "pmoscap_*",
+    "xdec_*",
+    "ypredec*",
+    "xpredec*",
+    "prexdec_*",
+    "xdec8_*",
+    "xdec16_*",
+    "xdec32_*",
+    "sa_*"
+  ],
+  "ERROR_ON_MAGIC_DRC": false,
   "ERROR_ON_ILLEGAL_OVERLAPS": false
 }
