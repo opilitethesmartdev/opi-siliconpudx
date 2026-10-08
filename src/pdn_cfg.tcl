@@ -6,6 +6,7 @@ define_pdn_grid \
     -instances i_asic_harness.i_toplevel.instbank.sram0.sram256x8m8wm1_sram \
     -name sram0_grid \
     -starts_with POWER \
+    -grid_over_pg_pins \
     -halo "$::env(PDN_HORIZONTAL_HALO) $::env(PDN_VERTICAL_HALO)"
 
 add_pdn_connect \
