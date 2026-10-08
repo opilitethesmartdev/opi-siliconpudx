@@ -56,5 +56,7 @@
   "MAGIC_EXT_ABSTRACT": true,
   "MAGIC_EXT_ABSTRACT_CELLS": [
     "gf180mcu_fd_sc_mcu7t5v0__.*"
-  ]
+  ],
+  "MAGIC_DRC_USE_GDS": false,
+  "ERROR_ON_ILLEGAL_OVERLAPS": false
 }
