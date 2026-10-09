@@ -26,55 +26,7 @@ entity tt_um_opi_siliconpudx is
 end entity tt_um_opi_siliconpudx;
 
 architecture rtl of tt_um_opi_siliconpudx is
-    signal en   : std_ulogic;
-    signal rst  : std_ulogic;
-    signal o    : std_ulogic_vector(1 downto 0);
-    signal tick : std_ulogic;
-    signal rw   : std_ulogic_vector(1 downto 0);
-    signal addr : std_ulogic_vector(REGDEPTH - 1 downto 0);
-    signal doe : std_ulogic;
-    signal di  : std_ulogic_vector(WORDWIDTH - 1 downto 0);
-    signal dout : std_ulogic_vector(WORDWIDTH - 1 downto 0);
+
 begin
-    -- Reset polarity conversion (active low rst_n to active high rst)
-    rst <= not rst_n;
-
-    -- Map ui_in to harness control signals
-    tick <= ui_in(0);
-    rw   <= ui_in(2 downto 1);
-    addr <= ui_in(7 downto 3);
-
-    -- Map harness status to uo_out
-    uo_out(1 downto 0) <= o;
-    uo_out(7 downto 2) <= (others => '0');
-
-    -- Map bidirectional IOs (uio) to dio
-    uio_out <= dout;
-    uio_oe  <= (others => doe);
-    di <= uio_in;
-
-    -- clock ena to prevent setup violation
-    enaff : entity work.sr_ff
-        port map(
-            clk => clk,
-            s   => ena,
-            r   => rst,
-            o   => en
-    );
-    
-
-    i_asic_harness : entity work.asic_harness
-        port map(
-            clk  => clk,
-            rst  => rst,
-            en   => en,
-            o    => o,
-            tick => tick,
-            rw   => rw,
-            addr => addr,
-            di   => di,
-            dout => dout,
-            doe  => doe
-    );
 
 end architecture rtl;
