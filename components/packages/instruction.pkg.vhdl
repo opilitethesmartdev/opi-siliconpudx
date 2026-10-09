@@ -11,4 +11,10 @@ use ieee.MATH_REAL.all;
 use work.core_pkg.all;
 
 package instruction_pkg is    
+    constant IPTRW  : natural := 2;  
+    constant ICMDW  : natural := 6;    
+    constant PARAMW : natural := WORDWIDTH; 
+    constant INSTW  : natural := IPTRW + ICMDW + PARAMW;
+
+    constant INSTD : natural := WORDWIDTH;
 end package instruction_pkg;
