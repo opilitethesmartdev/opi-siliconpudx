@@ -13,9 +13,9 @@ use work.register_pkg.all;
 use work.instruction_pkg.all;
 
 entity sram_macro is
-    generic(
-        CONFIG : string := "sram256x8m8wm1"
-    );
+    --generic(
+    --    CONFIG : string := "sram256x8m8wm1"
+    --);
     port(        
         clk : in std_ulogic;
         en  : in std_ulogic;
@@ -50,7 +50,7 @@ architecture rtl of sram_macro is
 
 
 begin
-    sram256x8m8wm1 : if CONFIG = "sram256x8m8wm1" generate
+    --sram256x8m8wm1 : if CONFIG = "sram256x8m8wm1" generate
         sram : gf180mcu_fd_ip_sram_sram256x8m8wm1
             port map(
                 CLK  => CLK,
@@ -61,7 +61,7 @@ begin
                 D    => D,
                 Q    => Q
         );
-    end generate;
+    --end generate;
 
     CEN <= not en;
     GWEN <= not wren;

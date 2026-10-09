@@ -12,9 +12,10 @@ use work.core_pkg.all;
 
 package instruction_pkg is    
     constant IPTRW  : natural := 2;  
-    constant ICMDW  : natural := 6;    
+    constant ICMDW  : natural := 4;    
     constant PARAMW : natural := WORDWIDTH; 
-    constant INSTW  : natural := IPTRW + ICMDW + PARAMW;
+    constant PARAMS : natural := 2;
+    constant INSTW  : natural := IPTRW*PARAMS + ICMDW + PARAMW*PARAMS; --24
 
     constant INSTD : natural := WORDWIDTH;
 end package instruction_pkg;
