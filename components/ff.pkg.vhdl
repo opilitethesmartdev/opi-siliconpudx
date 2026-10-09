@@ -29,6 +29,35 @@
         o <= p; 
     end architecture rtl;
 
+-- Multi-bit D-FlipFlop
+
+    library ieee;
+    use ieee.std_logic_1164.all;
+    entity d_ffn is
+        generic(
+            W : natural := 8
+        );
+        port (
+            clk : in std_ulogic;
+            rst : in std_ulogic;
+
+            i : in std_ulogic_vector(W - 1 downto 0);
+            o : out std_ulogic_vector(W - 1 downto 0)
+        );
+    end entity d_ffn;
+
+    architecture rtl of d_ffn is
+    begin
+        seq : process(clk)
+        begin
+            if rst = '1' then
+                o <= (others => '0');
+            elsif rising_edge(clk) then
+                o <= i;
+            end if;
+        end process seq;
+    end architecture rtl;
+
 -- S-R FlipFlop
     library ieee;
     use ieee.std_logic_1164.all;
