@@ -38,7 +38,7 @@ architecture rtl of InstructionBank is
     signal s2_dout :  std_ulogic_vector(7 downto 0);
 begin
 
-    rden <= '1' when cmd = "10" else '0';
+    rden <= '1' when (xor cmd = '1') else '0';
     wren <= '1' when cmd = "01" else '0';
 
     s2_din <= din(INSTW - 1 downto WORDWIDTH*2);
