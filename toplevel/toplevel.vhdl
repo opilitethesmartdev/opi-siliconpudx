@@ -82,7 +82,7 @@ begin
     );
 
 
-    inst : entity work.InstructionBank
+    instb : entity work.InstructionBank
         port map(
             clk  => clk,
             cmd  => ins_cmd,
@@ -91,7 +91,7 @@ begin
             dout => ins_o
         );
 
-    reg : entity work.RegisterBank
+    regb : entity work.RegisterBank
         port map(
             clk       => clk,
             rst       => rst,
