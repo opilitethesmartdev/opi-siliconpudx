@@ -16,7 +16,7 @@ entity asic_harness is
         -- Fundamental signals
         clk : in std_ulogic;
         rst : in std_ulogic;
-        en : in  std_ulogic;
+        en : in  std_ulogic_vector(1 downto 0);
         o  : out std_ulogic_vector(1 downto 0);
 
         rw : in std_ulogic_vector(1 downto 0);
@@ -29,24 +29,22 @@ entity asic_harness is
 end entity asic_harness;
 
 architecture rtl of asic_harness is
-signal ena        :  std_ulogic_vector(1 downto 0);
+    signal inst_cmd  :  std_ulogic_vector(1 downto 0);
+    signal inst_addr :  unsigned(INSTD-1 downto 0);
+    signal inst_i    :  std_ulogic_vector(INSTW-1 downto 0);
+    signal inst_o    :  std_ulogic_vector(INSTW-1 downto 0);
 
-signal inst_cmd  :  std_ulogic_vector(1 downto 0);
-signal inst_addr :  unsigned(INSTD-1 downto 0);
-signal inst_i    :  std_ulogic_vector(INSTW-1 downto 0);
-signal inst_o    :  std_ulogic_vector(INSTW-1 downto 0);
-
-signal re_cmd    :  std_ulogic_vector(2 downto 0);
-signal re_addr   :  unsigned(REGD-1 downto 0);
-signal re_i      :  std_ulogic_vector(WORDWIDTH-1 downto 0);
-signal re_o      :  std_ulogic_vector(WORDWIDTH-1 downto 0);
+    signal re_cmd    :  std_ulogic_vector(2 downto 0);
+    signal re_addr   :  unsigned(REGD-1 downto 0);
+    signal re_i      :  std_ulogic_vector(WORDWIDTH-1 downto 0);
+    signal re_o      :  std_ulogic_vector(WORDWIDTH-1 downto 0);
 
 begin
     i_toplevel : entity work.toplevel
         port map(
             clk       => clk,
             rst       => rst,
-            en        => ena,
+            en        => en,
             o         => o,
             inst_cmd  => inst_cmd,
             inst_addr => inst_addr,
@@ -57,8 +55,6 @@ begin
             re_i      => re_i,
             re_o      => re_o
     );
-
-    ena <= '0' & en;
 
     re_cmd <= ('0' & rw) when (xor rw) else "000";
     re_addr <= unsigned(addr) when (xor rw) else (others => '0');
