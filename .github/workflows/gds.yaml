@@ -31,18 +31,35 @@ jobs:
           echo "=== top entity ==="
           grep -n "entity tt_um_opi_siliconpudx" src/generated.vhdl
 
+      - name: Test GHDL synthesis
+        run: |
+          echo "=== GHDL version ==="
+          ghdl --version
+
+          echo "=== GHDL synthesis ==="
+          ghdl synth \
+            --std=08 \
+            --out=verilog \
+            src/generated.vhdl \
+            -e tt_um_opi_siliconpudx \
+            > /tmp/siliconpudx.v
+
+          echo "=== generated Verilog ==="
+          wc -l /tmp/siliconpudx.v
+          head -n 30 /tmp/siliconpudx.v
+
       - name: Debug tt-support-tools
         run: |
-          git clone --depth 1             https://github.com/TinyTapeout/tt-support-tools.git             /tmp/tt-support-tools
+          git clone --depth 1 https://github.com/TinyTapeout/tt-support-tools.git /tmp/tt-support-tools
 
           echo "=== commit ==="
           git -C /tmp/tt-support-tools rev-parse HEAD
 
           echo "=== transpile_vhdl ==="
-          grep -n -A60 -B10 "def transpile_vhdl"             /tmp/tt-support-tools/project.py
+          grep -n -A60 -B10 "def transpile_vhdl" /tmp/tt-support-tools/project.py
 
           echo "=== GHDL references ==="
-          grep -R -n "ghdl"             /tmp/tt-support-tools             --include="*.py"
+          grep -R -n "ghdl" /tmp/tt-support-tools --include="*.py"
 
       - name: Install GF180 PDK
         uses: TinyTapeout/ciel-action@v1

@@ -49,7 +49,7 @@ i_asic_harness : entity work.asic_harness
 
 rst <= not rst_n;
 
-uo_out <= o & (others => '0');
+uo_out <= o & "000000";
 rw <= ui_in(7 downto 6);
 addr <= ui_in(5 downto 1);
 en <= ui_in(0) & ena;
