@@ -14,37 +14,40 @@ use work.core_pkg.all;
 use work.register_pkg.all;
 use work.instruction_pkg.all;
 
-entity tb is
-end entity tb;
+entity tb_topl is
+end entity tb_topl;
 
-architecture sim of tb is
+architecture sim of tb_topl is
     signal clk  :  std_ulogic := '0';
     signal en   :  std_ulogic := '0';
     signal rst  :  std_ulogic;
-    signal o         :  std_ulogic_vector(1 downto 0);
+    signal o    :  std_ulogic_vector(1 downto 0);
 
-signal clk       :  std_ulogic;
-signal rst       :  std_ulogic;
-signal enc        :  std_ulogic_vector(1 downto 0);
-signal inst_cmd  :  std_ulogic_vector(1 downto 0);
-signal inst_addr :  unsigned(INSTD-1 downto 0);
-signal inst_i    :  std_ulogic_vector(INSTW-1 downto 0);
-signal inst_o    :  std_ulogic_vector(INSTW-1 downto 0);
-signal re_cmd    :  std_ulogic_vector(1 downto 0);
-signal re_addr   :  unsigned(REGD-1 downto 0);
-signal re_i      :  std_ulogic_vector(WORDWIDTH-1 downto 0);
-signal re_o      :  std_ulogic_vector(WORDWIDTH-1 downto 0);
+    signal enc       :  std_ulogic_vector(1 downto 0);
+    signal inst_cmd  :  std_ulogic_vector(1 downto 0);
+    signal inst_addr :  unsigned(INSTD-1 downto 0);
+    signal inst_i    :  std_ulogic_vector(INSTW-1 downto 0);
+    signal inst_o    :  std_ulogic_vector(INSTW-1 downto 0);
+    signal re_cmd    :  std_ulogic_vector(2 downto 0);
+    signal re_addr   :  unsigned(REGD-1 downto 0);
+    signal re_i      :  std_ulogic_vector(WORDWIDTH-1 downto 0);
+    signal re_o      :  std_ulogic_vector(WORDWIDTH-1 downto 0);
 
+    signal sim_inst_i : inst_rec_t;
 
 begin
     clk <= (not clk) after 5 ns;
     rst <= '1', '0' after 20 ns;
 
+    enc <= '0' & en;
+
+    sim_inst_i <= v2inst(inst_i);
+
     i_toplevel : entity work.toplevel
         port map(
             clk       => clk,
             rst       => rst,
-            en        => en,
+            en        => enc,
             inst_cmd  => inst_cmd,
             inst_addr => inst_addr,
             inst_i    => inst_i,
@@ -59,52 +62,52 @@ begin
     begin
 
         wait for 20 ns;
-                inst_wr <= '1';
-            inst_addr <= to_unsigned(0, INST_DEPTH);
-            inst_i <= "1100" & CISZ & x"0000";-- (3, isz, 0);
+                inst_cmd <= "01";
+            inst_addr <= to_unsigned(0, INSTD);
+            inst_i <= newinst(3, 0, isz, 0, 0);
         wait for 10 ns;
-            inst_addr <= to_unsigned(1, INST_DEPTH);  
-            inst_i <= "0000" & CJMP & x"0300";-- (0, jmp, 3);
+            inst_addr <= to_unsigned(1, INSTD);  
+            inst_i <= newinst(0, 0, jmp, 3, 0);
         wait for 10 ns;
-            inst_addr <= to_unsigned(2, INST_DEPTH);       
-            inst_i <= "0000" & CSTP & x"0000";-- (0, stp, 0);
+            inst_addr <= to_unsigned(2, INSTD);       
+            inst_i <= newinst(0, 0, stp, 0, 0);
         wait for 10 ns;
-            inst_addr <= to_unsigned(3, INST_DEPTH);
-            inst_i <= "1000" & CDEC & x"0000";-- (2, dec, 0);
+            inst_addr <= to_unsigned(3, INSTD);
+            inst_i <= newinst(2, 0, dec, 0, 0);
         wait for 10 ns;
-            inst_addr <= to_unsigned(4, INST_DEPTH);
-            inst_i <= "1000" & CINC & x"0400";-- (2, inc, 4);
+            inst_addr <= to_unsigned(4, INSTD);
+            inst_i <= newinst(2, 0, inc, 4, 0);
         wait for 10 ns;
-            inst_addr <= to_unsigned(5, INST_DEPTH);
-            inst_i <= "0000" & CJMP & x"0000";-- (0, jmp, 0);
+            inst_addr <= to_unsigned(5, INSTD);
+            inst_i <= newinst(0, 0, jmp, 0, 0);
         wait for 10 ns;
-                inst_wr <= '0';
+                inst_cmd <= "00";
         wait for 10 ns;
 
         wait for 10 ns;
                 re_cmd <= "001";
-            re_addr <= to_unsigned(0, REGDEPTH);  
-            re_regi <= (x"01"); --0 ptr
+            re_addr <= to_unsigned(0, REGD);  
+            re_i <= (x"01"); --0 ptr
         wait for 10 ns;
-            re_addr <= to_unsigned(1, REGDEPTH);  
-            re_regi <= (x"02"); --1 ptr
+            re_addr <= to_unsigned(1, REGD);  
+            re_i <= (x"02"); --1 ptr
         wait for 10 ns;
-            re_addr <= to_unsigned(2, REGDEPTH);  
-            re_regi <= (x"08"); --2 lit
+            re_addr <= to_unsigned(2, REGD);  
+            re_i <= (x"08"); --2 lit
         wait for 10 ns;
-            re_addr <= to_unsigned(3, REGDEPTH);  
-            re_regi <= (x"00"); --3 u
+            re_addr <= to_unsigned(3, REGD);  
+            re_i <= (x"00"); --3 u
         wait for 10 ns;
-            re_addr <= to_unsigned(4, REGDEPTH);  
-            re_regi <= (x"06"); --4 ptr
+            re_addr <= to_unsigned(4, REGD);  
+            re_i <= (x"06"); --4 ptr
         wait for 10 ns;
-            re_addr <= to_unsigned(5, REGDEPTH);  
-            re_regi <= (x"00"); --5 lit
+            re_addr <= to_unsigned(5, REGD);  
+            re_i <= (x"00"); --5 lit
         wait for 10 ns;
-            re_addr <= to_unsigned(6, REGDEPTH);  
-            re_regi <= (x"05"); --6 ptr
+            re_addr <= to_unsigned(6, REGD);  
+            re_i <= (x"05"); --6 ptr
         wait for 10 ns;
-                re_cmd <= "00";
+                re_cmd <= "000";
         wait for 10 ns;
 
 

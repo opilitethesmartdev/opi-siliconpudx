@@ -80,7 +80,7 @@ begin
                 else
                     intd <= intd + 1;
                     rden <= '1';
-                    addr <= int;
+                    addr <= int(REGD-1 downto 0);
                 end if;
             end if;
         end if;

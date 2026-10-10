@@ -14,10 +14,10 @@ use work.core_pkg.all;
 use work.register_pkg.all;
 use work.instruction_pkg.all;
 
-entity tb is
-end entity tb;
+entity tb_asic is
+end entity tb_asic;
 
-architecture sim of tb is
+architecture sim of tb_asic is
     signal clk  :  std_ulogic := '0';
     signal en   :  std_ulogic := '0';
     signal rst  :  std_ulogic;
@@ -37,7 +37,7 @@ begin
     i_tt_um_opi_siliconpudx : entity work.tt_um_opi_siliconpudx
         port map(
             clk     => clk,
-            rst_n   => rst_n,
+            rst_n   => rst,
             ena     => en,
             ui_in   => ui_in,
             uo_out  => uo_out,
