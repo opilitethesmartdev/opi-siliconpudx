@@ -49,7 +49,7 @@ architecture rtl of toplevel is
     signal reg_addr : unsigned(REGD-1 downto 0);
     signal reg_i    : std_ulogic_vector(WORDWIDTH-1 downto 0);
     signal reg_o    : std_ulogic_vector(WORDWIDTH-1 downto 0);
-    signal mmio_dirmask : std_ulogic_vector(2**MMIOD-1 downto 0);
+    signal mmio_dirmask : std_ulogic_vector(2**MMIOD-1 downto 0) := (others => '0');
 
     signal pc_cmd :  std_ulogic_vector(1 downto 0);
     signal pc_ovr :  unsigned(INSTD-1 downto 0);

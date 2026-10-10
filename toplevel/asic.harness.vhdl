@@ -63,6 +63,6 @@ begin
 
     inst_cmd <= "01" when (and rw) else "00";
     inst_addr <= resize(unsigned(addr), INSTD) when (and rw) else (others => '0');
-    inst_i <= din when rw = "11" else (others => '0');
+    inst_i <= din & x"0000" when (and rw) else (others => '0');
 
 end architecture rtl;
