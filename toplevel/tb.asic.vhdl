@@ -1,7 +1,7 @@
 ----------------------------------------------------------------------------
 -- Project		:	OPI-siliconPUdx
 -- Authors		:	opilitethesmartdev
--- Description	:	Testbench
+-- Description	:	Toplevel testbench
 ----------------------------------------------------------------------------
 
 -- vhdl_ls off
@@ -23,25 +23,28 @@ architecture sim of tb is
     signal rst  :  std_ulogic;
     signal o         :  std_ulogic_vector(1 downto 0);
 
+signal ui_in   :  std_ulogic_vector(7 downto 0);
+signal uo_out  :  std_ulogic_vector(7 downto 0);
+signal uio_in  :  std_ulogic_vector(7 downto 0);
+signal uio_out :  std_ulogic_vector(7 downto 0);
+signal uio_oe  :  std_ulogic_vector(7 downto 0);
+
+
 begin
     clk <= (not clk) after 5 ns;
-    rst <= '1', '0' after 20 ns;
+    rst <= '0', '1' after 20 ns;
 
-    i_toplevel : entity work.toplevel
+    i_tt_um_opi_siliconpudx : entity work.tt_um_opi_siliconpudx
         port map(
-            clk       => clk,
-            rst       => rst,
-            en        => en,
-            o         => o,
-            inst_wr   => inst_wr,
-            inst_addr => inst_addr,
-            inst_i    => inst_i,
-            re_cmd    => re_cmd,
-            re_addr   => re_addr,
-            re_regi   => re_regi,
-            re_rego   => re_rego
+            clk     => clk,
+            rst_n   => rst_n,
+            ena     => en,
+            ui_in   => ui_in,
+            uo_out  => uo_out,
+            uio_in  => uio_in,
+            uio_out => uio_out,
+            uio_oe  => uio_oe
     );
-
 
     testbench : process
     begin
