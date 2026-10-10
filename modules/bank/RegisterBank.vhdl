@@ -19,7 +19,7 @@ entity RegisterBank is
 
         -- Data interface
         cmd : in std_ulogic_vector(2 downto 0); -- [sel][read][write]
-        addr   : in unsigned(REGD - 1 downto 0);
+        addr : in unsigned(REGD - 1 downto 0);
         din  : in std_ulogic_vector(WORDWIDTH - 1 downto 0);
         dout : out std_ulogic_vector(WORDWIDTH - 1 downto 0);
 
@@ -54,6 +54,7 @@ begin
                         if(iodirmask(to_integer(addr(MMIOD - 1 downto 0))) = '0') then
                             regio(to_integer(addr(MMIOD - 1 downto 0))) <= din;
                         end if;
+                    when others =>
                 end case;
             end if;
         end if;
