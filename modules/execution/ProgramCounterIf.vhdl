@@ -26,21 +26,21 @@ entity ProgramCounterIf is
 end entity ProgramCounterIf;
 
 architecture rtl of ProgramCounterIf is
+    signal pci : unsigned(INSTD - 1 downto 0);
 begin
     seq: process(clk, rst) 
-        variable pci : unsigned(INSTD - 1 downto 0);
     begin
         if rst = '1' then
-            pci := (others => '0');
+            pci <= (others => '0');
             pc <= (others => '0');
         elsif rising_edge(clk) then
             case (cmd) is
                 when "10" =>
-                    pci := pci + 1;
+                    pci <= pci + 1;
                 when "01" =>
-                    pci := pci + 2;
+                    pci <= pci + 2;
                 when "11" =>
-                    pci := ovr;
+                    pci <= ovr;
                 when others =>
             end case;
 

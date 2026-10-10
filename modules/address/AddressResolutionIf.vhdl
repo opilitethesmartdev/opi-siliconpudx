@@ -75,7 +75,7 @@ begin
             param => i_param0,
             rden  => a0_rden,
             addr  => a0_addr,
-            din   => a0_din,
+            din   => din,
             fin   => a0_fin,
             tar   => a0_tar
         );
@@ -89,7 +89,7 @@ begin
             param => i_param1,
             rden  => a1_rden,
             addr  => a1_addr,
-            din   => a1_din,
+            din   => din,
             fin   => a1_fin,
             tar   => a1_tar
         );

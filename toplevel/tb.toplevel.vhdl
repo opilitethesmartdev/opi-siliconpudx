@@ -48,6 +48,7 @@ begin
             clk       => clk,
             rst       => rst,
             en        => enc,
+            o         => o,
             inst_cmd  => inst_cmd,
             inst_addr => inst_addr,
             inst_i    => inst_i,
@@ -127,7 +128,7 @@ begin
         -- Execute
         wait for 10 ns;
         en <= '1';
-        wait on o(0);
+        wait on o(1);
         en <= '0';
         report "Finish";
         wait for 400 ns;
