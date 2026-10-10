@@ -60,7 +60,16 @@ begin
 
     testbench : process
     begin
+        -- Pull defaults
+        re_cmd <= "000";
+        re_addr <= to_unsigned(0, REGD);  
+        re_i <= (x"00");
 
+        inst_cmd <= "00";
+        inst_addr <= to_unsigned(0, INSTD);
+        inst_i <= newinst(0, 0, nop, 0, 0);
+
+        -- Write instructions
         wait for 20 ns;
                 inst_cmd <= "01";
             inst_addr <= to_unsigned(0, INSTD);
@@ -82,8 +91,11 @@ begin
             inst_i <= newinst(0, 0, jmp, 0, 0);
         wait for 10 ns;
                 inst_cmd <= "00";
+                inst_addr <= to_unsigned(0, INSTD);
+                inst_i <= newinst(0, 0, nop, 0, 0);
         wait for 10 ns;
 
+        -- Write registers
         wait for 10 ns;
                 re_cmd <= "001";
             re_addr <= to_unsigned(0, REGD);  
@@ -108,12 +120,14 @@ begin
             re_i <= (x"05"); --6 ptr
         wait for 10 ns;
                 re_cmd <= "000";
+                re_addr <= to_unsigned(0, REGD);  
+                re_i <= (x"00");
         wait for 10 ns;
-
-
-        --wait for 10 ns;
-        --en <= '1';
-        --wait on o(0);
+        
+        -- Execute
+        wait for 10 ns;
+        en <= '1';
+        wait on o(0);
         en <= '0';
         report "Finish";
         wait for 400 ns;
