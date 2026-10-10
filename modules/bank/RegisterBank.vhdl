@@ -23,27 +23,25 @@ entity RegisterBank is
         din  : in std_ulogic_vector(WORDWIDTH - 1 downto 0);
         dout : out std_ulogic_vector(WORDWIDTH - 1 downto 0);
 
-        iodirmask : in  std_ulogic_vector(MMIOD**2 - 1 downto 0) -- read = 0
+        iodirmask : in  std_ulogic_vector(2**MMIOD - 1 downto 0) -- read = 0
     );
 
 end entity RegisterBank;
 
 architecture rtl of RegisterBank is
-    signal regdef   : reg_array_t(REGD - 1 downto 0)  := (others => (others => '0'));
-    signal regiodef : reg_array_t(MMIOD - 1 downto 0) := (others => (others => '0'));
     
-    signal regs  : reg_array_t(REGD - 1 downto 0)  := (others => (others => '0'));
-    signal regio : reg_array_t(MMIOD - 1 downto 0) := (others => (others => '0'));
+    signal regs  : reg_array_t(0 to 2**REGD - 1)  := (others => (others => '0'));
+    signal regio : reg_array_t(0 to 2**MMIOD - 1) := (others => (others => '0'));
 begin
     seq: process(clk)
     begin
         if rising_edge(clk) then
             if rst = '1' then
-                regs <= regdef;
+                regs <= (others => (others => '0'));
 
-                regiodefault : for rg in MMIOD**2 - 1 downto 0 loop
+                regiodefault : for rg in 2**MMIOD - 1 downto 0 loop
                     if(iodirmask(rg) = '1') then
-                        regio(rg) <= regiodef(rg);
+                        regio(rg) <= (others => '0');
                     end if;
                 end loop;
             else
