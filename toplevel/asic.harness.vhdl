@@ -23,7 +23,10 @@ entity asic_harness is
         addr : in std_ulogic_vector(REGD - 1 downto 0);
 
         din  : in std_ulogic_vector(WORDWIDTH - 1 downto 0);
-        dout : out std_ulogic_vector(WORDWIDTH - 1 downto 0)
+        dout : out std_ulogic_vector(WORDWIDTH - 1 downto 0);
+
+        -- Mock output (prevents instruction architecture from being optimized away at synthesis)
+        instruction : out std_ulogic
     );
 
 end entity asic_harness;
@@ -53,7 +56,8 @@ begin
             re_cmd    => re_cmd,
             re_addr   => re_addr,
             re_i      => re_i,
-            re_o      => re_o
+            re_o      => re_o,
+            instruction => instruction
     );
 
     re_cmd <= ('0' & rw) when (xor rw) else "000";

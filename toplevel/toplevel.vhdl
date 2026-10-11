@@ -29,7 +29,10 @@ entity toplevel is
         re_cmd  : in std_ulogic_vector(2 downto 0);
         re_addr : in unsigned(REGD-1 downto 0);
         re_i : in  std_ulogic_vector(WORDWIDTH-1 downto 0);
-        re_o : out std_ulogic_vector(WORDWIDTH-1 downto 0)
+        re_o : out std_ulogic_vector(WORDWIDTH-1 downto 0);
+
+        -- Mock output (prevents instruction architecture from being optimized away at synthesis)
+        instruction : out std_ulogic
     );
 
 end entity toplevel;
@@ -125,5 +128,7 @@ begin
 
     pc_cmd <= en(0) & '0';
     pc_ovr <= (others => '0');
+
+    instruction <= or ins_o;
 
 end architecture rtl;
