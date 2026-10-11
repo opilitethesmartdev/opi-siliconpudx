@@ -40,7 +40,7 @@ architecture rtl of sram_macro is
             Q : out std_ulogic_vector(7 downto 0)
         );
     end component;
-    component gf180mcu_ocd_ip_sram_sram256x8m8wm1 is
+    component gf180mcu_ocd_ip_sram__sram256x8m8wm1 is
         port(
             CLK : in std_ulogic;
             CEN : in std_ulogic;
@@ -74,7 +74,7 @@ begin
         );
     end generate;
     sram256x8m8wm1_3v3 : if CONFIG = "sram256x8m8wm1_3v3" generate
-        sram : gf180mcu_ocd_ip_sram_sram256x8m8wm1
+        sram : gf180mcu_ocd_ip_sram__sram256x8m8wm1
             port map(
                 CLK  => CLK,
                 CEN  => CEN,
