@@ -73,38 +73,25 @@ jobs:
           pdk_version: e8daeda73ca8f5814dbc0b11d1d05802251a3750
           pdk_root: /home/runner/pdk
 
-      - name: Export PDK_ROOT
-        run: echo "PDK_ROOT=/home/runner/pdk" >> "$GITHUB_ENV"
-
       - name: Fetch community SRAM Magic hierarchy
         run: |
           git clone https://github.com/RTimothyEdwards/gf180mcu_ocd_ip_sram.git /tmp/gf180mcu_ocd_ip_sram
           git -C /tmp/gf180mcu_ocd_ip_sram checkout efdbf734d806c2ac3b858d281a5b832625a8e928
 
           MAGIC_SRC=/tmp/gf180mcu_ocd_ip_sram/cells/gf180mcu_ocd_ip_sram__sram256x8m8wm1/magic
+          MAGIC_DST=components/sram/macros/256x8_3v3/magic
           test -f "$MAGIC_SRC/gf180mcu_ocd_ip_sram__sram256x8m8wm1.mag"
 
-          # CIEL may contain multiple PDK versions. LibreLane's pdk_dir can
-          # resolve to a different installed version than the one just selected,
-          # so install the hierarchy into every gf180mcuD variant directory.
-          PDK_VERSIONS="$PDK_ROOT/ciel/gf180mcu/versions"
-          mapfile -t PDK_VARIANT_DIRS < <(find "$PDK_VERSIONS" -type d -path '*/gf180mcuD/libs.ref' -print | sed 's#/libs.ref$##')
-          if [ "${#PDK_VARIANT_DIRS[@]}" -eq 0 ]; then
-            echo "Could not locate any gf180mcuD PDK variant under $PDK_VERSIONS"
-            find "$PDK_ROOT" -maxdepth 7 -type d -name gf180mcuD -print
-            exit 1
-          fi
+          # Keep the complete hierarchy inside the project so LibreLane does not
+          # depend on which CIEL PDK version it resolves at runtime.
+          mkdir -p "$MAGIC_DST"
+          cp "$MAGIC_SRC"/*.mag "$MAGIC_DST/"
+          test -f "$MAGIC_DST/gf180mcu_ocd_ip_sram__sram256x8m8wm1.mag"
 
-          echo "=== community SRAM Magic hierarchy ==="
+          echo "=== project-local SRAM Magic hierarchy ==="
           echo "Source commit: $(git -C /tmp/gf180mcu_ocd_ip_sram rev-parse HEAD)"
-          for PDK_VARIANT_DIR in "${PDK_VARIANT_DIRS[@]}"; do
-            MAGIC_DST="$PDK_VARIANT_DIR/libs.ref/gf180mcu_ocd_ip_sram/mag"
-            mkdir -p "$MAGIC_DST"
-            cp "$MAGIC_SRC"/*.mag "$MAGIC_DST/"
-            test -f "$MAGIC_DST/gf180mcu_ocd_ip_sram__sram256x8m8wm1.mag"
-            echo "PDK variant: $PDK_VARIANT_DIR"
-            echo "Copied $(find "$MAGIC_DST" -maxdepth 1 -type f -name '*.mag' | wc -l) .mag files"
-          done
+          echo "Destination: $MAGIC_DST"
+          echo "Copied $(find "$MAGIC_DST" -maxdepth 1 -type f -name '*.mag' | wc -l) .mag files"
       - name: Build GDS
         uses: TinyTapeout/tt-gds-action@ttgf26c
         with:
