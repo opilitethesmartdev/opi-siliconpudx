@@ -112,6 +112,12 @@ jobs:
           echo "Destination: $LIB_DST"
           echo "Copied $(find "$LIB_DST" -maxdepth 1 -type f -name '*.lib' | wc -l) 3.3V .lib files"
 
+      - name: Install GDS editing dependency
+        run: python3 -m pip install gdstk
+
+      - name: Fix SRAM GDS cell name and PR boundary
+        run: python3 .github/scripts/fix_sram_gds.py
+
       - name: Build GDS
         uses: TinyTapeout/tt-gds-action@ttgf26c
         with:
