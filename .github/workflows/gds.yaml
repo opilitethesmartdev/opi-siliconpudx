@@ -76,6 +76,23 @@ jobs:
       - name: Export PDK_ROOT
         run: echo "PDK_ROOT=/home/runner/pdk" >> "$GITHUB_ENV"
 
+      - name: Fetch community SRAM Magic hierarchy
+        run: |
+          git clone https://github.com/RTimothyEdwards/gf180mcu_ocd_ip_sram.git /tmp/gf180mcu_ocd_ip_sram
+          git -C /tmp/gf180mcu_ocd_ip_sram checkout efdbf734d806c2ac3b858d281a5b832625a8e928
+
+          MAGIC_SRC=/tmp/gf180mcu_ocd_ip_sram/cells/gf180mcu_ocd_ip_sram__sram256x8m8wm1/magic
+          MAGIC_DST="$PDK_ROOT/gf180mcuD/libs.ref/gf180mcu_ocd_ip_sram/mag"
+
+          test -f "$MAGIC_SRC/gf180mcu_ocd_ip_sram__sram256x8m8wm1.mag"
+          mkdir -p "$MAGIC_DST"
+          cp "$MAGIC_SRC"/*.mag "$MAGIC_DST/"
+
+          echo "=== community SRAM Magic hierarchy ==="
+          echo "Source commit: $(git -C /tmp/gf180mcu_ocd_ip_sram rev-parse HEAD)"
+          echo "Copied $(find "$MAGIC_DST" -maxdepth 1 -type f -name '*.mag' | wc -l) .mag files"
+          test -f "$MAGIC_DST/gf180mcu_ocd_ip_sram__sram256x8m8wm1.mag"
+
       - name: Build GDS
         uses: TinyTapeout/tt-gds-action@ttgf26c
         with:
