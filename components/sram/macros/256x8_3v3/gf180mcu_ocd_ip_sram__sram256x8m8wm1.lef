@@ -2,7 +2,7 @@ VERSION 5.7 ;
   NOWIREEXTENSIONATPIN ON ;
   DIVIDERCHAR "/" ;
   BUSBITCHARS "[]" ;
-MACRO gf180mcu_ocd_ip_sram__sram256x8m8wm1
+MACRO gf180mcu_ocd_ip_sram_sram256x8m8wm1
   CLASS BLOCK ;
   FOREIGN gf180mcu_ocd_ip_sram__sram256x8m8wm1 ;
   ORIGIN 0.000 0.000 ;
