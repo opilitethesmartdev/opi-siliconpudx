@@ -150,6 +150,12 @@ jobs:
           python3 -m pip install pyyaml
           python3 .github/scripts/combine_vhdl.py
 
+      - name: Prepare SRAM model for gate-level simulation
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/RTimothyEdwards/gf180mcu_ocd_ip_sram/efdbf734d806c2ac3b858d281a5b832625a8e928/cells/gf180mcu_ocd_ip_sram__sram256x8m8wm1/gf180mcu_ocd_ip_sram__sram256x8m8wm1.v -o test/sram_macro.v
+          sed -i 's/gf180mcu_ocd_ip_sram__sram256x8m8wm1/gf180mcu_ocd_ip_sram_sram256x8m8wm1/g' test/sram_macro.v
+          python3 -c 'from pathlib import Path; p=Path("test/Makefile"); s=p.read_text(); old="VERILOG_SOURCES += $(PWD)/gate_level_netlist.v"; new=old+"\\nVERILOG_SOURCES += $(PWD)/sram_macro.v"; assert old in s; p.write_text(s.replace(old,new,1)) if "$(PWD)/sram_macro.v" not in s else None'
+
       - name: GL test
         uses: TinyTapeout/tt-gds-action/gl_test@ttgf26c
 
