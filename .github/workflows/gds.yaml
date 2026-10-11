@@ -92,6 +92,26 @@ jobs:
           echo "Source commit: $(git -C /tmp/gf180mcu_ocd_ip_sram rev-parse HEAD)"
           echo "Destination: $MAGIC_DST"
           echo "Copied $(find "$MAGIC_DST" -maxdepth 1 -type f -name '*.mag' | wc -l) .mag files"
+      - name: Fetch community SRAM timing libraries
+        run: |
+          LIB_SRC=/tmp/gf180mcu_ocd_ip_sram/cells/gf180mcu_ocd_ip_sram__sram256x8m8wm1
+          LIB_DST=components/sram/macros/256x8_3v3/timing
+          test -f "$LIB_SRC/gf180mcu_ocd_ip_sram__sram256x8m8wm1__tt_025C_3v30.lib"
+
+          mkdir -p "$LIB_DST"
+          cp "$LIB_SRC"/*_3v*.lib "$LIB_DST/"
+
+          # The Liberty cell must match the synthesized wrapper type used by
+          # the LEF and MACROS entry. Keep the source corner names unchanged.
+          for lib in "$LIB_DST"/*.lib; do
+            sed -i 's/gf180mcu_ocd_ip_sram__sram256x8m8wm1/gf180mcu_ocd_ip_sram_sram256x8m8wm1/g' "$lib"
+          done
+
+          echo "=== project-local SRAM timing libraries ==="
+          echo "Source commit: $(git -C /tmp/gf180mcu_ocd_ip_sram rev-parse HEAD)"
+          echo "Destination: $LIB_DST"
+          echo "Copied $(find "$LIB_DST" -maxdepth 1 -type f -name '*.lib' | wc -l) 3.3V .lib files"
+
       - name: Build GDS
         uses: TinyTapeout/tt-gds-action@ttgf26c
         with:
