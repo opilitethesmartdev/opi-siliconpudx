@@ -140,6 +140,16 @@ jobs:
     permissions:
       contents: read
     steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Prepare VHDL sources
+        run: |
+          python3 -m pip install pyyaml
+          python3 .github/scripts/combine_vhdl.py
+
       - name: GL test
         uses: TinyTapeout/tt-gds-action/gl_test@ttgf26c
 
