@@ -8,14 +8,14 @@ project:
   clock_hz:     50000000 # Clock frequency in Hz (or 0 if not applicable):  50 MHz
 
   # How many tiles your design occupies? A single tile is about 340x160 uM.
-  tiles: "4x4"          # Valid values: 1x1, 1x2, 2x2, 3x2, 4x2, 3x4 or 4x4
+  tiles: "4x2"          # Valid values: 1x1, 1x2, 2x2, 3x2, 4x2, 3x4 or 4x4
 
   top_module: "tt_um_opi_siliconpudx"
 
-  source_files: # Note: output from custom VHDL merger script (see .github\scripts)
+  source_files: # Note: output from custom VHDL merger script (see .github\\scripts)
     - "generated.vhdl"
 
-  source_sources: # Note: used by custom VHDL merger script (see .github\scripts)
+  source_sources: # Note: used by custom VHDL merger script (see .github\\scripts)
     - "components/ff.pkg.vhdl"
     - "components/clkdiv.vhdl"
     #- "components/spconverter.vhdl"
