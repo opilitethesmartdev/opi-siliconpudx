@@ -64,7 +64,8 @@
 
     entity sr_ff is
         generic(
-            PRIORITY : string := "reset"
+            PRIORITY : string := "reset";
+            POLARITY : string := "rising"
         );
         port(
             clk : in std_ulogic;
@@ -78,7 +79,7 @@
 
     architecture rtl of sr_ff is
     begin
-        seq_rst : if PRIORITY = "reset" generate
+        seq_p_rst : if PRIORITY = "reset" and POLARITY = "rising" generate
         process(clk)
             begin
                 if rising_edge(clk) then
@@ -91,10 +92,37 @@
             end process;
         end generate;
 
-        seq_set : if PRIORITY = "set" generate
+        seq_p_set : if PRIORITY = "set" and POLARITY = "rising" generate
         process(clk)
             begin
                 if rising_edge(clk) then
+                    if s = '1' then
+                        o <= '1';
+                    elsif r = '1' then
+                        o <= '0';
+                    end if;
+                end if;
+            end process;
+        end generate;
+
+        
+        seq_n_rst : if PRIORITY = "reset" and POLARITY = "falling" generate
+        process(clk)
+            begin
+                if falling_edge(clk) then
+                    if r = '1' then
+                        o <= '0';
+                    elsif s = '1' then
+                        o <= '1';
+                    end if;
+                end if;
+            end process;
+        end generate;
+
+        seq_n_set : if PRIORITY = "set" and POLARITY = "falling" generate
+        process(clk)
+            begin
+                if falling_edge(clk) then
                     if s = '1' then
                         o <= '1';
                     elsif r = '1' then
