@@ -14,117 +14,59 @@ use work.instruction_pkg.all;
 entity asic_harness is
     port(
         -- Fundamental signals
-        clk : in std_ulogic; -- fast clock
+        clk : in std_ulogic;
         rst : in std_ulogic;
-        en : in std_ulogic;
-        o  : out std_ulogic_vector(1 downto 0); -- ([done][error])
+        en : in  std_ulogic_vector(1 downto 0);
+        o  : out std_ulogic_vector(1 downto 0);
 
-        -- Data IO Interface
-        tick : in std_ulogic;
-        rw : in std_ulogic_vector(1 downto 0); -- read / write cmd ([read][write], xor = enable, and = inst_wr)
-        addr : in std_ulogic_vector(REGDEPTH - 1 downto 0);
+        rw : in std_ulogic_vector(1 downto 0);
+        addr : in std_ulogic_vector(REGD - 1 downto 0);
 
-        di : in std_ulogic_vector(WORDWIDTH - 1 downto 0);
+        din  : in std_ulogic_vector(WORDWIDTH - 1 downto 0);
         dout : out std_ulogic_vector(WORDWIDTH - 1 downto 0);
-        doe : out std_ulogic
-        
+
+        -- Mock output (prevents instruction architecture from being optimized away at synthesis)
+        instruction : out std_ulogic
     );
 
 end entity asic_harness;
 
 architecture rtl of asic_harness is
-    signal phase : std_ulogic; 
-    signal intpl : std_ulogic_vector(WORDWIDTH-1 downto 0);
-    signal instaddr : unsigned(INST_DEPTH-1 downto 0);
- 
-    --signal proc_en   : std_ulogic;
-    signal inst_wr   : std_ulogic;
-    signal inst_addr : unsigned(INST_DEPTH-1 downto 0);
-    signal inst_i    : std_ulogic_vector(INST_WIDTH-1 downto 0);
-    signal re_cmd    : std_ulogic_vector(1 downto 0);
-    signal re_addr   : unsigned(REGDEPTH-1 downto 0);
-    signal reg_addr   : unsigned(REGDEPTH-1 downto 0);
-    signal re_regi   : std_ulogic_vector(REGWIDTH-1 downto 0);
-    signal re_rego   : std_ulogic_vector(REGWIDTH-1 downto 0);
+    signal inst_cmd  :  std_ulogic_vector(1 downto 0);
+    signal inst_addr :  unsigned(INSTD-1 downto 0);
+    signal inst_i    :  std_ulogic_vector(INSTW-1 downto 0);
+    signal inst_o    :  std_ulogic_vector(INSTW-1 downto 0);
+
+    signal re_cmd    :  std_ulogic_vector(2 downto 0);
+    signal re_addr   :  unsigned(REGD-1 downto 0);
+    signal re_i      :  std_ulogic_vector(WORDWIDTH-1 downto 0);
+    signal re_o      :  std_ulogic_vector(WORDWIDTH-1 downto 0);
 
 begin
-    -- Modules
-        i_toplevel : entity work.toplevel
-            port map(
-                clk       => clk,
-                rst       => rst,
-                en        => en,
-                o         => o,
-                inst_wr   => inst_wr,
-                inst_addr => inst_addr,
-                inst_i    => inst_i,
-                re_cmd    => re_cmd,
-                re_addr   => re_addr,
-                re_regi   => re_regi,
-                re_rego   => re_rego
-        );
+    i_toplevel : entity work.toplevel
+        port map(
+            clk       => clk,
+            rst       => rst,
+            en        => en,
+            o         => o,
+            inst_cmd  => inst_cmd,
+            inst_addr => inst_addr,
+            inst_i    => inst_i,
+            inst_o    => inst_o,
+            re_cmd    => re_cmd,
+            re_addr   => re_addr,
+            re_i      => re_i,
+            re_o      => re_o,
+            instruction => instruction
+    );
 
-    -- Logic
-        tickff : entity work.t_ff
-            port map(
-                clk => clk,
-                i   => tick,
-                o   => phase
-        );
+    re_cmd <= ('0' & rw) when (xor rw) else "000";
+    re_addr <= unsigned(addr) when (xor rw) else (others => '0');
+    re_i <= din when rw = "10" else (others => '0');
+    dout <= re_o when rw = "01" else (others => '0');
 
-    dout <= re_rego(WORDWIDTH - 1 downto 0);
-    doe <= '1' when rw = "10" else '0';
+    inst_cmd <= "01" when (and rw) else "00";
+    inst_addr <= resize(unsigned(addr), INSTD) when (and rw) else (others => '0');
+    inst_i <= din & x"0000" when (and rw) else (others => '0');
 
-    re_addr <= unsigned(addr) when rw = "10" else reg_addr;
-
-    seq : process (clk, rst)
-    begin
-        if rst = '1' then
-            intpl <= (others => '0');
-            
-            re_cmd <= "00";
-            reg_addr <= (others => '0');
-            re_regi <= (others => '0');
-            
-            inst_wr <= '0';
-            instaddr <= (others => '0');
-            inst_addr <= (others => '0');
-            inst_i <= (others => '0');
-        elsif rising_edge(clk) then
-            intpl <= (others => '0');
-            
-            re_cmd <= "00";
-            reg_addr <= (others => '0');
-            re_regi <= (others => '0');
-            
-            inst_wr <= '0';
-            inst_addr <= (others => '0');
-            inst_i <= (others => '0');
-
-            case(rw) is
-                when "01" =>
-                    if tick = '1' then
-                        intpl <= di;
-                    else 
-                        intpl <= (others => '0');
-
-                        re_cmd <= "10";
-                        reg_addr <= unsigned(addr);
-                        re_regi <= intpl(CFGWIDTH - 1 downto 0) & di;
-                    end if;
-                when "11" =>
-                    if tick = '1' then
-                        intpl <= di;
-                    else 
-                        intpl <= (others => '0');
-
-                        inst_wr <= '1';
-                        instaddr <= instaddr + 1;
-                        inst_addr <= instaddr;
-                        inst_i <= intpl & di;
-                    end if;
-                when others =>
-            end case;
-        end if;
-    end process seq;
 end architecture rtl;

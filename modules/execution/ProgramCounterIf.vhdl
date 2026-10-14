@@ -1,53 +1,50 @@
 ----------------------------------------------------------------------------
 -- Project		:	OPI-siliconPUdx
 -- Authors		:	opilitethesmartdev
--- Description	:	Program counter interface
+-- Description	:	Program Counter interface
 ----------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+use work.core_pkg.all;
+use work.register_pkg.all;
 use work.instruction_pkg.all;
 
 entity ProgramCounterIf is
     port(
         -- Fundamental signals
-        clk : in std_ulogic;
+        clk : in std_ulogic; -- fast clock
         rst : in std_ulogic;
-        en : in std_ulogic;
 
         -- Control signals
-        ctrl : in std_ulogic_vector(1 downto 0); -- [en][ovr], and ctrl => skip
-        ovr : in unsigned(INST_DEPTH - 1 downto 0);
-
-        -- Output
-        pc : out unsigned(INST_DEPTH - 1 downto 0)
+        cmd : in std_ulogic_vector(1 downto 0); --[nxt][skip], and = ovr
+        ovr : in unsigned(INSTD - 1 downto 0);
+        pc : out unsigned(INSTD - 1 downto 0)
     );
+
 end entity ProgramCounterIf;
 
-architecture v0 of ProgramCounterIf is
-    signal pcint : unsigned(INST_DEPTH - 1 downto 0) := (others => '0');
+architecture rtl of ProgramCounterIf is
+    signal pci : unsigned(INSTD - 1 downto 0);
 begin
-    seq : process(rst, en, clk)
+    seq: process(clk, rst) 
     begin
         if rst = '1' then
-            pcint <= (others => '0');
+            pci <= (others => '0');
+            pc <= (others => '0');
         elsif rising_edge(clk) then
-                
-            if en = '1' then
-                case (ctrl) is
-                    when "01" =>
-                        pcint <= ovr;
-                    when "10" =>
-                        pcint <= pcint + 1;
-                    when "11" =>
-                        pcint <= pcint + 2;
-                    when others =>
-                end case;
-            end if;
+            case (cmd) is
+                when "10" =>
+                    pci <= pci + 1;
+                when "01" =>
+                    pci <= pci + 2;
+                when "11" =>
+                    pci <= ovr;
+                when others =>
+            end case;
+
+            pc <= pci;
         end if;
-    end process seq;   
-
-    pc <= pcint;  
-
-end architecture v0;
+    end process seq;
+end architecture rtl;

@@ -3,38 +3,35 @@
 
 import cocotb
 from cocotb.clock import Clock
-from cocotb.triggers import ClockCycles
+from cocotb.triggers import ClockCycles, Timer
 
 
 @cocotb.test()
-async def test_project(dut):
-    dut._log.info("Start")
+async def test_interface(dut):
+    """Smoke-test reset and the bidirectional-pin direction control."""
 
-    # Set the clock period to 10 us (100 KHz)
-    clock = Clock(dut.clk, 10, unit="us")
+    clock = Clock(dut.clk, 20, unit="ns")
     cocotb.start_soon(clock.start())
 
-    # Reset
-    dut._log.info("Reset")
     dut.ena.value = 1
     dut.ui_in.value = 0
     dut.uio_in.value = 0
     dut.rst_n.value = 0
-    await ClockCycles(dut.clk, 10)
+    await ClockCycles(dut.clk, 2)
     dut.rst_n.value = 1
+    await ClockCycles(dut.clk, 2)
 
-    dut._log.info("Test project behavior")
-
-    # Set the input values you want to test
-    dut.ui_in.value = 20
-    dut.uio_in.value = 30
-
-    # Wait for one clock cycle to see the output values
-    await ClockCycles(dut.clk, 1)
-
-    # The following assersion is just an example of how to check the output values.
-    # Change it to match the actual expected output of your module:
-    assert dut.uo_out.value == 50
-
-    # Keep testing the module by changing the input values, waiting for
-    # one or more clock cycles, and asserting the expected output values.
+    # ui_in[7:6] selects rw. The wrapper enables the bidirectional pins
+    # for modes 01 and 11, and disables them for modes 00 and 10.
+    for mode, expected_oe in (
+        (0b00, 0x00),
+        (0b01, 0xFF),
+        (0b10, 0x00),
+        (0b11, 0xFF),
+    ):
+        dut.ui_in.value = mode << 6
+        await Timer(1, unit="ns")
+        assert int(dut.uio_oe.value) == expected_oe, (
+            f"rw mode {mode:02b}: expected uio_oe=0x{expected_oe:02x}, "
+            f"got 0x{int(dut.uio_oe.value):02x}"
+        )

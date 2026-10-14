@@ -1,11 +1,14 @@
 [libraries]
 
 lib.files = [
-"toplevel/*.vhdl",
-"components/*.vhdl",
-"components/**/*.vhdl",
-"modules/*.vhdl",
-"modules/**/*.vhdl",
+  "toplevel/*.vhdl",
+  "components/*.vhdl",
+  "components/**/*.vhdl",
+  "modules/*.vhdl",
+  "modules/**/*.vhdl",
+]
+
+lib.exculde = [
 ]
 
 STANDARD.files = [

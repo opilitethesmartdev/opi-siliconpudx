@@ -26,44 +26,40 @@ entity tt_um_opi_siliconpudx is
 end entity tt_um_opi_siliconpudx;
 
 architecture rtl of tt_um_opi_siliconpudx is
-    signal rst  : std_ulogic;
-    signal o    : std_ulogic_vector(1 downto 0);
-    signal tick : std_ulogic;
-    signal rw   : std_ulogic_vector(1 downto 0);
-    signal addr : std_ulogic_vector(REGDEPTH - 1 downto 0);
-    signal doe : std_ulogic;
-    signal di  : std_ulogic_vector(WORDWIDTH - 1 downto 0);
-    signal dout : std_ulogic_vector(WORDWIDTH - 1 downto 0);
+signal instruction  :  std_ulogic;
+
+signal rst  :  std_ulogic;
+signal o    :  std_ulogic_vector(1 downto 0);
+signal en   :  std_ulogic_vector(1 downto 0);
+signal rw   :  std_ulogic_vector(1 downto 0);
+signal addr :  std_ulogic_vector(REGD-1 downto 0);
+signal din  :  std_ulogic_vector(WORDWIDTH-1 downto 0);
+signal dout :  std_ulogic_vector(WORDWIDTH-1 downto 0);
+
 begin
-    -- Reset polarity conversion (active low rst_n to active high rst)
-    rst <= not rst_n;
+i_asic_harness : entity work.asic_harness
+    port map(
+        clk  => clk,
+        rst  => rst,
+        en   => en,
+        o    => o,
+        rw   => rw,
+        addr => addr,
+        din  => din,
+        dout => dout,
+        instruction => instruction
+);
 
-    -- Map ui_in to harness control signals
-    tick <= ui_in(0);
-    rw   <= ui_in(2 downto 1);
-    addr <= ui_in(7 downto 3);
+rst <= not rst_n;
 
-    -- Map harness status to uo_out
-    uo_out(1 downto 0) <= o;
-    uo_out(7 downto 2) <= (others => '0');
+uo_out <= o & instruction & "00000";
+rw <= ui_in(7 downto 6);
+addr <= ui_in(5 downto 1);
+en <= ui_in(0) & ena;
 
-    -- Map bidirectional IOs (uio) to dio
-    uio_out <= dout;
-    uio_oe  <= (others => doe);
-    di <= uio_in;
+din <= uio_in when (rw = "00") else (others => '0');
+uio_out <= dout when (rw = "01" or rw = "11") else (others => '0');
 
-    i_asic_harness : entity work.asic_harness
-        port map(
-            clk  => clk,
-            rst  => rst,
-            en   => ena,
-            o    => o,
-            tick => tick,
-            rw   => rw,
-            addr => addr,
-            di   => di,
-            dout => dout,
-            doe  => doe
-    );
+uio_oe <= (others =>'1') when (rw = "01" or rw = "11") else (others => '0');
 
 end architecture rtl;
