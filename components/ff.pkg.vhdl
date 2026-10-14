@@ -271,21 +271,28 @@
         type arr is array (0 to DELAY) of std_ulogic_vector(WIDTH - 1 downto 0);
         signal shift : arr := (others => (others => '0'));
     begin
-        seq : process (clk, rst)
-        begin
-            if rst = '1' then
-                shift <= (others => (others => '0'));
-            elsif rising_edge(clk) then
-                shift(0) <= i;
-                if DELAY > 1 then
-                    shift(1 to DELAY-1) <= shift(0 to DELAY-2);
-                elsif DELAY = 1 then
-                    shift(1) <= shift(0);
-                end if;
-            end if;
-        end process seq;
 
-        o <= shift(DELAY);
+        seq : if DELAY > 0 generate
+            process (clk, rst) begin
+                if rst = '1' then
+                    shift <= (others => (others => '0'));
+                elsif rising_edge(clk) then
+                    shift(0) <= i;
+                    for k in 1 to DELAY loop
+                        shift(k) <= shift(k - 1);
+                    end loop;
+                end if;
+            end process;
+
+            o <= shift(DELAY);
+        end generate seq;
+
+        comb : if DELAY = 0 generate
+            process (i) begin
+                o <= i;
+            end process;
+        end generate;
+
     end architecture bhv;
 
 -- Shift n-cycle 1-bit signal delayer
