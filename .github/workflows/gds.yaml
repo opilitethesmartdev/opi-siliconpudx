@@ -123,7 +123,7 @@ jobs:
         with:
           pdk: gf180mcuD
           tools-repo: opilitethesmartdev/tt-support-tools-gds-vhdl-patch
-          tools-ref: fix/vhdl-top-selection
+          tools-ref: fix/skip-postcts-odb-0445
 
   precheck:
     needs: gds
