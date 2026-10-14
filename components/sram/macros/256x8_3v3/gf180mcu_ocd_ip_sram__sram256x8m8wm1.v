@@ -153,9 +153,9 @@ reg cen_flag_dly;
 always @(cen_flag) cen_flag_dly = #100 cen_flag;
 
 specify
-  specparam Tcyc = 55600 : 55600 : 55600;
-  specparam Tckh = 25000 : 25000 : 25000;
-  specparam Tckl = 25000 : 25000 : 25000;
+  specparam Tcyc = 10000 : 10000 : 10000;
+  specparam Tckh = 5000 : 5000 : 5000;
+  specparam Tckl = 5000 : 5000 : 5000;
 
   specparam tcs  = 5000 : 5000 : 5000;
   specparam tas  = 5000 : 5000 : 5000;
@@ -169,7 +169,7 @@ specify
   specparam twh  = 10000 : 10000 : 10000;
   specparam twih = 10000 : 10000 : 10000;
 
-  specparam ta   = 45000 : 45000 : 45000;
+  specparam ta   = 6500 : 6500 : 6500;
 
   specparam Tdly  = 100 : 100: 100;
 
