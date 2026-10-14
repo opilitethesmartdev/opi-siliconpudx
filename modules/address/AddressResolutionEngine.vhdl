@@ -36,9 +36,9 @@ entity AddressResolutionEngine is
 end entity AddressResolutionEngine;
 
 architecture rtl of AddressResolutionEngine is 
-    signal int : unsigned(WORDWIDTH - 1 downto 0);
+    signal tarint : unsigned(WORDWIDTH - 1 downto 0);
     signal intd : unsigned(IPTRW - 1 downto 0);
-    signal d, finrst : std_ulogic;
+    signal d : std_ulogic;
 begin  
     fin <= d;
     --finff : entity work.sr_ff
@@ -60,14 +60,14 @@ begin
         elsif rising_edge(clk) then
             rden <= '0';
             if en = '1' and d = '0' then
-                tar <= std_ulogic_vector(int);
+                tar <= std_ulogic_vector(tarint);
 
                 if intd = depth then
                     d <= '1';
                 else
                     intd <= intd + 1;
                     rden <= '1';
-                    addr <= int(REGD-1 downto 0);
+                    addr <= tarint(REGD-1 downto 0);
                 end if;
             end if;
         end if;
@@ -76,13 +76,13 @@ begin
     seq_n : process(clk, rst)
     begin
         if rst = '1' then
-            int <= (others => '0');
+            tarint <= (others => '0');
         elsif falling_edge(clk) then
             if en = '1' then
                 if intd = 0 then
-                    int <= unsigned(param);
+                    tarint <= unsigned(param);
                 else
-                    int <= unsigned(din);
+                    tarint <= unsigned(din);
                 end if;
             end if;
         end if;
