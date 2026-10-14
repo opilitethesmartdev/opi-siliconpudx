@@ -38,6 +38,9 @@ architecture rtl of AddressResolutionIf is
 
     signal i :  inst_rec_t;
 
+    signal a0_res   :  std_ulogic_vector(WORDWIDTH-1 downto 0);
+    signal a1_res   :  std_ulogic_vector(WORDWIDTH-1 downto 0);
+
     signal a0_en    :  std_ulogic;
     signal a0_rden  :  std_ulogic;
     signal a0_addr  :  unsigned(REGD-1 downto 0);
@@ -108,5 +111,8 @@ begin
         rden <= a0_rden when clk = '1' else a1_rden;
         addr <= a0_addr when clk = '1' else a1_addr;
 
-        res <= inst2v((depth0 => i.depth0, depth1 => i.depth1, cmd => i.cmd, param0 => a0_tar, param1 => a1_tar));
+        a0_res <= a0_tar when (a0_en or a0_fin) = '1' else i.param0;
+        a1_res <= a1_tar when (a1_en or a1_fin) = '1' else i.param1;
+
+        res <= inst2v((depth0 => i.depth0, depth1 => i.depth1, cmd => i.cmd, param0 => a0_res, param1 => a1_res));
 end architecture rtl;

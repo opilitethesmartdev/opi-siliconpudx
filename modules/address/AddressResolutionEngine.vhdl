@@ -84,6 +84,8 @@ begin
                 else
                     tarint <= unsigned(din);
                 end if;
+            else
+                tarint <= unsigned(param);
             end if;
         end if;
     end process seq_n;
