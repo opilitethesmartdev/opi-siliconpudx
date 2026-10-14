@@ -39,7 +39,7 @@ end entity toplevel;
 
 architecture rtl of toplevel is
     signal inten : std_ulogic_vector(1 downto 0);
-    --signal fin : std_logic;
+    signal advpff, endt, endtff : std_logic;
     signal sclk :  clk_rec_t;
 
     signal ins_cmd  : std_ulogic_vector(1 downto 0);
@@ -64,6 +64,15 @@ architecture rtl of toplevel is
     signal arif_reg_in  :  std_ulogic_vector(WORDWIDTH-1 downto 0);
     signal inst_res  :  std_ulogic_vector(INSTW-1 downto 0);
     signal sim_ins_res : inst_rec_t;
+
+    signal exu_en    :  std_ulogic;
+    signal exu_rst   :  std_ulogic;
+    signal exu_fin   :  std_ulogic;
+    signal exu_rcmd  :  std_ulogic_vector(2 downto 0);
+    signal exu_addr  :  unsigned(REGD-1 downto 0);
+    signal exu_dout  :  std_ulogic_vector(WORDWIDTH-1 downto 0);
+    signal exu_din   :  std_ulogic_vector(WORDWIDTH-1 downto 0);
+
     
 
 begin
@@ -71,8 +80,13 @@ begin
         if rst = '1' then 
             inten <= "00";
             o <= "00";
+            advpff <= '0';
+            endt <= '0';
         elsif rising_edge(clk) then 
             inten <= en;
+            advpff <= sclk.advp;
+            endtff <= endt;
+            endt <= '1' when inten(0) = '0' and en(0) = '1' else '0';
             o <=     "10" when sclk.en = '1' and inst2cmd(ins_o) = stp 
                 else "11" when sclk.en = '1' and inst2cmd(ins_o) = nop
                 else "00";
@@ -114,7 +128,7 @@ begin
 
     pcif : entity work.ProgramCounterIf
         port map(
-            clk => sclk.advp,
+            clk => clk,
             rst => rst,
             cmd => pc_cmd,
             ovr => pc_ovr,
@@ -133,26 +147,52 @@ begin
             res  => inst_res
     );
 
+    exu : entity work.ExecutionUnit
+        port map(
+            clk    => clk,
+            rst    => exu_rst,
+            en     => exu_en,
+            fin    => exu_fin,
+            rcmd   => exu_rcmd,
+            addr   => exu_addr,
+            dout   => exu_dout,
+            din    => exu_din,
+            inst   => inst_res,
+            pc_cmd => pc_cmd,
+            pc_ovr => pc_ovr
+    );
     
 
-    ins_cmd  <= inst_cmd when en(0) = '0' else en(0) & '0';
-    ins_addr <= inst_addr when en(0) = '0' else pc when inten(0) = '1' else(others => '0');
+    --ins_cmd  <= inst_cmd when en(0) = '0' else (exu_fin or  endt or endtff) & '0';
+    ins_cmd  <= inst_cmd when en(0) = '0' else (sclk.advp or advpff ) & '0';
+    ins_addr <=      inst_addr when en(0) = '0' 
+                else pc        when inten(0) = '1' 
+                else (others => '0');
     ins_i    <= inst_i when en(0) = '0' else (others => '0');
 
         inst_o <= ins_o when en(0) = '0' else (others => '0');
         sim_ins_o <= v2inst(ins_o) when en(0) = '1' else v2inst((others => '0'));
 
-    reg_cmd  <= re_cmd when en(0) = '0' else ('0' & arif_reg_rden & '0') when sclk.o = '1' else (others => '0');
-    reg_addr <= re_addr when en(0) = '0' else (arif_reg_addr) when sclk.o = '1' else (others => '0');
-    reg_i    <= re_i when en(0) = '0' else (others => '0');
-
+    reg_cmd  <=      re_cmd                      when en(0) = '0' 
+                else ('0' & arif_reg_rden & '0') when sclk.o = '1' 
+                else exu_rcmd                    when sclk.o = '0' 
+                else (others => '0');
+    reg_addr <=      re_addr         when en(0) = '0' 
+                else (arif_reg_addr) when sclk.o = '1' 
+                else exu_addr        when sclk.o = '0' 
+                else (others => '0');
+    reg_i    <=      re_i when en(0) = '0' 
+                else exu_dout when sclk.o = '0' 
+                else (others => '0');
         re_o <= reg_o when en(0) = '0' else (others => '0');
-        arif_reg_in <= reg_o when en(0) = '1' and sclk.o = '1' else (others => '0');
-        
-    pc_ovr <= (others => '0');
+        arif_reg_in <= reg_o when (en(0) = '1' and sclk.o = '1') else (others => '0');
+        exu_din <= reg_o when (en(0) = '1' and sclk.o = '0') else (others => '0');
 
     arif_en <= sclk.advp or sclk.o;
     sim_ins_res <= v2inst(inst_res);
+
+    exu_en <= not sclk.o;
+    exu_rst <= rst or sclk.advn;
 
     instruction <= or ins_o;
 
