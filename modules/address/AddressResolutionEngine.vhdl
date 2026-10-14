@@ -36,47 +36,34 @@ entity AddressResolutionEngine is
 end entity AddressResolutionEngine;
 
 architecture rtl of AddressResolutionEngine is 
+    signal int : unsigned(WORDWIDTH - 1 downto 0);
     signal intd : unsigned(IPTRW - 1 downto 0);
-    signal inten : std_ulogic;
-    signal d, done : std_ulogic;
-    signal finrst : std_ulogic;
-begin   
-    enff : entity work.sr_ff
-        port map(
-            clk => clk,
-            s   => en,
-            r   => d,
-            o   => inten
-    ); d <= done or rst;
-
-    finff : entity work.sr_ff
-        port map(
-            clk => clk,
-            s   => d,
-            r   => finrst,
-            o   => fin
-    ); finrst <= inten or rst;
+    signal d, finrst : std_ulogic;
+begin  
+    fin <= d;
+    --finff : entity work.sr_ff
+    --    port map(
+    --        clk => clk,
+    --        s   => d,
+    --        r   => finrst,
+    --        o   => fin
+    --); finrst <= en or rst;
 
     seq : process (clk, rst)
-        variable int : unsigned(WORDWIDTH - 1 downto 0) := (others => '0');
     begin
         if rst = '1' then
-            int := (others => '0');
             intd <= (others => '0');
             tar <= (others => '0');
-            done <= '0';
+            addr <= (others => '0');
+            rden <= '0';
+            d <= '0';
         elsif rising_edge(clk) then
-            done <= '0';
-            if inten = '1' then
-                if intd = 0 then
-                    int := unsigned(param);
-                else
-                    int := unsigned(din);
-                end if;
+            rden <= '0';
+            if en = '1' and d = '0' then
+                tar <= std_ulogic_vector(int);
 
                 if intd = depth then
-                    tar <= std_ulogic_vector(int);
-                    done <= '1';
+                    d <= '1';
                 else
                     intd <= intd + 1;
                     rden <= '1';
@@ -85,4 +72,19 @@ begin
             end if;
         end if;
     end process seq;
+
+    seq_n : process(clk, rst)
+    begin
+        if rst = '1' then
+            int <= (others => '0');
+        elsif falling_edge(clk) then
+            if en = '1' then
+                if intd = 0 then
+                    int <= unsigned(param);
+                else
+                    int <= unsigned(din);
+                end if;
+            end if;
+        end if;
+    end process seq_n;
 end architecture rtl;

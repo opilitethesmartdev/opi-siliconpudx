@@ -34,6 +34,7 @@ end entity AddressResolutionIf;
 
 architecture rtl of AddressResolutionIf is
     signal clk_n : std_ulogic;
+    signal intrst, dten : std_ulogic;
 
     signal i :  inst_rec_t;
 
@@ -53,7 +54,7 @@ begin
     are0 : entity work.AddressResolutionEngine
         port map(
             clk   => clk,
-            rst   => rst,
+            rst   => intrst,
             en    => a0_en,
             depth => unsigned(i.depth0),
             param => i.param0,
@@ -67,16 +68,25 @@ begin
     are1 : entity work.AddressResolutionEngine
         port map(
             clk   => clk_n,
-            rst   => rst,
+            rst   => intrst,
             en    => a1_en,
             depth => unsigned(i.depth1),
-            param => i.param0,
+            param => i.param1,
             rden  => a1_rden,
             addr  => a1_addr,
             din   => din,
             fin   => a1_fin,
             tar   => a1_tar
         );
+
+    enedge : entity work.edgend
+        generic map( polarity => "rising" )
+        port map(
+            clk => clk,
+            i   => en,
+            o   => dten
+    );
+    
 
     enp: process(rst, clk)
     begin
@@ -89,9 +99,9 @@ begin
         end if;
     end process enp;
 
-
     -- Combinatorial logic
         clk_n <= not clk;
+        intrst <= rst or dten;
 
         i <= v2inst(inst);
         

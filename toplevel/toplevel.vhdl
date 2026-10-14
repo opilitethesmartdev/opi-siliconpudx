@@ -58,6 +58,13 @@ architecture rtl of toplevel is
     signal pc_ovr :  unsigned(INSTD-1 downto 0);
     signal pc  :  unsigned(INSTD-1 downto 0);
     
+    signal arif_en :  std_ulogic;
+    signal arif_reg_rden :  std_ulogic;
+    signal arif_reg_addr :  unsigned(REGD-1 downto 0);
+    signal arif_reg_in  :  std_ulogic_vector(WORDWIDTH-1 downto 0);
+    signal inst_res  :  std_ulogic_vector(INSTW-1 downto 0);
+    signal sim_ins_res : inst_rec_t;
+    
 
 begin
     enff : process(rst, clk) begin
@@ -113,21 +120,39 @@ begin
             ovr => pc_ovr,
             pc  => pc
     );
+
+    arif : entity work.AddressResolutionIf
+        port map(
+            clk  => clk,
+            rst  => rst,
+            en   => arif_en,
+            rden => arif_reg_rden,
+            addr => arif_reg_addr,
+            din  => arif_reg_in,
+            inst => ins_o,
+            res  => inst_res
+    );
+
     
 
     ins_cmd  <= inst_cmd when en(0) = '0' else en(0) & '0';
     ins_addr <= inst_addr when en(0) = '0' else pc when inten(0) = '1' else(others => '0');
     ins_i    <= inst_i when en(0) = '0' else (others => '0');
+
         inst_o <= ins_o when en(0) = '0' else (others => '0');
         sim_ins_o <= v2inst(ins_o) when en(0) = '1' else v2inst((others => '0'));
 
-    reg_cmd  <= re_cmd when en(0) = '0' else (others => '0');
-    reg_addr <= re_addr when en(0) = '0' else (others => '0');
+    reg_cmd  <= re_cmd when en(0) = '0' else ('0' & arif_reg_rden & '0') when sclk.o = '1' else (others => '0');
+    reg_addr <= re_addr when en(0) = '0' else (arif_reg_addr) when sclk.o = '1' else (others => '0');
     reg_i    <= re_i when en(0) = '0' else (others => '0');
-        re_o <= reg_o when en(0) = '0' else (others => '0');
 
-    pc_cmd <= en(0) & '0';
+        re_o <= reg_o when en(0) = '0' else (others => '0');
+        arif_reg_in <= reg_o when en(0) = '1' and sclk.o = '1' else (others => '0');
+        
     pc_ovr <= (others => '0');
+
+    arif_en <= sclk.advp or sclk.o;
+    sim_ins_res <= v2inst(inst_res);
 
     instruction <= or ins_o;
 

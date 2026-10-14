@@ -70,11 +70,19 @@ begin
         inst_addr <= to_unsigned(0, INSTD);
         inst_i <= newinst(0, 0, nop, 0, 0);
 
+        -- Program:
+        -- isz **0 **0
+        -- jmp   3   0
+        -- stp 
+        -- dec **0   0
+        -- inc **4   0
+        -- jmp   0   0
+
         -- Write instructions
         wait for 20 ns;
                 inst_cmd <= "01";
             inst_addr <= to_unsigned(0, INSTD);
-            inst_i <= newinst(3, 0, isz, 0, 0);
+            inst_i <= newinst(2, 2, isz, 0, 0);
         wait for 10 ns;
             inst_addr <= to_unsigned(1, INSTD);  
             inst_i <= newinst(0, 0, jmp, 3, 0);
