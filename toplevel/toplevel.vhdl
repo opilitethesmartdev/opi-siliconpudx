@@ -68,9 +68,9 @@ architecture rtl of toplevel is
     signal exu_en    :  std_ulogic;
     signal exu_rst   :  std_ulogic;
     signal exu_fin   :  std_ulogic;
-    signal exu_rcmd  :  std_ulogic_vector(2 downto 0);
-    signal exu_addr  :  unsigned(REGD-1 downto 0);
-    signal exu_dout  :  std_ulogic_vector(WORDWIDTH-1 downto 0);
+    signal exu_rcmd_s  :  std_ulogic_vector(2 downto 0);
+    signal exu_addr_s  :  unsigned(REGD-1 downto 0);
+    signal exu_dout_s  :  std_ulogic_vector(WORDWIDTH-1 downto 0);
     signal exu_din   :  std_ulogic_vector(WORDWIDTH-1 downto 0);
 
     
@@ -153,9 +153,9 @@ begin
             rst    => exu_rst,
             en     => exu_en,
             fin    => exu_fin,
-            rcmd   => exu_rcmd,
-            addr   => exu_addr,
-            dout   => exu_dout,
+            rcmd   => exu_rcmd_s,
+            addr   => exu_addr_s,
+            dout   => exu_dout_s,
             din    => exu_din,
             inst   => inst_res,
             pc_cmd => pc_cmd,
@@ -175,14 +175,14 @@ begin
 
     reg_cmd  <=      re_cmd                      when en(0) = '0' 
                 else ('0' & arif_reg_rden & '0') when sclk.o = '1' 
-                else exu_rcmd                    when sclk.o = '0' 
+                else exu_rcmd_s                    when sclk.o = '0' 
                 else (others => '0');
     reg_addr <=      re_addr         when en(0) = '0' 
                 else (arif_reg_addr) when sclk.o = '1' 
-                else exu_addr        when sclk.o = '0' 
+                else exu_addr_s        when sclk.o = '0' 
                 else (others => '0');
     reg_i    <=      re_i when en(0) = '0' 
-                else exu_dout when sclk.o = '0' 
+                else exu_dout_s when sclk.o = '0' 
                 else (others => '0');
         re_o <= reg_o when en(0) = '0' else (others => '0');
         arif_reg_in <= reg_o when (en(0) = '1' and sclk.o = '1') else (others => '0');
