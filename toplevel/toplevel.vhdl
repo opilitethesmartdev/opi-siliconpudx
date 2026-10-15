@@ -72,9 +72,7 @@ architecture rtl of toplevel is
     signal exu_addr_s  :  unsigned(REGD-1 downto 0);
     signal exu_dout_s  :  std_ulogic_vector(WORDWIDTH-1 downto 0);
     signal exu_din   :  std_ulogic_vector(WORDWIDTH-1 downto 0);
-
-    
-
+  
 begin
     enff : process(rst, clk) begin
         if rst = '1' then 
@@ -163,30 +161,30 @@ begin
     );
     
 
-    --ins_cmd  <= inst_cmd when en(0) = '0' else (exu_fin or  endt or endtff) & '0';
-    ins_cmd  <= inst_cmd when en(0) = '0' else (sclk.advp or advpff ) & '0';
-    ins_addr <=      inst_addr when en(0) = '0' 
+    --ins_cmd  <= inst_cmd when inten(0) = '0' else (exu_fin or  endt or endtff) & '0';
+    ins_cmd  <= inst_cmd when inten(0) = '0' else (sclk.advp or advpff ) & '0';
+    ins_addr <=      inst_addr when inten(0) = '0' 
                 else pc        when inten(0) = '1' 
                 else (others => '0');
-    ins_i    <= inst_i when en(0) = '0' else (others => '0');
+    ins_i    <= inst_i when inten(0) = '0' else (others => '0');
 
-        inst_o <= ins_o when en(0) = '0' else (others => '0');
-        sim_ins_o <= v2inst(ins_o) when en(0) = '1' else v2inst((others => '0'));
+        inst_o <= ins_o when inten(0) = '0' else (others => '0');
+        sim_ins_o <= v2inst(ins_o) when inten(0) = '1' else v2inst((others => '0'));
 
-    reg_cmd  <=      re_cmd                      when en(0) = '0' 
+    reg_cmd  <=      re_cmd                      when inten(0) = '0' 
                 else ('0' & arif_reg_rden & '0') when sclk.o = '1' 
                 else exu_rcmd_s                    when sclk.o = '0' 
                 else (others => '0');
-    reg_addr <=      re_addr         when en(0) = '0' 
+    reg_addr <=      re_addr         when inten(0) = '0' 
                 else (arif_reg_addr) when sclk.o = '1' 
                 else exu_addr_s        when sclk.o = '0' 
                 else (others => '0');
-    reg_i    <=      re_i when en(0) = '0' 
+    reg_i    <=      re_i when inten(0) = '0' 
                 else exu_dout_s when sclk.o = '0' 
                 else (others => '0');
-        re_o <= reg_o when en(0) = '0' else (others => '0');
-        arif_reg_in <= reg_o when (en(0) = '1' and sclk.o = '1') else (others => '0');
-        exu_din <= reg_o when (en(0) = '1' and sclk.o = '0') else (others => '0');
+        re_o <= reg_o when inten(0) = '0' else (others => '0');
+        arif_reg_in <= reg_o when (inten(0) = '1' and sclk.o = '1') else (others => '0');
+        exu_din <= reg_o when (inten(0) = '1' and sclk.o = '0') else (others => '0');
 
     arif_en <= sclk.advp or sclk.o;
     sim_ins_res <= v2inst(inst_res);
