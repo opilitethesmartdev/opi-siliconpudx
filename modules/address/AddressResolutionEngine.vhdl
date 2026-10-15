@@ -41,13 +41,6 @@ architecture rtl of AddressResolutionEngine is
     signal d : std_ulogic;
 begin  
     fin <= d;
-    --finff : entity work.sr_ff
-    --    port map(
-    --        clk => clk,
-    --        s   => d,
-    --        r   => finrst,
-    --        o   => fin
-    --); finrst <= en or rst;
 
     seq : process (clk, rst)
     begin
@@ -84,8 +77,6 @@ begin
                 else
                     tarint <= unsigned(din);
                 end if;
-            else
-                tarint <= unsigned(param);
             end if;
         end if;
     end process seq_n;
