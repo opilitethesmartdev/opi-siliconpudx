@@ -15,7 +15,7 @@ jobs:
           submodules: recursive
 
       - name: Install PyYAML
-        run: python3 -m pip install pyyaml
+        run: python3 -m pip install pyyaml --break-system-packages
 
       - name: Combine VHDL sources
         run: python3 .github/scripts/combine_vhdl.py
@@ -113,7 +113,7 @@ jobs:
           echo "Copied $(find "$LIB_DST" -maxdepth 1 -type f -name '*.lib' | wc -l) 3.3V .lib files"
 
       - name: Install GDS editing dependency
-        run: python3 -m pip install gdstk
+        run: python3 -m pip install gdstk --break-system-packages
 
       - name: Fix SRAM GDS cell name and PR boundary
         run: python3 .github/scripts/fix_sram_gds.py
