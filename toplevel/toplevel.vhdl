@@ -135,7 +135,8 @@ begin
 
     arif : entity work.AddressResolutionIf
         port map(
-            clk  => clk,
+            clk   => clk,
+            clk_s => sclk.o,
             rst  => rst,
             en   => arif_en,
             rden => arif_reg_rden,
