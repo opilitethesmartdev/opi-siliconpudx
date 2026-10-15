@@ -33,8 +33,8 @@ entity AddressResolutionIf is
 end entity AddressResolutionIf;
 
 architecture rtl of AddressResolutionIf is
+    signal intrst, dten, enff : std_ulogic;
     signal clk_n : std_ulogic;
-    signal intrst, dten : std_ulogic;
 
     signal i :  inst_rec_t;
 
@@ -82,7 +82,7 @@ begin
             tar   => a1_tar
         );
 
-    enedge : entity work.edgend
+    enedge : entity work.edge
         generic map( polarity => "rising" )
         port map(
             clk => clk,
@@ -96,9 +96,13 @@ begin
         if rst = '1' then
             a0_en <= '0';
             a1_en <= '0';
+
+            enff <= '0';
         elsif rising_edge(clk) then
-            a0_en <= '1' when (unsigned(i.depth0) > 0 and a0_fin = '0' and en = '1') else '0';
-            a1_en <= '1' when (unsigned(i.depth1) > 0 and a1_fin = '0' and en = '1') else '0';
+            enff <= en;
+
+            a0_en <= '1' when (unsigned(i.depth0) > 0 and a0_fin = '0' and enff = '1') else '0';
+            a1_en <= '1' when (unsigned(i.depth1) > 0 and a1_fin = '0' and enff = '1') else '0';
         end if;
     end process enp;
 
