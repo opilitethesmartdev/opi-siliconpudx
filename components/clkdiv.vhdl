@@ -61,5 +61,5 @@ begin
         end if;
     end process;
     
-    clko <= (o => ci, en => clkon and en, advp => advp, advn => advn);
+    clko <= (o => ci, en => clkon, advp => advp, advn => advn);
 end architecture rtl;

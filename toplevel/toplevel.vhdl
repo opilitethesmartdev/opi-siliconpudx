@@ -160,7 +160,6 @@ begin
             pc_cmd => pc_cmd,
             pc_ovr => pc_ovr
     );
-    
 
     --ins_cmd  <= inst_cmd when inten(0) = '0' else (exu_fin or  endt or endtff) & '0';
     ins_cmd  <= inst_cmd when inten(0) = '0' else (sclk.advp or advpff ) & '0';
