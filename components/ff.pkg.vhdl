@@ -29,13 +29,43 @@
         o <= p; 
     end architecture rtl;
 
+-- Multi-bit D-FlipFlop
+
+    library ieee;
+    use ieee.std_logic_1164.all;
+    entity d_ffn is
+        generic(
+            W : natural := 8
+        );
+        port (
+            clk : in std_ulogic;
+            rst : in std_ulogic;
+
+            i : in std_ulogic_vector(W - 1 downto 0);
+            o : out std_ulogic_vector(W - 1 downto 0)
+        );
+    end entity d_ffn;
+
+    architecture rtl of d_ffn is
+    begin
+        seq : process(clk)
+        begin
+            if rst = '1' then
+                o <= (others => '0');
+            elsif rising_edge(clk) then
+                o <= i;
+            end if;
+        end process seq;
+    end architecture rtl;
+
 -- S-R FlipFlop
     library ieee;
     use ieee.std_logic_1164.all;
 
     entity sr_ff is
         generic(
-            PRIORITY : string := "reset"
+            PRIORITY : string := "reset";
+            POLARITY : string := "rising"
         );
         port(
             clk : in std_ulogic;
@@ -49,7 +79,7 @@
 
     architecture rtl of sr_ff is
     begin
-        seq_rst : if PRIORITY = "reset" generate
+        seq_p_rst : if PRIORITY = "reset" and POLARITY = "rising" generate
         process(clk)
             begin
                 if rising_edge(clk) then
@@ -62,10 +92,37 @@
             end process;
         end generate;
 
-        seq_set : if PRIORITY = "set" generate
+        seq_p_set : if PRIORITY = "set" and POLARITY = "rising" generate
         process(clk)
             begin
                 if rising_edge(clk) then
+                    if s = '1' then
+                        o <= '1';
+                    elsif r = '1' then
+                        o <= '0';
+                    end if;
+                end if;
+            end process;
+        end generate;
+
+        
+        seq_n_rst : if PRIORITY = "reset" and POLARITY = "falling" generate
+        process(clk)
+            begin
+                if falling_edge(clk) then
+                    if r = '1' then
+                        o <= '0';
+                    elsif s = '1' then
+                        o <= '1';
+                    end if;
+                end if;
+            end process;
+        end generate;
+
+        seq_n_set : if PRIORITY = "set" and POLARITY = "falling" generate
+        process(clk)
+            begin
+                if falling_edge(clk) then
                     if s = '1' then
                         o <= '1';
                     elsif r = '1' then
@@ -214,21 +271,28 @@
         type arr is array (0 to DELAY) of std_ulogic_vector(WIDTH - 1 downto 0);
         signal shift : arr := (others => (others => '0'));
     begin
-        seq : process (clk, rst)
-        begin
-            if rst = '1' then
-                shift <= (others => (others => '0'));
-            elsif rising_edge(clk) then
-                shift(0) <= i;
-                if DELAY > 1 then
-                    shift(1 to DELAY-1) <= shift(0 to DELAY-2);
-                elsif DELAY = 1 then
-                    shift(1) <= shift(0);
-                end if;
-            end if;
-        end process seq;
 
-        o <= shift(DELAY);
+        seq : if DELAY > 0 generate
+            process (clk, rst) begin
+                if rst = '1' then
+                    shift <= (others => (others => '0'));
+                elsif rising_edge(clk) then
+                    shift(0) <= i;
+                    for k in 1 to DELAY loop
+                        shift(k) <= shift(k - 1);
+                    end loop;
+                end if;
+            end process;
+
+            o <= shift(DELAY);
+        end generate seq;
+
+        comb : if DELAY = 0 generate
+            process (i) begin
+                o <= i;
+            end process;
+        end generate;
+
     end architecture bhv;
 
 -- Shift n-cycle 1-bit signal delayer

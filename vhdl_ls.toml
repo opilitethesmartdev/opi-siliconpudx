@@ -4,7 +4,6 @@ lib.files = [
   "toplevel/*.vhdl",
   "components/*.vhdl",
   "components/**/*.vhdl",
-  # "components/**/macros/*",
   "modules/*.vhdl",
   "modules/**/*.vhdl",
 ]

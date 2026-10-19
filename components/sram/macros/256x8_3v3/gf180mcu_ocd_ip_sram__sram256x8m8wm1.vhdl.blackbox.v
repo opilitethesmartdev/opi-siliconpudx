@@ -1,4 +1,9 @@
 /*
+ * Copyright 2025 Open Circuit Design, LLC
+ * 3.3V SRAM based on the GlobalFoundries PDK Authors 5V SRAM
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * See original license, below.
+ *
  * $Id: $
  * Copyright 2022 GlobalFoundries PDK Authors
  *
@@ -19,12 +24,10 @@
  * Data Created:        05-06-2014
  * Revision:		0.0	
  *
- * Description:         gf180mcu_fd_ip_sram__sram256x8m8wm1 Simulation Model
+ * Description:         gf180mcu_ocd_ip_sram__sram256x8m8wm1 Black-box module
  */
 
-`timescale 1 ps / 1 ps
-
-module gf180mcu_fd_ip_sram_sram256x8m8wm1 (
+module gf180mcu_ocd_ip_sram_sram256x8m8wm1 (
 	CLK,
 	CEN,
 	GWEN,
@@ -46,16 +49,18 @@ output	[7:0]	Q;
 inout		VDD;
 inout		VSS;
 
-gf180mcu_fd_ip_sram__sram256x8m8wm1 sram(
-    .CLK(CLK),
-    .CEN(CEN),
-    .GWEN(GWEN),
-    .WEN(WEN),
-    .A(A),
-    .D(D),
-    .Q(Q),
-    .VDD(VDD),
-    .VSS(VSS)
+gf180mcu_ocd_ip_sram__sram256x8m8wm1 sram(
+`ifdef USE_POWER_PINS
+	VDD,
+	VSS,
+`endif
+	CLK,
+	CEN,
+	GWEN,
+	WEN,
+	A,
+	D,
+	Q
 );
 
 endmodule
