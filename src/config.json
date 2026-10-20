@@ -46,30 +46,30 @@
     },
     "gf180mcu_ocd_ip_sram_sram64x8m8wm1": {
       "gds": [
-        "dir::../components/sram/macros/64x8_3v3/gf180mcu_ocd_ip_sram__sram256x8m8wm1.gds"
+        "dir::../components/sram/macros/64x8_3v3/gf180mcu_ocd_ip_sram__sram64x8m8wm1.gds"
       ],
       "lef": [
-        "dir::../components/sram/macros/64x8_3v3/gf180mcu_ocd_ip_sram__sram256x8m8wm1.lef"
+        "dir::../components/sram/macros/64x8_3v3/gf180mcu_ocd_ip_sram__sram64x8m8wm1.lef"
       ],
       "vh": [
-        "dir::../components/sram/macros/64x8_3v3/gf180mcu_ocd_ip_sram__sram256x8m8wm1.vhdl.blackbox.v",
-        "dir::../components/sram/macros/64x8_3v3/gf180mcu_ocd_ip_sram__sram256x8m8wm1.blackbox.v"
+        "dir::../components/sram/macros/64x8_3v3/gf180mcu_ocd_ip_sram__sram64x8m8wm1.vhdl.blackbox.v",
+        "dir::../components/sram/macros/64x8_3v3/gf180mcu_ocd_ip_sram__sram64x8m8wm1.blackbox.v"
       ],
       "lib": {
         "*_ff_125C_*": [
-          "dir::../components/sram/macros/64x8_3v3/timing/gf180mcu_ocd_ip_sram__sram256x8m8wm1__ff_125C_3v60.lib"
+          "dir::../components/sram/macros/64x8_3v3/timing/gf180mcu_ocd_ip_sram__sram64x8m8wm1__ff_125C_3v60.lib"
         ],
         "*_ff_n40C_*": [
-          "dir::../components/sram/macros/64x8_3v3/timing/gf180mcu_ocd_ip_sram__sram256x8m8wm1__ff_n40C_3v60.lib"
+          "dir::../components/sram/macros/64x8_3v3/timing/gf180mcu_ocd_ip_sram__sram64x8m8wm1__ff_n40C_3v60.lib"
         ],
         "*_ss_125C_*": [
-          "dir::../components/sram/macros/64x8_3v3/timing/gf180mcu_ocd_ip_sram__sram256x8m8wm1__ss_125C_3v00.lib"
+          "dir::../components/sram/macros/64x8_3v3/timing/gf180mcu_ocd_ip_sram__sram64x8m8wm1__ss_125C_3v00.lib"
         ],
         "*_ss_n40C_*": [
-          "dir::../components/sram/macros/64x8_3v3/timing/gf180mcu_ocd_ip_sram__sram256x8m8wm1__ss_n40C_3v00.lib"
+          "dir::../components/sram/macros/64x8_3v3/timing/gf180mcu_ocd_ip_sram__sram64x8m8wm1__ss_n40C_3v00.lib"
         ],
         "*_tt_025C_*": [
-          "dir::../components/sram/macros/64x8_3v3/timing/gf180mcu_ocd_ip_sram__sram256x8m8wm1__tt_025C_3v30.lib"
+          "dir::../components/sram/macros/64x8_3v3/timing/gf180mcu_ocd_ip_sram__sram64x8m8wm1__tt_025C_3v30.lib"
         ]
       }
     }
