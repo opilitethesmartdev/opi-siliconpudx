@@ -40,7 +40,7 @@ end entity toplevel;
 architecture rtl of toplevel is
     signal inten : std_ulogic_vector(1 downto 0);
     signal advpff, endt, endtff : std_logic;
-    signal sclk :  clk_rec_t;
+    signal nclk, sclk :  clk_rec_t;
 
     signal ins_cmd  : std_ulogic_vector(1 downto 0);
     signal ins_addr : unsigned(INSTD-1 downto 0);
@@ -91,13 +91,25 @@ begin
         end if;
     end process enff;
 
-    clkdiv : entity work.clkdiv
+    nclk_div : entity work.clkdiv
         generic map(
             CLOCKDIV => 5,
             C_WIDTH  => 3
         )
         port map(
             clki => clk,
+            rst  => rst,
+            en   => en(0),
+            clko => nclk
+    );
+
+    sclk_div : entity work.clkdiv
+        generic map(
+            CLOCKDIV => 5,
+            C_WIDTH  => 3
+        )
+        port map(
+            clki => nclk.o,
             rst  => rst,
             en   => inten(0),
             clko => sclk
@@ -126,7 +138,7 @@ begin
 
     pcif : entity work.ProgramCounterIf
         port map(
-            clk => clk,
+            clk => nclk.o,
             rst => rst,
             cmd => pc_cmd,
             ovr => pc_ovr,
@@ -148,7 +160,7 @@ begin
 
     exu : entity work.ExecutionUnit
         port map(
-            clk    => clk,
+            clk    => nclk.o,
             rst    => exu_rst,
             en     => exu_en,
             fin    => exu_fin,
