@@ -37,28 +37,21 @@ begin
     begin
         if rising_edge(clk) then
             if rst = '1' then
-                regs <= (others => (others => '0'));
-
                 regiodefault : for rg in 2**MMIOD - 1 downto 0 loop
                     if(iodirmask(rg) = '1') then
                         regio(rg) <= (others => '0');
                     end if;
                 end loop;
             else
-                case (cmd) is
-                    when "001" =>
-                        regs(to_integer(addr)) <= din;
-                    when "101" =>
-                        if(iodirmask(to_integer(addr(MMIOD - 1 downto 0))) = '0') then
-                            regio(to_integer(addr(MMIOD - 1 downto 0))) <= din;
-                        end if;
-                    when others =>
-                end case;
+                if cmd = "101" then
+                    if(iodirmask(to_integer(addr(MMIOD - 1 downto 0))) = '0') then
+                        regio(to_integer(addr(MMIOD - 1 downto 0))) <= din;
+                    end if;
+                end if;
             end if;
         end if;
     end process seq;
 
-    dout <= regs(to_integer(addr))  when cmd = "010" 
-       else regio(to_integer(addr)) when cmd = "110" 
+    dout <= regio(to_integer(addr)) when cmd = "110" 
        else (others => '0');
 end architecture rtl;

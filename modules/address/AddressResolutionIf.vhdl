@@ -34,7 +34,7 @@ entity AddressResolutionIf is
 end entity AddressResolutionIf;
 
 architecture rtl of AddressResolutionIf is
-    signal intrst, dten : std_ulogic;
+    signal intrst, dten, endelta0, endelta1 : std_ulogic;
     signal clk_n : std_ulogic;
 
     signal i :  inst_rec_t;
@@ -42,11 +42,8 @@ architecture rtl of AddressResolutionIf is
     signal a0_res   :  std_ulogic_vector(WORDWIDTH-1 downto 0);
     signal a1_res   :  std_ulogic_vector(WORDWIDTH-1 downto 0);
 
-    signal a0_en    :  std_ulogic;
-    signal a1_en    :  std_ulogic;
-
-    signal a0_enp   :  std_ulogic;
-    signal a1_enp   :  std_ulogic;
+    signal a0_en, a0_enff    :  std_ulogic;
+    signal a1_en, a1_enff    :  std_ulogic;
 
     signal a0_rden  :  std_ulogic;
     signal a0_addr  :  unsigned(REGD-1 downto 0);
@@ -95,37 +92,26 @@ begin
             o   => dten
     );
 
-    enp: process(rst, clk_s)
-    begin
-        if rst = '1' then
-            a0_enp <= '0';
-            a1_enp <= '0';
-        elsif rising_edge(clk_s) then
-            a0_enp <= '1' when (unsigned(i.depth0) > 0 and en = '1') else '0';
-            a1_enp <= '1' when (unsigned(i.depth1) > 0 and en = '1') else '0';
-        end if;
-    end process enp;
-
-    a0_enff : entity work.sr_ff
-        port map(
-            clk => clk,
-            s   => a0_enp,
-            r   => a0_fin,
-            o   => a0_en
-    );
-
-    a1_enff : entity work.sr_ff
-        port map(
-            clk => clk,
-            s   => a1_enp,
-            r   => a1_fin,
-            o   => a1_en
-    );
-
+   --enp: process(rst, clk_s)
+   --begin
+   --    if rst = '1' then
+   --        a0_enff <= '0';
+   --        a1_enff <= '0';
+   --    elsif rising_edge(clk_s) then
+   --        a0_enff <= '1' when (unsigned(i.depth0) > 0 and en = '1') else '0';
+   --        a1_enff <= '1' when (unsigned(i.depth1) > 0 and en = '1') else '0';
+   --    end if;
+   --end process enp;
 
     -- Combinatorial logic
         clk_n <= not clk;
         intrst <= rst or dten;
+
+        --endelta0 <= en xor a0_enff;
+        --endelta1 <= en xor a1_enff;
+
+        a0_en <= '1' when (unsigned(i.depth0) > 0 and en = '1') else '0';--endelta0 or a0_enff;
+        a1_en <= '1' when (unsigned(i.depth1) > 0 and en = '1') else '0';--endelta1 or a1_enff;
 
         i <= v2inst(inst);
         
