@@ -172,6 +172,9 @@ jobs:
           if ! grep -Fq 'VERILOG_SOURCES += $(PWD)/sram_macro.v' test/Makefile; then
             printf '%s\n' 'VERILOG_SOURCES += $(PWD)/sram_macro.v' >> test/Makefile
           fi
+          if ! grep -Fq 'VERILOG_SOURCES += $(PWD)/sram64_macro.v' test/Makefile; then
+            printf '%s\n' 'VERILOG_SOURCES += $(PWD)/sram64_macro.v' >> test/Makefile
+          fi
 
       - name: GL test
         uses: TinyTapeout/tt-gds-action/gl_test@ttgf26c
