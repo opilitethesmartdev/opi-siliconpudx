@@ -57,7 +57,7 @@ architecture rtl of sram_macro is
             CEN : in std_ulogic;
             GWEN : in std_ulogic;
             WEN  : in std_ulogic_vector(7 downto 0);
-            A : in std_ulogic_vector(7 downto 0);
+            A : in std_ulogic_vector(5 downto 0);
             D : in std_ulogic_vector(7 downto 0);
             Q : out std_ulogic_vector(7 downto 0)
         );
