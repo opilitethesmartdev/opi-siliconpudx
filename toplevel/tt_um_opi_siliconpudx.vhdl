@@ -54,8 +54,8 @@ rst <= not rst_n;
 
 uo_out <= o & instruction & "00000";
 rw <= ui_in(7 downto 6);
-addr <= ui_in(5 downto 1);
-en <= ui_in(0) & ena;
+addr <= ui_in(5 downto 0);
+en <= '0' & ena;
 
 din <= uio_in when (rw = "00") else (others => '0');
 uio_out <= dout when (rw = "01" or rw = "11") else (others => '0');

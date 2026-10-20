@@ -43,10 +43,40 @@
           "dir::../components/sram/macros/256x8_3v3/timing/gf180mcu_ocd_ip_sram__sram256x8m8wm1__tt_025C_3v30.lib"
         ]
       }
+    },
+    "gf180mcu_ocd_ip_sram_sram64x8m8wm1": {
+      "gds": [
+        "dir::../components/sram/macros/64x8_3v3/gf180mcu_ocd_ip_sram__sram256x8m8wm1.gds"
+      ],
+      "lef": [
+        "dir::../components/sram/macros/64x8_3v3/gf180mcu_ocd_ip_sram__sram256x8m8wm1.lef"
+      ],
+      "vh": [
+        "dir::../components/sram/macros/64x8_3v3/gf180mcu_ocd_ip_sram__sram256x8m8wm1.vhdl.blackbox.v",
+        "dir::../components/sram/macros/64x8_3v3/gf180mcu_ocd_ip_sram__sram256x8m8wm1.blackbox.v"
+      ],
+      "lib": {
+        "*_ff_125C_*": [
+          "dir::../components/sram/macros/64x8_3v3/timing/gf180mcu_ocd_ip_sram__sram256x8m8wm1__ff_125C_3v60.lib"
+        ],
+        "*_ff_n40C_*": [
+          "dir::../components/sram/macros/64x8_3v3/timing/gf180mcu_ocd_ip_sram__sram256x8m8wm1__ff_n40C_3v60.lib"
+        ],
+        "*_ss_125C_*": [
+          "dir::../components/sram/macros/64x8_3v3/timing/gf180mcu_ocd_ip_sram__sram256x8m8wm1__ss_125C_3v00.lib"
+        ],
+        "*_ss_n40C_*": [
+          "dir::../components/sram/macros/64x8_3v3/timing/gf180mcu_ocd_ip_sram__sram256x8m8wm1__ss_n40C_3v00.lib"
+        ],
+        "*_tt_025C_*": [
+          "dir::../components/sram/macros/64x8_3v3/timing/gf180mcu_ocd_ip_sram__sram256x8m8wm1__tt_025C_3v30.lib"
+        ]
+      }
     }
   },
   "PDN_MACRO_CONNECTIONS": [
-    ".*sram256x8m8wm1_3v3_sram VPWR VGND VDD VSS"
+    ".*sram256x8m8wm1_3v3_sram VPWR VGND VDD VSS",
+    ".*sram64x8m8wm1_3v3_sram VPWR VGND VDD VSS"
   ],
   "RUN_KLAYOUT_XOR": 0,
   "RUN_KLAYOUT_DRC": 0,
@@ -68,7 +98,8 @@
   "PDN_ENABLE_GLOBAL_CONNECTIONS": true,
   "PDN_CFG": "dir::pdn_cfg.tcl",
   "MAGIC_DRC_MAGLEFS": [
-    "dir::../components/sram/macros/256x8_3v3/magic/gf180mcu_ocd_ip_sram__sram256x8m8wm1.mag"
+    "dir::../components/sram/macros/256x8_3v3/magic/gf180mcu_ocd_ip_sram__sram256x8m8wm1.mag",
+    "dir::../components/sram/macros/64x8_3v3/magic/gf180mcu_ocd_ip_sram__sram64x8m8wm1.mag"
   ],
   "MAGIC_EXT_ABSTRACT": true,
   "MAGIC_EXT_ABSTRACT_CELLS": [
