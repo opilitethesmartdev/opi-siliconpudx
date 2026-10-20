@@ -88,10 +88,19 @@ jobs:
           cp "$MAGIC_SRC"/*.mag "$MAGIC_DST/"
           test -f "$MAGIC_DST/gf180mcu_ocd_ip_sram__sram256x8m8wm1.mag"
 
-          echo "=== project-local SRAM Magic hierarchy ==="
+          MAGIC64_SRC=/tmp/gf180mcu_ocd_ip_sram/cells/gf180mcu_ocd_ip_sram__sram64x8m8wm1/magic
+          MAGIC64_DST=components/sram/macros/64x8_3v3/magic
+          test -f "$MAGIC64_SRC/gf180mcu_ocd_ip_sram__sram64x8m8wm1.mag"
+          mkdir -p "$MAGIC64_DST"
+          cp "$MAGIC64_SRC"/*.mag "$MAGIC64_DST/"
+          test -f "$MAGIC64_DST/gf180mcu_ocd_ip_sram__sram64x8m8wm1.mag"
+
+          echo "=== project-local SRAM Magic hierarchies ==="
           echo "Source commit: $(git -C /tmp/gf180mcu_ocd_ip_sram rev-parse HEAD)"
-          echo "Destination: $MAGIC_DST"
-          echo "Copied $(find "$MAGIC_DST" -maxdepth 1 -type f -name '*.mag' | wc -l) .mag files"
+          echo "256x8 destination: $MAGIC_DST"
+          echo "Copied $(find "$MAGIC_DST" -maxdepth 1 -type f -name '*.mag' | wc -l) 256x8 .mag files"
+          echo "64x8 destination: $MAGIC64_DST"
+          echo "Copied $(find "$MAGIC64_DST" -maxdepth 1 -type f -name '*.mag' | wc -l) 64x8 .mag files"
       - name: Fetch community SRAM timing libraries
         run: |
           LIB_SRC=/tmp/gf180mcu_ocd_ip_sram/cells/gf180mcu_ocd_ip_sram__sram256x8m8wm1
