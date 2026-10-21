@@ -48,10 +48,13 @@ architecture rtl of toplevel is
     signal ins_o : std_ulogic_vector(INSTW-1 downto 0);
     signal sim_ins_o : inst_rec_t;
 
+    signal reg_mode :  std_ulogic;
     signal reg_cmd  : std_ulogic_vector(2 downto 0);
     signal reg_addr : unsigned(REGD-1 downto 0);
     signal reg_i    : std_ulogic_vector(WORDWIDTH-1 downto 0);
     signal reg_o    : std_ulogic_vector(WORDWIDTH-1 downto 0);
+    signal reg_addra : unsigned(REGD-1 downto 0);
+    signal reg_oa    : std_ulogic_vector(WORDWIDTH-1 downto 0);
     signal mmio_dirmask : std_ulogic_vector(2**MMIOD-1 downto 0) := (others => '0');
 
     signal pc_cmd :  std_ulogic_vector(1 downto 0);
@@ -129,12 +132,15 @@ begin
         port map(
             clk       => clk,
             rst       => rst,
+            mode      => reg_mode,
             cmd       => reg_cmd,
             addr      => reg_addr,
             din       => reg_i,
             dout      => reg_o,
+            addra     => reg_addra,
+            douta     => reg_oa,
             iodirmask => mmio_dirmask
-        );
+    );
 
     pcif : entity work.ProgramCounterIf
         port map(

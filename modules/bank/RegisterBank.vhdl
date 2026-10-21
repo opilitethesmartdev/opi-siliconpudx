@@ -16,12 +16,17 @@ entity RegisterBank is
         -- Fundamental signals
         clk : in std_ulogic;
         rst : in std_ulogic;
+        mode : in std_ulogic; -- mirror mode when 0, singular mode when 1
 
         -- Data interface
-        cmd : in std_ulogic_vector(2 downto 0); -- [sel][read][write]
-        addr : in unsigned(REGD - 1 downto 0);
-        din  : in std_ulogic_vector(WORDWIDTH - 1 downto 0);
-        dout : out std_ulogic_vector(WORDWIDTH - 1 downto 0);
+        cmd : in std_ulogic_vector(2 downto 0); -- [sel][read][write] 
+        addr : in unsigned(REGD - 1 downto 0);  -- common for mirror mode, sram0 for singular mode
+        din  : in std_ulogic_vector(WORDWIDTH - 1 downto 0);-- only mirror mode
+        dout : out std_ulogic_vector(WORDWIDTH - 1 downto 0); -- common for mirror mode, sram0 for singular mode
+
+        -- Alternative read for sram1, only usable in mirror mode
+        addra : in unsigned(REGD - 1 downto 0);
+        douta : out std_ulogic_vector(WORDWIDTH - 1 downto 0);
 
         iodirmask : in  std_ulogic_vector(2**MMIOD - 1 downto 0) -- read = 0
     );
@@ -34,9 +39,9 @@ architecture rtl of RegisterBank is
 
     signal rden :  std_ulogic;
     signal wren :  std_ulogic;
-    signal reg_addr :  unsigned(7 downto 0);
-    signal reg_i :  std_ulogic_vector(7 downto 0);
-    signal reg_o :  std_ulogic_vector(7 downto 0);
+    signal reg_addr1 :  unsigned(7 downto 0);
+    signal reg_o0 :  std_ulogic_vector(7 downto 0);
+    signal reg_o1 :  std_ulogic_vector(7 downto 0);
 
 begin
     sram0 : entity work.sram_macro
@@ -48,9 +53,23 @@ begin
             en   => rden,
             wren => wren,
             mask => (others => '1'),
-            addr => reg_addr,
-            din  => reg_i,
-            dout => reg_o
+            addr => addr,
+            din  => din,
+            dout => reg_o0
+    );
+
+    sram1 : entity work.sram_macro
+        generic map(
+            CONFIG => "sram64x8m8wm1_3v3"
+        )
+        port map(
+            clk  => clk,
+            en   => rden,
+            wren => wren,
+            mask => (others => '1'),
+            addr => reg_addr1,
+            din  => din,
+            dout => reg_o1
     );
 
     seq: process(clk)
@@ -74,13 +93,11 @@ begin
         end if;
     end process seq;
 
-    dout <= io_out when cmd = "110" 
-       else reg_o  when cmd = "010"
-       else (others => '0');
+    rden <= (not cmd(2) and xor cmd(1 downto 0)) or mode;
+    wren <= (nor cmd(2 downto 1) and cmd(0)) and not mode;
 
-    rden <= '1' when cmd = "010" or cmd = "001" else '0';
-    wren <= '1' when cmd = "001" else '0';
-
-    reg_addr <= resize(addr, 8) when rden = '1' else (others => '0');
-    reg_i <= din when cmd = "001" else (others => '0');
+    dout <= (reg_o0 or reg_o1) when (mode or cmd(2)) = '0' else io_out when cmd(2) = '1' else reg_o0;
+    douta <= reg_o1 when mode = '1' else (others => '0');    
+    
+    reg_addr1 <= addra when mode = '1' else addr;
 end architecture rtl;
