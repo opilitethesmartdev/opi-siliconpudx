@@ -39,6 +39,7 @@ architecture rtl of RegisterBank is
 
     signal rden :  std_ulogic;
     signal wren :  std_ulogic;
+    signal reg_addr0 :  unsigned(7 downto 0);
     signal reg_addr1 :  unsigned(7 downto 0);
     signal reg_o0 :  std_ulogic_vector(7 downto 0);
     signal reg_o1 :  std_ulogic_vector(7 downto 0);
@@ -53,7 +54,7 @@ begin
             en   => rden,
             wren => wren,
             mask => (others => '1'),
-            addr => addr,
+            addr => reg_addr0,
             din  => din,
             dout => reg_o0
     );
@@ -99,5 +100,6 @@ begin
     dout <= (reg_o0 or reg_o1) when (mode or cmd(2)) = '0' else io_out when cmd(2) = '1' else reg_o0;
     douta <= reg_o1 when mode = '1' else (others => '0');    
     
-    reg_addr1 <= addra when mode = '1' else addr;
+    reg_addr1 <= resize(addra, 8) when mode = '1' else resize(addr, 8);
+    reg_addr0 <= resize(addr, 8);
 end architecture rtl;
