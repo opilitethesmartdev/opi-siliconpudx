@@ -32,7 +32,6 @@ begin
     begin
         if rst = '1' then
             pci <= (others => '0');
-            pc <= (others => '0');
         elsif rising_edge(clk) then
             case (cmd) is
                 when "10" =>
@@ -43,8 +42,8 @@ begin
                     pci <= ovr;
                 when others =>
             end case;
-
-            pc <= pci;
         end if;
     end process seq;
+
+    pc <= pci;
 end architecture rtl;
