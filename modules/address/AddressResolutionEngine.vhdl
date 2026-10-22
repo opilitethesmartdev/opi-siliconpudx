@@ -24,7 +24,7 @@ entity AddressResolutionEngine is
         param : in std_ulogic_vector(PARAMW - 1 downto 0);
 
         -- Register interface
-        rden : out std_ulogic;
+        --rden : out std_ulogic;
         addr : out unsigned(REGD - 1 downto 0);
         din  : in  std_ulogic_vector(WORDWIDTH - 1 downto 0);
 
@@ -48,10 +48,10 @@ begin
             intd <= (others => '0');
             tar <= (others => '0');
             addr <= (others => '0');
-            rden <= '0';
+            --rden <= '0';
             d <= '0';
         elsif rising_edge(clk) then
-            rden <= '0';
+            --rden <= '0';
             if en = '1' and d = '0' then
                 tar <= std_ulogic_vector(tarint);
 
@@ -59,7 +59,7 @@ begin
                     d <= '1';
                 else
                     intd <= intd + 1;
-                    rden <= '1';
+                    --rden <= '1';
                     addr <= tarint(REGD-1 downto 0);
                 end if;
             end if;

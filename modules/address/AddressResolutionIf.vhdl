@@ -16,14 +16,16 @@ entity AddressResolutionIf is
     port(
         -- Fundamental signals
         clk : in std_ulogic;
-        clk_s : in std_ulogic;
         rst : in std_ulogic;
         en  : in std_ulogic;
         
         -- Register interface
         rden : out std_ulogic;
-        addr : out unsigned(REGD - 1 downto 0);
-        din  : in  std_ulogic_vector(WORDWIDTH - 1 downto 0);
+        addr0 : out unsigned(REGD - 1 downto 0);
+        din0  : in  std_ulogic_vector(WORDWIDTH - 1 downto 0);
+
+        addr1 : out unsigned(REGD - 1 downto 0);
+        din1  : in  std_ulogic_vector(WORDWIDTH - 1 downto 0);
 
         -- Input command
         inst : in std_ulogic_vector(INSTW - 1 downto 0);
@@ -34,24 +36,23 @@ entity AddressResolutionIf is
 end entity AddressResolutionIf;
 
 architecture rtl of AddressResolutionIf is
-    signal intrst, dten, endelta0, endelta1 : std_ulogic;
-    signal clk_n : std_ulogic;
+    signal intrst, dten : std_ulogic;
 
     signal i :  inst_rec_t;
 
     signal a0_res   :  std_ulogic_vector(WORDWIDTH-1 downto 0);
     signal a1_res   :  std_ulogic_vector(WORDWIDTH-1 downto 0);
 
-    signal a0_en, a0_enff    :  std_ulogic;
-    signal a1_en, a1_enff    :  std_ulogic;
+    signal a0_en  :  std_ulogic;
+    signal a1_en  :  std_ulogic;
 
-    signal a0_rden  :  std_ulogic;
-    signal a0_addr  :  unsigned(REGD-1 downto 0);
+    --signal a0_rden  :  std_ulogic;
+    --signal a0_addr  :  unsigned(REGD-1 downto 0);
     signal a0_fin   :  std_ulogic;
     signal a0_tar   :  std_ulogic_vector(WORDWIDTH-1 downto 0);
 
-    signal a1_rden  :  std_ulogic;
-    signal a1_addr  :  unsigned(REGD-1 downto 0);
+    --signal a1_rden  :  std_ulogic;
+    --signal a1_addr  :  unsigned(REGD-1 downto 0);
     signal a1_fin   :  std_ulogic;
     signal a1_tar   :  std_ulogic_vector(WORDWIDTH-1 downto 0);
 
@@ -63,23 +64,21 @@ begin
             en    => a0_en,
             depth => unsigned(i.depth0),
             param => i.param0,
-            rden  => a0_rden,
-            addr  => a0_addr,
-            din   => din,
+            addr  => addr1,
+            din   => din0,
             fin   => a0_fin,
             tar   => a0_tar
         );
 
     are1 : entity work.AddressResolutionEngine
         port map(
-            clk   => clk_n,
+            clk   => clk,
             rst   => intrst,
             en    => a1_en,
             depth => unsigned(i.depth1),
             param => i.param1,
-            rden  => a1_rden,
-            addr  => a1_addr,
-            din   => din,
+            addr  => addr0,
+            din   => din1,
             fin   => a1_fin,
             tar   => a1_tar
         );
@@ -104,7 +103,6 @@ begin
    --end process enp;
 
     -- Combinatorial logic
-        clk_n <= not clk;
         intrst <= rst or dten;
 
         --endelta0 <= en xor a0_enff;
@@ -115,8 +113,7 @@ begin
 
         i <= v2inst(inst);
         
-        rden <= a0_rden when clk = '1' else a1_rden;
-        addr <= a0_addr when clk = '1' else a1_addr;
+        rden <= a0_en or a1_en;
 
         a0_res <= a0_tar when (a0_en or a0_fin) = '1' else i.param0;
         a1_res <= a1_tar when (a1_en or a1_fin) = '1' else i.param1;

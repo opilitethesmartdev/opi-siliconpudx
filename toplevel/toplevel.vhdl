@@ -40,7 +40,7 @@ end entity toplevel;
 architecture rtl of toplevel is
     signal inten : std_ulogic_vector(1 downto 0);
     signal advpff, endt, endtff : std_logic;
-    signal nclk, sclk :  clk_rec_t;
+    signal sclk :  clk_rec_t;
 
     signal ins_cmd  : std_ulogic_vector(1 downto 0);
     signal ins_addr : unsigned(INSTD-1 downto 0);
@@ -48,7 +48,7 @@ architecture rtl of toplevel is
     signal ins_o : std_ulogic_vector(INSTW-1 downto 0);
     signal sim_ins_o : inst_rec_t;
 
-    signal reg_mode :  std_ulogic;
+    signal reg_mode    :  std_ulogic;
     signal reg_cmd  : std_ulogic_vector(2 downto 0);
     signal reg_addr : unsigned(REGD-1 downto 0);
     signal reg_i    : std_ulogic_vector(WORDWIDTH-1 downto 0);
@@ -62,9 +62,10 @@ architecture rtl of toplevel is
     signal pc  :  unsigned(INSTD-1 downto 0);
     
     signal arif_en :  std_ulogic;
-    signal arif_reg_rden :  std_ulogic;
-    signal arif_reg_addr :  unsigned(REGD-1 downto 0);
-    signal arif_reg_in  :  std_ulogic_vector(WORDWIDTH-1 downto 0);
+    signal arif_reg_addr0 :  unsigned(REGD-1 downto 0);
+    signal arif_reg_in0  :  std_ulogic_vector(WORDWIDTH-1 downto 0);
+    --signal arif_reg_addr1 :  unsigned(REGD-1 downto 0);
+    --signal arif_reg_in1  :  std_ulogic_vector(WORDWIDTH-1 downto 0);
     signal inst_res  :  std_ulogic_vector(INSTW-1 downto 0);
     signal sim_ins_res : inst_rec_t;
 
@@ -94,7 +95,7 @@ begin
         end if;
     end process enff;
 
-    nclk_div : entity work.clkdiv
+    sclk_div : entity work.clkdiv
         generic map(
             CLOCKDIV => 5,
             C_WIDTH  => 3
@@ -102,22 +103,19 @@ begin
         port map(
             clki => clk,
             rst  => rst,
-            en   => en(0),
-            clko => nclk
-    );
-
-    sclk_div : entity work.clkdiv
-        generic map(
-            CLOCKDIV => 5,
-            C_WIDTH  => 3
-        )
-        port map(
-            clki => nclk.o,
-            rst  => rst,
             en   => inten(0),
             clko => sclk
     );
 
+
+    pcif : entity work.ProgramCounterIf
+        port map(
+            clk => clk,
+            rst => rst,
+            cmd => pc_cmd,
+            ovr => pc_ovr,
+            pc  => pc
+        );
 
     instb : entity work.InstructionBank
         port map(
@@ -132,41 +130,38 @@ begin
         port map(
             clk       => clk,
             rst       => rst,
-            mode      => reg_mode,
+            
             cmd       => reg_cmd,
-            addr      => reg_addr,
             din       => reg_i,
+
+            mode      => reg_mode,
+            addr      => reg_addr,
             dout      => reg_o,
+
             addra     => reg_addra,
             douta     => reg_oa,
-            iodirmask => mmio_dirmask
-    );
 
-    pcif : entity work.ProgramCounterIf
-        port map(
-            clk => nclk.o,
-            rst => rst,
-            cmd => pc_cmd,
-            ovr => pc_ovr,
-            pc  => pc
-    );
+            iodirmask => mmio_dirmask
+        );
 
     arif : entity work.AddressResolutionIf
         port map(
             clk   => clk,
-            clk_s => sclk.o,
-            rst  => rst,
-            en   => arif_en,
-            rden => arif_reg_rden,
-            addr => arif_reg_addr,
-            din  => arif_reg_in,
-            inst => ins_o,
-            res  => inst_res
-    );
+            rst   => rst,
+            en    => arif_en,
+            rden  => reg_mode,
+            addr0 => arif_reg_addr0,
+            din0  => arif_reg_in0,
+            addr1 => reg_addra,
+            din1  => reg_oa,
+            inst  => ins_i,
+            res   => inst_res
+        );
+
 
     exu : entity work.ExecutionUnit
         port map(
-            clk    => nclk.o,
+            clk    => clk,
             rst    => exu_rst,
             en     => exu_en,
             fin    => exu_fin,
@@ -177,8 +172,9 @@ begin
             inst   => inst_res,
             pc_cmd => pc_cmd,
             pc_ovr => pc_ovr
-    );
+        );
 
+    --
     --ins_cmd  <= inst_cmd when inten(0) = '0' else (exu_fin or  endt or endtff) & '0';
     ins_cmd  <= inst_cmd when inten(0) = '0' else (sclk.advp or advpff ) & '0';
     ins_addr <=      inst_addr when inten(0) = '0' 
@@ -188,28 +184,27 @@ begin
 
         inst_o <= ins_o when inten(0) = '0' else (others => '0');
         sim_ins_o <= v2inst(ins_o) when inten(0) = '1' else v2inst((others => '0'));
+    
+    reg_addr <= arif_reg_addr0 when inten(0) = '1' and sclk.o = '1' else exu_addr_s when inten(0) = '0' else re_addr;
 
-    reg_cmd  <=      re_cmd                      when inten(0) = '0' 
-                else ('0' & arif_reg_rden & '0') when sclk.o = '1' 
-                else exu_rcmd_s                    when sclk.o = '0' 
+    reg_cmd  <=      re_cmd     when inten(0) = '0' 
+                else exu_rcmd_s when sclk.o = '0' 
                 else (others => '0');
-    reg_addr <=      re_addr         when inten(0) = '0' 
-                else (arif_reg_addr) when sclk.o = '1' 
-                else exu_addr_s        when sclk.o = '0' 
-                else (others => '0');
+
     reg_i    <=      re_i when inten(0) = '0' 
                 else exu_dout_s when sclk.o = '0' 
                 else (others => '0');
+
         re_o <= reg_o when inten(0) = '0' else (others => '0');
-        arif_reg_in <= reg_o when (inten(0) = '1' and sclk.o = '1') else (others => '0');
+        arif_reg_in0 <= reg_o when (inten(0) = '1' and sclk.o = '1') else (others => '0');
         exu_din <= reg_o when (inten(0) = '1' and sclk.o = '0') else (others => '0');
 
-    arif_en <= sclk.advp or sclk.o;
-    sim_ins_res <= v2inst(inst_res);
+    arif_en <= sclk.advp or sclk.o;    
 
     exu_en <= not sclk.o;
     exu_rst <= rst or sclk.advn;
 
     instruction <= or ins_o;
+    sim_ins_res <= v2inst(inst_res);
 
 end architecture rtl;
