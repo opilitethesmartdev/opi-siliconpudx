@@ -36,7 +36,8 @@ entity AddressResolutionIf is
 end entity AddressResolutionIf;
 
 architecture rtl of AddressResolutionIf is
-    signal intrst, dten : std_ulogic;
+    signal intrst, clk_n : std_ulogic;
+    signal dten, dten_n : std_ulogic;
 
     signal i :  inst_rec_t;
 
@@ -91,6 +92,17 @@ begin
             o   => dten
     );
 
+    dtenshift: entity work.n_shift1b
+     generic map(
+        DELAY => 1
+    )
+     port map(
+        clk => clk_n,
+        rst => rst,
+        i => dten,
+        o => dten_n
+    );
+
    --enp: process(rst, clk_s)
    --begin
    --    if rst = '1' then
@@ -103,7 +115,8 @@ begin
    --end process enp;
 
     -- Combinatorial logic
-        intrst <= rst or dten;
+        clk_n <= not clk;
+        intrst <= rst or (dten and not dten_n);
 
         --endelta0 <= en xor a0_enff;
         --endelta1 <= en xor a1_enff;

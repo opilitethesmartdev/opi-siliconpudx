@@ -154,10 +154,9 @@ begin
             din0  => arif_reg_in0,
             addr1 => reg_addra,
             din1  => reg_oa,
-            inst  => ins_i,
+            inst  => ins_o,
             res   => inst_res
         );
-
 
     exu : entity work.ExecutionUnit
         port map(
@@ -185,7 +184,9 @@ begin
         inst_o <= ins_o when inten(0) = '0' else (others => '0');
         sim_ins_o <= v2inst(ins_o) when inten(0) = '1' else v2inst((others => '0'));
     
-    reg_addr <= arif_reg_addr0 when inten(0) = '1' and sclk.o = '1' else exu_addr_s when inten(0) = '0' else re_addr;
+    reg_addr <= arif_reg_addr0 when inten(0) = '1' and sclk.o = '1' 
+           else exu_addr_s     when inten(0) = '1' and sclk.o = '0' 
+           else re_addr;
 
     reg_cmd  <=      re_cmd     when inten(0) = '0' 
                 else exu_rcmd_s when sclk.o = '0' 
@@ -201,7 +202,7 @@ begin
 
     arif_en <= sclk.advp or sclk.o;    
 
-    exu_en <= not sclk.o;
+    exu_en <= not sclk.o and sclk.en;
     exu_rst <= rst or sclk.advn;
 
     instruction <= or ins_o;

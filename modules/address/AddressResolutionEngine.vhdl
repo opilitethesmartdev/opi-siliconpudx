@@ -48,36 +48,34 @@ begin
             intd <= (others => '0');
             tar <= (others => '0');
             addr <= (others => '0');
-            --rden <= '0';
             d <= '0';
         elsif rising_edge(clk) then
-            --rden <= '0';
             if en = '1' and d = '0' then
-                tar <= std_ulogic_vector(tarint);
+                tar <= std_ulogic_vector(tarint);                                   
 
                 if intd = depth then
                     d <= '1';
                 else
-                    intd <= intd + 1;
-                    --rden <= '1';
-                    addr <= tarint(REGD-1 downto 0);
+                    if intd = 0 then                  
+                        addr <= unsigned(param(REGD-1 downto 0));       
+                    else                                        
+                        addr <= unsigned(din(REGD-1 downto 0));     
+                    end if;      
+                    
+                    intd <= intd + 1;                      
                 end if;
             end if;
         end if;
     end process seq;
 
-    seq_n : process(clk, rst)
-    begin
-        if rst = '1' then
-            tarint <= (others => '0');
-        elsif falling_edge(clk) then
-            if en = '1' then
-                if intd = 0 then
-                    tarint <= unsigned(param);
-                else
-                    tarint <= unsigned(din);
-                end if;
-            end if;
-        end if;
-    end process seq_n;
+    --seq2 : process(clk, rst)
+    --begin
+    --    if rst = '1' then
+    --        tarint <= unsigned(param);
+    --    elsif rising_edge(clk) then
+    --        if en = '1' and intd = 0 then
+    --            tarint <= unsigned(din);
+    --        end if;
+    --    end if;
+    --end process seq2;
 end architecture rtl;

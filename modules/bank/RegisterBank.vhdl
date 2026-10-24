@@ -94,8 +94,10 @@ begin
         end if;
     end process seq;
 
-    rden <= (not cmd(2) and xor cmd(1 downto 0)) or mode;
-    wren <= (nor cmd(2 downto 1) and cmd(0)) and not mode;
+    --rden <= (not cmd(2) and xor cmd(1 downto 0)) or mode;
+    rden <= '1' when mode = '1' or (cmd = "001" or cmd = "010") else '0';
+    wren <= '1' when mode = '0' and cmd = "001" else '0';
+    --wren <= ((nor cmd(2 downto 1)) and cmd(0)) and not mode;
 
     dout <= (reg_o0 or reg_o1) when (mode or cmd(2)) = '0' else io_out when cmd(2) = '1' else reg_o0;
     douta <= reg_o1 when mode = '1' else (others => '0');    
