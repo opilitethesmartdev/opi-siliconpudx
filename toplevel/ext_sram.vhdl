@@ -16,7 +16,7 @@ use ieee.numeric_std.all;
 entity ext_sram is
     generic(
         WORDWIDTH : natural := 32;
-        WORDDEPTH : natural := 10;
+        WORDDEPTH : natural := 10
     );
     port(        
         clk : in std_ulogic;
@@ -29,19 +29,21 @@ entity ext_sram is
     );
 end entity ext_sram;
 
-type ram_t is array(0 to 2**WORDDEPTH - 1) of std_ulogic_vector(WORDWIDTH - 1 downto 0);
-
 architecture bhv of ext_sram is
-    signal ram : ram_t;
+    type ram_t is array(0 to 2**WORDDEPTH - 1) of std_ulogic_vector(WORDWIDTH - 1 downto 0);
+
+    signal ram : ram_t := (others => x"00000000");
+    signal addri : addr'type;
 begin
     seq: process(clk)
     begin
-        if rising_edge(clk) = '1' then
+        if rising_edge(clk) then
             if en = '1' then
                 if wren = '1' then
-                    ram(to_integer(addr)) <= din or mask;
+                    ram(to_integer(addr)) <= din and mask;
                 else
-                    dout <= ram(to_integer(addr)) or mask;
+                    addri <= addr;
+                    dout <= ram(to_integer(addri)) and mask;
                 end if;
             end if;
         end if;
