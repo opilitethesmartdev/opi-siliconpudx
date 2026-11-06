@@ -13,11 +13,11 @@ use work.core_pkg.all;
 package instruction_pkg is    
     constant IPTRW  : natural := 2;  
     constant ICMDW  : natural := 4;    
-    constant PARAMW : natural := WORDWIDTH; 
+    constant PARAMW : natural := 10; 
     constant PARAMS : natural := 2;
     constant INSTW  : natural := IPTRW*PARAMS + ICMDW + PARAMW*PARAMS; --24
 
-    constant INSTD : natural := WORDWIDTH;
+    constant INSTD : natural := PARAMW;
 
         -- Command helper types
     type command_t is (nop, inc, dec, jmp, isz, stp);
