@@ -23,15 +23,20 @@ architecture sim of tb_topl is
     signal rst  :  std_ulogic;
     signal o    :  std_ulogic_vector(1 downto 0);
 
-    signal enc       :  std_ulogic_vector(1 downto 0);
+    --signal enc       :  std_ulogic_vector(1 downto 0);
     signal inst_cmd  :  std_ulogic_vector(1 downto 0);
     signal inst_addr :  unsigned(INSTD-1 downto 0);
     signal inst_i    :  std_ulogic_vector(INSTW-1 downto 0);
     signal inst_o    :  std_ulogic_vector(INSTW-1 downto 0);
-    signal re_cmd    :  std_ulogic_vector(2 downto 0);
+    signal re_cmd    :  std_ulogic_vector(1 downto 0);
     signal re_addr   :  unsigned(REGD-1 downto 0);
     signal re_i      :  std_ulogic_vector(WORDWIDTH-1 downto 0);
     signal re_o      :  std_ulogic_vector(WORDWIDTH-1 downto 0);
+
+    signal wren :  std_ulogic;
+    signal addr :  unsigned(INSTD-1 downto 0);
+    signal din  :  std_ulogic_vector(INSTW-1 downto 0);
+    signal dout :  std_ulogic_vector(INSTW-1 downto 0);
 
     signal sim_inst_i : inst_rec_t;
 
@@ -39,7 +44,7 @@ begin
     clk <= (not clk) after 5 ns;
     rst <= '1', '0' after 20 ns;
 
-    enc <= '0' & en;
+    --enc <= '0' & en;
 
     sim_inst_i <= v2inst(inst_i);
 
@@ -47,7 +52,7 @@ begin
         port map(
             clk       => clk,
             rst       => rst,
-            en        => enc,
+            en        => en,
             o         => o,
             inst_cmd  => inst_cmd,
             inst_addr => inst_addr,
@@ -59,10 +64,27 @@ begin
             re_o      => re_o
     );
 
+    i_ext_sram : entity work.ext_sram
+        generic map(
+            WORDWIDTH => INSTW,
+            WORDDEPTH => INSTD
+        )
+        port map(
+            clk  => clk,
+            en   => en,
+            wren => wren,
+            mask => x"11111111",
+            addr => addr,
+            din  => din,
+            dout => dout
+    );
+    
+
     testbench : process
     begin
         -- Pull defaults
-        re_cmd <= "000";
+        --re_cmd <= "000";
+        re_cmd <= "00";
         re_addr <= to_unsigned(0, REGD);  
         re_i <= (x"00");
 
@@ -106,7 +128,8 @@ begin
 
         -- Write registers
         wait for 10 ns;
-                re_cmd <= "001";
+                --re_cmd <= "001";
+                re_cmd <= "01";
             re_addr <= to_unsigned(0, REGD);  
             re_i <= (x"01"); --0 ptr
         wait for 10 ns;
@@ -128,7 +151,8 @@ begin
             re_addr <= to_unsigned(6, REGD);  
             re_i <= (x"05"); --6 ptr
         wait for 10 ns;
-                re_cmd <= "000";
+                --re_cmd <= "000";
+                re_cmd <= "00";
                 re_addr <= to_unsigned(0, REGD);  
                 re_i <= (x"00");
         wait for 10 ns;

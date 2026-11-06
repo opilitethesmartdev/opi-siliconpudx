@@ -3,8 +3,6 @@
 -- Authors		:	opilitethesmartdev
 -- Description	:	External SRAM bank
 ----------------------------------------------------------------------------
-
--- vhdl_ls off
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -33,7 +31,7 @@ architecture bhv of ext_sram is
     type ram_t is array(0 to 2**WORDDEPTH - 1) of std_ulogic_vector(WORDWIDTH - 1 downto 0);
 
     signal ram : ram_t := (others => x"00000000");
-    signal addri : addr'type;
+    signal addri : unsigned(WORDDEPTH - 1 downto 0);
 begin
     seq: process(clk)
     begin
