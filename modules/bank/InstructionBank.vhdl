@@ -16,11 +16,9 @@ entity InstructionBank is
         o : out std_ulogic_vector(1 downto 0); -- [stp][nop]
         
         cmd  : in  std_ulogic_vector(1 downto 0); --[read][write]; xor = en; 
-        
-        -- Mirror mode
         addr : in  unsigned(REGD - 1 downto 0); 
         din  : in  std_ulogic_vector(WORDWIDTH - 1 downto 0);
-        dout : out std_ulogic_vector(WORDWIDTH - 1 downto 0);       
+        dout : out std_ulogic_vector(WORDWIDTH - 1 downto 0)--;       
     );
 end entity InstructionBank;
 

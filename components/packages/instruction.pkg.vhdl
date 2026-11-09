@@ -20,7 +20,7 @@ package instruction_pkg is
     constant INSTD : natural := PARAMW;
 
         -- Command helper types
-    type command_t is (nop, inc, dec, jmp, isz, stp);
+    type command_t is (nop, idl, inc, dec,  jmp, isz, stp, ldd,  wrr, wrd, iot, iow,  izb, izv, pke);
 
     type inst_rec_t is record
         depth0 : unsigned(IPTRW - 1 downto 0);
