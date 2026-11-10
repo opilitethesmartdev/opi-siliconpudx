@@ -11,7 +11,7 @@ use work.core_pkg.all;
 use work.register_pkg.all;
 use work.instruction_pkg.all;
 
-entity InstructionBank is
+entity InstructionBankIf is
     port (
         clk : in std_ulogic;
         rst : in std_ulogic;
@@ -29,9 +29,9 @@ entity InstructionBank is
         ram_addr : out unsigned(INSTD - 1 downto 0);
         ram_dout : in std_ulogic_vector(IBWIDTH - 1 downto 0)
     );
-end entity InstructionBank;
+end entity InstructionBankIf;
 
-architecture rtl of InstructionBank is
+architecture rtl of InstructionBankIf is
     signal en, edr, eni : std_ulogic;
     signal isstp, isnop : std_ulogic;
 begin

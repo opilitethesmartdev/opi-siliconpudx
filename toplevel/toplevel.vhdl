@@ -96,7 +96,7 @@ begin
                 dout_b => rm_dout_b
         );
 
-        instb : entity work.InstructionBank
+        instb : entity work.InstructionBankIf
             port map(
                 clk      => clk,
                 rst      => rst,

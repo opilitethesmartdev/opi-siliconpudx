@@ -27,7 +27,7 @@ project:
     - "modules/execution/ProgramCounterIf.vhdl"
     - "modules/address/AddressResolutionEngine.vhdl"
     - "modules/address/AddressResolutionIf.vhdl"
-    - "modules/bank/InstructionBank.vhdl"
+    - "modules/bank/InstructionBankIf.vhdl"
     - "modules/bank/RegisterBank.vhdl"
     #- "modules/ProcessingElement.vhdl"
     - "toplevel/toplevel.vhdl"
