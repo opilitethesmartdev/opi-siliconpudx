@@ -22,7 +22,7 @@ entity SerialMemoryMasterIf is
 
         -- Memory Interface       
         int : in std_ulogic;
-        cmd : out std_ulogic;
+        ctrl : out std_ulogic;
         addr : out   std_ulogic_vector(SADDRWIDTH - 1 downto 0);
         -- Tri-state data lines
         doe  : out std_ulogic_vector(SDATAWIDTH - 1 downto 0);
@@ -38,11 +38,12 @@ entity SerialMemoryMasterIf is
 end entity SerialMemoryMasterIf;
 
 architecture rtl of SerialMemoryMasterIf is
-    signal clk_n : std_ulogic;
+    signal clk_n, en : std_ulogic;
     signal addr_ff : std_ulogic_vector(ADDRWIDTH - 1 downto 0);
 begin
-    -- Clock generation
+    -- Clock / Enable logic
     clk_n <= not clk;
+    en <= xor cmd;
 
     seq: process(clk, clk_n) 
     begin

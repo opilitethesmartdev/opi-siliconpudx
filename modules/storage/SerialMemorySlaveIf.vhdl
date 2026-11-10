@@ -19,7 +19,7 @@ entity SerialMemorySlaveIf is
         clk : in std_ulogic;
         
         int : out std_ulogic;
-        cmd : in std_ulogic;
+        ctrl : in std_ulogic;
 
         addr : in   std_ulogic_vector(ADDRWIDTH - 1 downto 0);
         dio  : inout std_ulogic_vector(DATAWIDTH - 1 downto 0)--;       

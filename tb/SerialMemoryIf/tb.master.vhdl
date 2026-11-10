@@ -21,7 +21,7 @@ architecture sim of tb_serialmemoryif_master is
 
     signal clk  :  std_ulogic := '0';
     signal int  :  std_ulogic;
-    signal cmd  :  std_ulogic;
+    signal ctrl  :  std_ulogic;
     signal addr :  std_ulogic_vector(SADDRWIDTH-1 downto 0);
     signal doe  :  std_ulogic_vector(SDATAWIDTH-1 downto 0);
     signal dmo  :  std_ulogic_vector(SDATAWIDTH-1 downto 0);
@@ -45,7 +45,7 @@ begin
             clk  => clk,
 
             int  => int,
-            cmd  => cmd,
+            ctrl  => ctrl,
             addr => addr,
             doe  => doe,
             dmo  => dmo,
