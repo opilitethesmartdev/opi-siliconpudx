@@ -23,9 +23,5 @@ entity InstructionBank is
 end entity InstructionBank;
 
 architecture rtl of InstructionBank is
-    
 begin
-    
-    
-    
 end architecture rtl;
