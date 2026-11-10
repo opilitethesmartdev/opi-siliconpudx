@@ -39,31 +39,33 @@ end entity SerialMemoryMasterIf;
 
 architecture rtl of SerialMemoryMasterIf is
     signal clk_n, en : std_ulogic;
-    signal load_shifts : std_ulogic;
+    signal lds, fina : std_ulogic;
     signal addr_ff : std_ulogic_vector(ADDRWIDTH - 1 downto 0);
 begin
     -- Clock / Enable logic
     clk_n <= not clk;
     en <= xor cmd;
 
-loadedge : entity work.edgend
-    generic map(
-        polarity => polarity
-    )
-    port map(
-        clk => clk,
-        i   => en,
-        o   => load_shifts
-);
+    loadedge : entity work.edgend
+        generic map(
+            polarity => polarity
+        )
+        port map(
+            clk => clk,
+            i   => en,
+            o   => load_shifts
+    );
 
 
     shiftff: process(clk, clk_n) 
     begin
         if rising_edge(clk) or rising_edge(clk_n) then
-            if en = '1' then
-                if load_shifts = '1' then
+            if en = '1' and fina = '0' then
+                if lds = '1' then
                     addr_ff <= addr;
                 else
+                    saddr <= addr_ff(ADDRWIDTH - 1 downto ADDRWIDTH - SADDRWIDTH);
+                    addr_ff <= addr_ff(ADDRWIDTH - SADDRWIDTH - 1 downto 0);
                 end if;
             end if;
         end if;
