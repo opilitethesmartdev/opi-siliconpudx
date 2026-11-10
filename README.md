@@ -4,7 +4,7 @@ Simple 8-bit microcontroller architecure based on the WDR Paper computer ISA, ex
 **Author: opilitethesmartdev**
 
 ## Features: 
-- Simplified ISA: 6 base commands + 9 additions 
+- Simplified ISA: 5 base commands + 6 additions 
   - Base ISA from the Matchstick PC (WDR Computer Club)
   - Extended for actual MCU use
 - Pointer indirection:
@@ -21,7 +21,7 @@ Simple 8-bit microcontroller architecure based on the WDR Paper computer ISA, ex
   - Interfacing with free pins (GPIO)
   - Parallel 4-bit duplex protocol
   - Specialized ISA extensions
-  - Possibly some cool extension modules (Interrupts, MAC)
+  - Possibly some cool extension modules (Interrupts, MAC, ReLU)
 - External (persistent) storage
 - Adjustment to ASIC constraints
 
@@ -41,29 +41,22 @@ stp        -- stop program
 **Implicit:**
 ```
 nop        -- no command (throws error when reached)
+idl        -- do nothing (idle)
 ```
 **Extensions:**
 ```
-idl        -- do nothing (idle)
-wrr A, B   -- override register A to value Bs
+wrr A, B   -- override register A to value B
 
 ldd A, B   -- load embedded data from location A to register B
-wrd A, B   -- write value A to embedded data location B
+           -- (4 bits from A and 4 bits from A + 1)
 
 iot A, B   -- toggle bit B on MMIO register A
-iow A, B   -- write value A[7-4] with mask A[3-0] to a MMIO register B half
-           -- if A[9] = 0: write to register [7-4]
-           -- if A[9] = 1: write to register [3-0]
 
 izb A, (B) -- check if (bit B) of MMIO register A equals 0
            -- (same behavior as isz)
 
-izv A, B   -- check if MMIO register A half equals B[7-4] with mask B[3-0]
-           -- if B[9] = 0: check register [7-4]
-           -- if B[9] = 1: check register [3-0]
-           -- (same behavior as isz)
-
-pke A, (B) -- send a pulse to MMIO register A (with message B)
+mtr A, B   -- move MMIO register A to register B
+rtm A, B   -- move register A to MMIO register B
 ```
 
 ## Instruction
@@ -92,4 +85,4 @@ The (to be confirmed) instruction storage has the size of 1024x32 bits. As such,
 0x03 [28-bit instruction][4-bit data]
 ```
 These chunks of 4 bit data can be merged into 8 bit values that can be loaded into registers
-using the `ldd` command. These can be edited using the `wrd` command
+using the `ldd` command.
