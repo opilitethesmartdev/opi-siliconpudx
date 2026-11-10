@@ -13,7 +13,7 @@ use work.register_pkg.all;
 entity SerialMemorySlaveIf is
     generic(
         DATAWIDTH : natural := 4;
-        ADDRWIDTH : natural := 2;
+        ADDRWIDTH : natural := 2
     );
     port (
         clk : in std_ulogic;

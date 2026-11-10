@@ -15,7 +15,7 @@ entity SerialMemoryMasterIf is
         SDATAWIDTH : natural := 4;
         SADDRWIDTH : natural := 2;
         DATAWIDTH : natural := 32;
-        ADDRWIDTH : natural := 16;
+        ADDRWIDTH : natural := 16
     );
     port (
         clk : in std_ulogic;
@@ -33,7 +33,7 @@ entity SerialMemoryMasterIf is
         cmd : in std_ulogic_vector(1 downto 0); --[rd][wr]; xor = en
         addr : in unsigned(ADDRWIDTH - 1 downto 0);
         dso : in std_ulogic_vector(DATAWIDTH - 1 downto 0);
-        dsi : out std_ulogic_vector(DATAWIDTH - 1 downto 0);
+        dsi : out std_ulogic_vector(DATAWIDTH - 1 downto 0)
     );
 end entity SerialMemoryMasterIf;
 
@@ -47,13 +47,10 @@ begin
     en <= xor cmd;
 
     loadedge : entity work.edgend
-        generic map(
-            polarity => polarity
-        )
         port map(
             clk => clk,
             i   => en,
-            o   => load_shifts
+            o   => lds
     );
 
 
@@ -62,7 +59,7 @@ begin
         if rising_edge(clk) or rising_edge(clk_n) then
             if en = '1' and fina = '0' then
                 if lds = '1' then
-                    addr_ff <= addr;
+                    addr_ff <= std_ulogic_vector(addr);
                 else
                     saddr <= addr_ff(ADDRWIDTH - 1 downto ADDRWIDTH - SADDRWIDTH);
                     addr_ff <= addr_ff(ADDRWIDTH - SADDRWIDTH - 1 downto 0);
