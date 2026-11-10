@@ -14,22 +14,23 @@ use work.instruction_pkg.all;
 entity toplevel is
     port(
         -- Fundamental signals
-        clk : in std_ulogic; -- fast clock
-        rst : in std_ulogic;
-        en : in  std_ulogic; -- [en] 
-        o  : out std_ulogic_vector(1 downto 0); -- [done][err]
+            clk : in std_ulogic;
+            rst : in std_ulogic;
+            en : in  std_ulogic; -- [en] 
+            o  : out std_ulogic_vector(1 downto 0); -- [done][err]
         
-        -- Instruction bank
-        inst_cmd  : in std_ulogic_vector(1 downto 0);
-        inst_addr : in unsigned(INSTD-1 downto 0);
-        inst_i : in  std_ulogic_vector(INSTW-1 downto 0);
-        inst_o : out std_ulogic_vector(INSTW-1 downto 0); 
+        -- Instruction SRAM access
+            ram_en   : out std_ulogic;
+            ram_wren : out std_ulogic;
+            ram_mask : out std_ulogic_vector(IBWIDTH - 1 downto 0);
+            ram_addr : out unsigned(INSTD - 1 downto 0);
+            ram_dout : in std_ulogic_vector(IBWIDTH - 1 downto 0);
         
         -- Register bank external access
-        re_cmd  : in std_ulogic_vector(1 downto 0);
-        re_addr : in unsigned(REGD-1 downto 0);
-        re_i : in  std_ulogic_vector(WORDWIDTH-1 downto 0);
-        re_o : out std_ulogic_vector(WORDWIDTH-1 downto 0);
+            re_cmd  : in std_ulogic_vector(1 downto 0);
+            re_addr : in unsigned(REGD-1 downto 0);
+            re_i : in  std_ulogic_vector(WORDWIDTH-1 downto 0);
+            re_o : out std_ulogic_vector(WORDWIDTH-1 downto 0);
 
         -- Mock output (prevents instruction architecture from being optimized away at synthesis)
         instruction : out std_ulogic
@@ -39,7 +40,7 @@ end entity toplevel;
 
 architecture rtl of toplevel is
     -- State control signals
-        signal oi : std_ulogic;
+        signal err : std_ulogic;
         signal s  : clk_rec_t; -- slow clock
 
     -- Register bank (mirror mode)
@@ -48,7 +49,6 @@ architecture rtl of toplevel is
         signal reg_addr   :  unsigned(REGD-1 downto 0);
         signal reg_din    :  std_ulogic_vector(WORDWIDTH-1 downto 0);
         signal reg_dout   :  std_ulogic_vector(WORDWIDTH-1 downto 0);
-
     -- Register bank (singular mode)
         signal rm_rd_a   :  std_ulogic;
         signal rm_rd_b   :  std_ulogic;
@@ -56,6 +56,14 @@ architecture rtl of toplevel is
         signal rm_addr_b :  unsigned(REGD-1 downto 0);
         signal rm_dout_a :  std_ulogic_vector(WORDWIDTH-1 downto 0);
         signal rm_dout_b :  std_ulogic_vector(WORDWIDTH-1 downto 0);
+
+    -- Instruction bank
+        signal ins_o        :  std_ulogic_vector(1 downto 0);
+        signal cmd      :  std_ulogic_vector(1 downto 0);
+        signal addr     :  unsigned(INSTD-1 downto 0);
+        signal dout     :  std_ulogic_vector(EMBDWIDTH-1 downto 0);
+        signal inst     :  inst_rec_t;
+
 
 begin
     -- State Entities
@@ -87,8 +95,27 @@ begin
                 dout_a => rm_dout_a,
                 dout_b => rm_dout_b
         );
+
+        instb : entity work.InstructionBank
+            port map(
+                clk      => clk,
+                rst      => rst,
+                o        => ins_o,
+                cmd      => cmd,
+                addr     => addr,
+                dout     => dout,
+                inst     => inst,
+                ram_en   => ram_en,
+                ram_wren => ram_wren,
+                ram_mask => ram_mask,
+                ram_addr => ram_addr,
+                ram_dout => ram_dout
+        );
+
     
     -- Processes
     -- Logic
-    o <= '0' & reg_err;
+    err <= reg_err or o(0);
+    o <= ins_o(1) & err;
+    
 end architecture rtl;
