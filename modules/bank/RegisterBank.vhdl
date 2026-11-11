@@ -39,14 +39,12 @@ architecture rtl of RegisterBank is
 
     signal a_en   :  std_ulogic;
     signal a_wren :  std_ulogic;
-    signal a_mask :  std_ulogic_vector(7 downto 0);
     signal a_addr :  unsigned(7 downto 0);
     signal a_din  :  std_ulogic_vector(7 downto 0);
     signal a_dout :  std_ulogic_vector(7 downto 0);
 
     signal b_en   :  std_ulogic;
     signal b_wren :  std_ulogic;
-    signal b_mask :  std_ulogic_vector(7 downto 0);
     signal b_addr :  unsigned(7 downto 0);
     signal b_din  :  std_ulogic_vector(7 downto 0);
     signal b_dout :  std_ulogic_vector(7 downto 0);
@@ -60,7 +58,7 @@ begin
             clk  => clk,
             en   => a_en,
             wren => a_wren,
-            mask => a_mask,
+            mask => (others => a_en),
             addr => a_addr,
             din  => a_din,
             dout => a_dout
@@ -73,7 +71,7 @@ begin
             clk  => clk,
             en   => b_en,
             wren => b_wren,
-            mask => b_mask,
+            mask => (others => b_en),
             addr => b_addr,
             din  => b_din,
             dout => b_dout
