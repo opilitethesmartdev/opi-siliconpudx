@@ -37,6 +37,8 @@ architecture sim of tb_topl is
     signal instruction :  std_ulogic;
     
 
+    signal sel_ram      :  std_ulogic;
+
     signal ram_en      :  std_ulogic;
     signal ram_wren    :  std_ulogic;
     signal ram_mask    :  std_ulogic_vector(IBWIDTH-1 downto 0);
@@ -44,22 +46,19 @@ architecture sim of tb_topl is
     signal ram_dout    :  std_ulogic_vector(IBWIDTH-1 downto 0);
     signal ram_din  :  std_ulogic_vector(IBWIDTH-1 downto 0);
 
-signal req        :  std_ulogic_vector(1 downto 0);
-signal rsv        :  std_ulogic_vector(1 downto 0);
+    signal man_ram_en   :  std_ulogic;
+    signal man_ram_wren :  std_ulogic;
+    signal man_ram_mask :  std_ulogic_vector(IBWIDTH-1 downto 0);
+    signal man_ram_addr :  unsigned(INSTD-1 downto 0);
+    signal man_ram_din  :  std_ulogic_vector(IBWIDTH-1 downto 0);
+    signal man_ram_dout :  std_ulogic_vector(IBWIDTH-1 downto 0);
 
-signal man_ram_en   :  std_ulogic;
-signal man_ram_wren :  std_ulogic;
-signal man_ram_mask :  std_ulogic_vector(IBWIDTH-1 downto 0);
-signal man_ram_addr :  unsigned(INSTD-1 downto 0);
-signal man_ram_din  :  std_ulogic_vector(IBWIDTH-1 downto 0);
-signal man_ram_dout :  std_ulogic_vector(IBWIDTH-1 downto 0);
-
-signal dut_ram_en   :  std_ulogic;
-signal dut_ram_wren :  std_ulogic;
-signal dut_ram_mask :  std_ulogic_vector(IBWIDTH-1 downto 0);
-signal dut_ram_addr :  unsigned(INSTD-1 downto 0);
-signal dut_ram_din  :  std_ulogic_vector(IBWIDTH-1 downto 0);
-signal dut_ram_dout :  std_ulogic_vector(IBWIDTH-1 downto 0);
+    signal dut_ram_en   :  std_ulogic;
+    signal dut_ram_wren :  std_ulogic;
+    signal dut_ram_mask :  std_ulogic_vector(IBWIDTH-1 downto 0);
+    signal dut_ram_addr :  unsigned(INSTD-1 downto 0);
+    signal dut_ram_din  :  std_ulogic_vector(IBWIDTH-1 downto 0);
+    signal dut_ram_dout :  std_ulogic_vector(IBWIDTH-1 downto 0);
 
 
     --signal sim_inst_i : inst_rec_t;
@@ -80,11 +79,11 @@ begin
             rst         => rst,
             en          => en,
             o           => o,
-            ram_en      => ins_ram_en,
-            ram_wren    => ins_ram_wren,
-            ram_mask    => ins_ram_mask,
-            ram_addr    => ins_ram_addr,
-            ram_dout    => ins_ram_dout,
+            ram_en      => dut_ram_en,
+            ram_wren    => dut_ram_wren,
+            ram_mask    => dut_ram_mask,
+            ram_addr    => dut_ram_addr,
+            ram_dout    => dut_ram_dout,
             re_cmd      => re_cmd,
             re_addr     => re_addr,
             re_i        => re_i,
@@ -92,31 +91,31 @@ begin
             instruction => instruction
     );
 
-    i_SRAMArbiterIf : entity work.SRAMArbiterIf
+    i_SRAMMuxIf : entity work.SRAMMuxIf
         port map(
             clk        => clk,
             rst        => rst,
-            req        => req,
-            rsv        => rsv,
+            sel        => sel_ram,
             ram_en     => ram_en,
             ram_wren   => ram_wren,
             ram_mask   => ram_mask,
             ram_addr   => ram_addr,
             ram_din    => ram_din,
             ram_dout   => ram_dout,
-            ram_a_en   => man_ram_en,
-            ram_a_wren => man_ram_wren,
-            ram_a_mask => man_ram_mask,
-            ram_a_addr => man_ram_addr,
-            ram_a_din  => man_ram_din,
-            ram_a_dout => man_ram_dout,
-            ram_b_en   => dut_ram_en,
-            ram_b_wren => dut_ram_wren,
-            ram_b_mask => dut_ram_mask,
-            ram_b_addr => dut_ram_addr,
-            ram_b_din  => dut_ram_din,
-            ram_b_dout => dut_ram_dout
+            ram_0_en   => man_ram_en,
+            ram_0_wren => man_ram_wren,
+            ram_0_mask => man_ram_mask,
+            ram_0_addr => man_ram_addr,
+            ram_0_din  => man_ram_din,
+            ram_0_dout => man_ram_dout,
+            ram_1_en   => dut_ram_en,
+            ram_1_wren => dut_ram_wren,
+            ram_1_mask => dut_ram_mask,
+            ram_1_addr => dut_ram_addr,
+            ram_1_din  => dut_ram_din,
+            ram_1_dout => dut_ram_dout
     );
+
     
     i_ext_sram : entity work.ext_sram
         generic map(
@@ -140,6 +139,14 @@ begin
         re_cmd <= "00";
         re_addr <= to_unsigned(0, REGD);  
         re_i <= (x"00");
+        
+        man_ram_en <= '0';
+        man_ram_wren <= '0';
+        man_ram_mask <= (others => '0');
+        man_ram_addr <= to_unsigned(0, INSTD);  
+        man_ram_din <= x"0" & newinst(0, 0, nop, 0, 0);
+
+        sel_ram <= '0';
 
         -- Program:
         -- isz **0   0
@@ -148,48 +155,42 @@ begin
         -- dec **0   0
         -- inc **4   0
         -- jmp   0   0
-        
 
         -- Write instructions
         wait for 10 ns;
-            ram_en <= '1';
-            ram_wren <= '1';
-            ram_mask <= (others => '1');
+            man_ram_en <= '1';
+            man_ram_wren <= '1';
+            man_ram_mask <= (others => '1');
 
-            ram_addr <= to_unsigned(0, INSTD);  
-            ram_din <= x"0" & newinst(2, 0, isz, 0, 0);
+            man_ram_addr <= to_unsigned(0, INSTD);  
+            man_ram_din <= x"0" & newinst(2, 0, isz, 0, 0);
         wait for 10 ns;
-            ram_addr <= to_unsigned(1, INSTD);  
-            ram_din <= x"0" & newinst(0, 2, jmp, 3, 0);
+            man_ram_addr <= to_unsigned(1, INSTD);  
+            man_ram_din <= x"0" & newinst(0, 2, jmp, 3, 0);
         wait for 10 ns;
-            ram_addr <= to_unsigned(2, INSTD);  
-            ram_din <= x"0" & newinst(0, 0, stp, 0, 0);
+            man_ram_addr <= to_unsigned(2, INSTD);  
+            man_ram_din <= x"0" & newinst(0, 0, stp, 0, 0);
         wait for 10 ns;
-            ram_addr <= to_unsigned(3, INSTD);  
-            ram_din <= x"0" & newinst(2, 0, dec, 0, 0);
+            man_ram_addr <= to_unsigned(3, INSTD);  
+            man_ram_din <= x"0" & newinst(2, 0, dec, 0, 0);
         wait for 10 ns;
-            ram_addr <= to_unsigned(4, INSTD);  
-            ram_din <= x"0" & newinst(2, 0, inc, 4, 0);
+            man_ram_addr <= to_unsigned(4, INSTD);  
+            man_ram_din <= x"0" & newinst(2, 0, inc, 4, 0);
         wait for 10 ns;
-            ram_addr <= to_unsigned(5, INSTD);  
-            ram_din <= x"0" & newinst(0, 0, jmp, 0, 0);
+            man_ram_addr <= to_unsigned(5, INSTD);  
+            man_ram_din <= x"0" & newinst(0, 0, jmp, 0, 0);
         wait for 10 ns;
-            ram_en <= '0';
-            ram_wren <= '0';
-            ram_mask <= (others => '0');
-            ram_addr <= (others => '0');
-            ram_din <=  (others => '0');
+            man_ram_en <= '0';
+            man_ram_wren <= '0';
+            man_ram_mask <= (others => '0');
+            man_ram_addr <= (others => '0');
+            man_ram_din <=  (others => '0');
         wait for 10 ns;
-        -- Wire the SRAM to Toplevel
-            ram_en <= ins_ram_en;
-            ram_wren <= ins_ram_wren;
-            ram_mask <= ins_ram_mask;
-            ram_addr <= ins_ram_addr;
-            ins_ram_dout <= ram_dout;
+        -- Mux SRAM to DUT      
+        sel_ram <= '1';
 
         -- Write registers
         wait for 10 ns;
-                --re_cmd <= "001";
                 re_cmd <= "01";
             re_addr <= to_unsigned(0, REGD);  
             re_i <= (x"01"); --0 ptr
