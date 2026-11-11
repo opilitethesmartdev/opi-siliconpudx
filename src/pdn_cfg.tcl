@@ -6,7 +6,7 @@ define_pdn_grid \
     -instances { \
         i_asic_harness.i_toplevel.regb.sram0.sram256x8m8wm1_3v3_sram \
         i_asic_harness.i_toplevel.regb.sram1.sram256x8m8wm1_3v3_sram \
-        }     
+        } \
     -name sram_grid \
     -starts_with POWER \
     -grid_over_pg_pins \
