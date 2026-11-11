@@ -41,8 +41,7 @@ end entity asic_harness;
 
 architecture rtl of asic_harness is
     -- SRAM Access Arbitration
-    signal req        :  std_ulogic_vector(1 downto 0);
-    signal rsv        :  std_ulogic_vector(1 downto 0);
+    signal ram_sel        :  std_ulogic;
 
     -- Toplevel SRAM Access
     signal ram_a_en   :  std_ulogic;
@@ -62,31 +61,27 @@ architecture rtl of asic_harness is
 
 
 begin
-    i_SRAMArbiterIf : entity work.SRAMArbiterIf
-        port map(
-            clk        => clk,
-            rst        => rst,
-            req        => req,
-            rsv        => rsv,
-            ram_en     => ram_en,
-            ram_wren   => ram_wren,
-            ram_mask   => ram_mask,
-            ram_addr   => ram_addr,
-            ram_din    => ram_din,
-            ram_dout   => ram_dout,
-            ram_a_en   => ram_a_en,
-            ram_a_wren => ram_a_wren,
-            ram_a_mask => ram_a_mask,
-            ram_a_addr => ram_a_addr,
-            ram_a_din  => ram_a_din,
-            ram_a_dout => ram_a_dout,
-            ram_b_en   => hsc_ram_en,
-            ram_b_wren => hsc_ram_wren,
-            ram_b_mask => hsc_ram_mask,
-            ram_b_addr => hsc_ram_addr,
-            ram_b_din  => hsc_ram_din,
-            ram_b_dout => hsc_ram_dout
-    );
-    
+i_SRAMMuxIf : entity work.SRAMMuxIf
+    port map(
+        sel        => ram_sel,
+        ram_en     => ram_en,
+        ram_wren   => ram_wren,
+        ram_mask   => ram_mask,
+        ram_addr   => ram_addr,
+        ram_din    => ram_din,
+        ram_dout   => ram_dout,
+        ram_0_en   => hsc_ram_en,
+        ram_0_wren => hsc_ram_wren,
+        ram_0_mask => hsc_ram_mask,
+        ram_0_addr => hsc_ram_addr,
+        ram_0_din  => hsc_ram_din,
+        ram_0_dout => hsc_ram_dout,
+        ram_1_en   => ram_a_en,
+        ram_1_wren => ram_a_wren,
+        ram_1_mask => ram_a_mask,
+        ram_1_addr => ram_a_addr,
+        ram_1_din  => ram_a_din,
+        ram_1_dout => ram_a_dout
+);    
 
 end architecture rtl;
