@@ -44,6 +44,24 @@ architecture sim of tb_topl is
     signal ram_dout    :  std_ulogic_vector(IBWIDTH-1 downto 0);
     signal ram_din  :  std_ulogic_vector(IBWIDTH-1 downto 0);
 
+signal req        :  std_ulogic_vector(1 downto 0);
+signal rsv        :  std_ulogic_vector(1 downto 0);
+
+signal man_ram_en   :  std_ulogic;
+signal man_ram_wren :  std_ulogic;
+signal man_ram_mask :  std_ulogic_vector(IBWIDTH-1 downto 0);
+signal man_ram_addr :  unsigned(INSTD-1 downto 0);
+signal man_ram_din  :  std_ulogic_vector(IBWIDTH-1 downto 0);
+signal man_ram_dout :  std_ulogic_vector(IBWIDTH-1 downto 0);
+
+signal dut_ram_en   :  std_ulogic;
+signal dut_ram_wren :  std_ulogic;
+signal dut_ram_mask :  std_ulogic_vector(IBWIDTH-1 downto 0);
+signal dut_ram_addr :  unsigned(INSTD-1 downto 0);
+signal dut_ram_din  :  std_ulogic_vector(IBWIDTH-1 downto 0);
+signal dut_ram_dout :  std_ulogic_vector(IBWIDTH-1 downto 0);
+
+
     --signal sim_inst_i : inst_rec_t;
 
 
@@ -74,7 +92,32 @@ begin
             instruction => instruction
     );
 
-
+    i_SRAMArbiterIf : entity work.SRAMArbiterIf
+        port map(
+            clk        => clk,
+            rst        => rst,
+            req        => req,
+            rsv        => rsv,
+            ram_en     => ram_en,
+            ram_wren   => ram_wren,
+            ram_mask   => ram_mask,
+            ram_addr   => ram_addr,
+            ram_din    => ram_din,
+            ram_dout   => ram_dout,
+            ram_a_en   => man_ram_en,
+            ram_a_wren => man_ram_wren,
+            ram_a_mask => man_ram_mask,
+            ram_a_addr => man_ram_addr,
+            ram_a_din  => man_ram_din,
+            ram_a_dout => man_ram_dout,
+            ram_b_en   => dut_ram_en,
+            ram_b_wren => dut_ram_wren,
+            ram_b_mask => dut_ram_mask,
+            ram_b_addr => dut_ram_addr,
+            ram_b_din  => dut_ram_din,
+            ram_b_dout => dut_ram_dout
+    );
+    
     i_ext_sram : entity work.ext_sram
         generic map(
             WORDWIDTH => IBWIDTH,
@@ -105,6 +148,7 @@ begin
         -- dec **0   0
         -- inc **4   0
         -- jmp   0   0
+        
 
         -- Write instructions
         wait for 10 ns;
