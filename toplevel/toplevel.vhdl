@@ -33,7 +33,7 @@ entity toplevel is
             re_o : out std_ulogic_vector(WORDWIDTH-1 downto 0);
 
         -- Mock output (prevents instruction architecture from being optimized away at synthesis)
-        instruction : out std_ulogic
+            instruction : out std_ulogic
     );
 
 end entity toplevel;
@@ -43,19 +43,25 @@ architecture rtl of toplevel is
         signal err : std_ulogic;
         signal s  : clk_rec_t; -- slow clock
 
-    -- Register bank (mirror mode)
+    -- Register bank source
         signal reg_err    :  std_ulogic;
         signal reg_cmd    :  std_ulogic_vector(1 downto 0);
         signal reg_addr   :  unsigned(REGD-1 downto 0);
-        signal reg_din    :  std_ulogic_vector(WORDWIDTH-1 downto 0);
-        signal reg_dout   :  std_ulogic_vector(WORDWIDTH-1 downto 0);
+        signal reg_i    :  std_ulogic_vector(WORDWIDTH-1 downto 0);
+        signal reg_o   :  std_ulogic_vector(WORDWIDTH-1 downto 0);
+
+    -- Register bank (mirror mode)
+        signal rm_cmd    :  std_ulogic_vector(1 downto 0);
+        signal rm_addr   :  unsigned(REGD-1 downto 0);
+        signal rm_i    :  std_ulogic_vector(WORDWIDTH-1 downto 0);
+        signal rm_o   :  std_ulogic_vector(WORDWIDTH-1 downto 0);
     -- Register bank (singular mode)
-        signal rm_rd_a   :  std_ulogic;
-        signal rm_rd_b   :  std_ulogic;
-        signal rm_addr_a :  unsigned(REGD-1 downto 0);
-        signal rm_addr_b :  unsigned(REGD-1 downto 0);
-        signal rm_dout_a :  std_ulogic_vector(WORDWIDTH-1 downto 0);
-        signal rm_dout_b :  std_ulogic_vector(WORDWIDTH-1 downto 0);
+        signal rs_rd_a   :  std_ulogic;
+        signal rs_rd_b   :  std_ulogic;
+        signal rs_addr_a :  unsigned(REGD-1 downto 0);
+        signal rs_addr_b :  unsigned(REGD-1 downto 0);
+        signal rs_dout_a :  std_ulogic_vector(WORDWIDTH-1 downto 0);
+        signal rs_dout_b :  std_ulogic_vector(WORDWIDTH-1 downto 0);
 
     -- Instruction bank
         signal ins_o        :  std_ulogic_vector(1 downto 0);
@@ -86,14 +92,14 @@ begin
                 err    => reg_err,
                 cmd    => reg_cmd,
                 addr   => reg_addr,
-                din    => reg_din,
-                dout   => reg_dout,
-                rd_a   => rm_rd_a,
-                rd_b   => rm_rd_b,
-                addr_a => rm_addr_a,
-                addr_b => rm_addr_b,
-                dout_a => rm_dout_a,
-                dout_b => rm_dout_b
+                din    => reg_i,
+                dout   => reg_o,
+                rd_a   => rs_rd_a,
+                rd_b   => rs_rd_b,
+                addr_a => rs_addr_a,
+                addr_b => rs_addr_b,
+                dout_a => rs_dout_a,
+                dout_b => rs_dout_b
         );
 
         instb : entity work.InstructionBankIf
@@ -113,9 +119,27 @@ begin
         );
 
     
+    -- Multiplexers
+        regb_mux : entity work.RegBankMuxIf
+            port map(
+                sel        => en,
+                reg_cmd    => reg_cmd,
+                reg_addr   => reg_addr,
+                reg_i      => reg_i,
+                reg_o      => reg_o,
+                reg_0_cmd  => re_cmd, 
+                reg_0_addr => re_addr,
+                reg_0_i    => re_i,
+                reg_0_o    => re_o,
+                reg_1_cmd  => rm_cmd,
+                reg_1_addr => rm_addr,
+                reg_1_i    => rm_i,
+                reg_1_o    => rm_o
+        );
+
     -- Processes
     -- Logic
-    err <= reg_err or o(0);
+    err <= reg_err or ins_o(0);
     o <= ins_o(1) & err;
     
 end architecture rtl;

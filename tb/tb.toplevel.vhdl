@@ -23,16 +23,10 @@ architecture sim of tb_topl is
     signal rst  :  std_ulogic;
     signal o    :  std_ulogic_vector(1 downto 0);
 
-    signal ins_ram_en      :  std_ulogic;
-    signal ins_ram_wren    :  std_ulogic;
-    signal ins_ram_mask    :  std_ulogic_vector(IBWIDTH-1 downto 0);
-    signal ins_ram_addr    :  unsigned(INSTD-1 downto 0);
-    signal ins_ram_dout    :  std_ulogic_vector(IBWIDTH-1 downto 0);
-
     signal re_cmd      :  std_ulogic_vector(1 downto 0);
     signal re_addr     :  unsigned(REGD-1 downto 0);
     signal re_i        :  std_ulogic_vector(WORDWIDTH-1 downto 0);
-    signal re_o        :  std_ulogic_vector(WORDWIDTH-1 downto 0);
+    signal re_o        :  std_ulogic_vector(WORDWIDTH-1 downto 0) := (others => '0');
 
     signal instruction :  std_ulogic;
     
@@ -51,7 +45,7 @@ architecture sim of tb_topl is
     signal man_ram_mask :  std_ulogic_vector(IBWIDTH-1 downto 0);
     signal man_ram_addr :  unsigned(INSTD-1 downto 0);
     signal man_ram_din  :  std_ulogic_vector(IBWIDTH-1 downto 0);
-    signal man_ram_dout :  std_ulogic_vector(IBWIDTH-1 downto 0);
+    signal man_ram_dout :  std_ulogic_vector(IBWIDTH-1 downto 0) := (others => '0');
 
     signal dut_ram_en   :  std_ulogic;
     signal dut_ram_wren :  std_ulogic;
@@ -93,8 +87,6 @@ begin
 
     i_SRAMMuxIf : entity work.SRAMMuxIf
         port map(
-            clk        => clk,
-            rst        => rst,
             sel        => sel_ram,
             ram_en     => ram_en,
             ram_wren   => ram_wren,

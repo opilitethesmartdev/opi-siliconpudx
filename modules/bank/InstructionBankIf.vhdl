@@ -56,6 +56,7 @@ begin
     dout <= ram_dout(IBWIDTH - 1 downto INSTW) when edr = '1' else (others => '0');  
     inst <= v2inst(ram_dout(INSTW - 1 downto 0)) when eni = '1' else INSTNULL;  
 
-    isnop <= '1' when v2inst(ram_dout(INSTW - 1 downto 0)).cmd = nop and (eni = '1')else '0';
-    isstp <= '1' when v2inst(ram_dout(INSTW - 1 downto 0)).cmd = stp and (eni = '1')else '0';
+    isnop <= '1' when v2inst(ram_dout(INSTW - 1 downto 0)).cmd = nop and (eni = '1') else '0';
+    isstp <= '1' when v2inst(ram_dout(INSTW - 1 downto 0)).cmd = stp and (eni = '1') else '0';
+    o(1) <= isstp;
 end architecture rtl;
