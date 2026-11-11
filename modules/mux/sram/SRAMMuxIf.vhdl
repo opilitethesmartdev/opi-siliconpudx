@@ -1,7 +1,7 @@
 ----------------------------------------------------------------------------
 -- Project		:	OPI-siliconPUdx
 -- Authors		:	opilitethesmartdev
--- Description	:	SRAM Arbiter
+-- Description	:	SRAM Dual Mux
 ----------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
@@ -13,8 +13,6 @@ use work.instruction_pkg.all;
 
 entity SRAMMuxIf is
     port (
-        clk : in std_ulogic;
-        rst : in std_ulogic;
         sel : in std_ulogic;
         
         -- Source Interface
