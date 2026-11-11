@@ -69,6 +69,12 @@ architecture rtl of toplevel is
         signal addr     :  unsigned(INSTD-1 downto 0);
         signal dout     :  std_ulogic_vector(EMBDWIDTH-1 downto 0);
         signal inst     :  inst_rec_t;
+    
+    -- Program Counter If
+        signal pc_cmd :  std_ulogic_vector(1 downto 0);
+        signal pc_ovr :  unsigned(INSTD-1 downto 0);
+        signal pc_out :  unsigned(INSTD-1 downto 0);
+
 
 
 begin
@@ -137,9 +143,23 @@ begin
                 reg_1_o    => rm_o
         );
 
+    -- Main Entities
+        pcif : entity work.ProgramCounterIf
+            port map(
+                clk => clk,
+                rst => rst,
+                en  => en,
+                cmd => pc_cmd,
+                ovr => pc_ovr,
+                pc  => pc_out
+        );
+
     -- Processes
     -- Logic
     err <= reg_err or ins_o(0);
     o <= ins_o(1) & err;
+
+    pc_cmd <= en & '0';
+    pc_ovr <= (others => '0');
     
 end architecture rtl;
