@@ -25,23 +25,31 @@ entity ProgramCounterIf is
 end entity ProgramCounterIf;
 
 architecture rtl of ProgramCounterIf is
-    signal int : unsigned(INSTD - 1 downto 0);
+    --signal i1, i2 : unsigned(INSTD - 1 downto 0);
+    signal i1 : unsigned(INSTD - 1 downto 0);
 begin   
     seq : process (clk, rst)
     begin
         if rst = '1' then
-            int <= (others => '0');
+            i1 <= (others => '0');
+            --i2 <= (others => '0');
         elsif rising_edge(clk) then
             if en = '1' then
                 case cmd is
-                    when "10" => int <= int + 1;
-                    when "01" => int <= int + 2;
-                    when "11" => int <= ovr;
+                    when "10" => 
+                        i1 <= i1 + 1;
+                        --i2 <= i1;
+                    when "01" => 
+                        i1 <= i1 + 2;
+                        --i2 <= i1;
+                    when "11" => 
+                        i1 <= ovr;                        
+                        --i2 <= ovr;
                     when others =>
                 end case;
             end if;
         end if;
     end process seq;
 
-    pc <= int;
+    pc <= i1;--i2;
 end architecture rtl;

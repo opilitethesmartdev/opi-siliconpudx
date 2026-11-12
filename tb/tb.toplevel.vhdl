@@ -21,6 +21,8 @@ architecture sim of tb_topl is
     signal clk  :  std_ulogic := '0';
     signal en   :  std_ulogic := '0';
     signal rst  :  std_ulogic;
+    signal fin  :  std_ulogic;
+
     signal o    :  std_ulogic_vector(1 downto 0);
 
     signal re_cmd      :  std_ulogic_vector(1 downto 0);
@@ -62,6 +64,8 @@ architecture sim of tb_topl is
 begin
     clk <= (not clk) after 5 ns;
     rst <= '1', '0' after 20 ns;
+
+    fin <= or o;
 
     --enc <= '0' & en;
 
@@ -214,10 +218,11 @@ begin
         -- Execute
         wait for 10 ns;
         en <= '1';
-        wait on o(1);
+        wait on fin;
+        wait for 10 ns;
         en <= '0';
         report "Finish";
-        wait for 400 ns;
+        wait for 40 ns;
         stop;
     end process testbench;
     

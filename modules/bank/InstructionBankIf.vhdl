@@ -15,6 +15,7 @@ entity InstructionBankIf is
     port (
         clk : in std_ulogic;
         rst : in std_ulogic;
+        ena : in std_ulogic;
         o : out std_ulogic_vector(1 downto 0); -- [stp][nop]
         
         cmd  : in  std_ulogic_vector(1 downto 0); --[read][write]; xor = en
@@ -32,11 +33,15 @@ entity InstructionBankIf is
 end entity InstructionBankIf;
 
 architecture rtl of InstructionBankIf is
+    signal clk_n : std_ulogic;
     signal en, edr, eni : std_ulogic;
     signal isstp, isnop : std_ulogic;
+    signal inst_dl : std_ulogic_vector(INSTW - 1 downto 0);
 begin
-    en <= or cmd;
-    edr <= and cmd;
+    clk_n <= not clk;
+
+    en <= (or cmd);-- and ena;
+    edr <=(and cmd);-- and ena;
     eni <= en and not edr;
 
     nopfinff : entity work.sr_ff
@@ -54,9 +59,22 @@ begin
     ram_mask <= (others => '1') when en = '1' else (others => '0');  
   
     dout <= ram_dout(IBWIDTH - 1 downto INSTW) when edr = '1' else (others => '0');  
-    inst <= v2inst(ram_dout(INSTW - 1 downto 0)) when eni = '1' else INSTNULL;  
+    inst <= v2inst(ram_dout(INSTW - 1 downto 0)) when eni = '1' else INSTNULL; 
+    
+    instshift : entity work.n_shift
+        generic map(
+            DELAY => 1,
+            WIDTH => INSTW
+        )
+        port map(
+            clk => clk_n,
+            rst => rst,
+            i   => ram_dout(INSTW - 1 downto 0),
+            o   => inst_dl
+    );
+    
 
-    isnop <= '1' when v2inst(ram_dout(INSTW - 1 downto 0)).cmd = nop and (eni = '1') else '0';
-    isstp <= '1' when v2inst(ram_dout(INSTW - 1 downto 0)).cmd = stp and (eni = '1') else '0';
+    isnop <= '1' when v2inst(inst_dl).cmd = nop and ((eni and ena) = '1') else '0';
+    isstp <= '1' when v2inst(inst_dl).cmd = stp and ((eni and ena) = '1') else '0';
     o(1) <= isstp;
 end architecture rtl;

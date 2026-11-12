@@ -64,11 +64,11 @@ architecture rtl of toplevel is
         signal rs_dout_b :  std_ulogic_vector(WORDWIDTH-1 downto 0);
 
     -- Instruction bank
-        signal ins_o        :  std_ulogic_vector(1 downto 0);
-        signal cmd      :  std_ulogic_vector(1 downto 0);
-        signal addr     :  unsigned(INSTD-1 downto 0);
-        signal dout     :  std_ulogic_vector(EMBDWIDTH-1 downto 0);
-        signal inst     :  inst_rec_t;
+        signal ins_sta        :  std_ulogic_vector(1 downto 0);
+        signal ins_cmd      :  std_ulogic_vector(1 downto 0);
+        signal ins_addr     :  unsigned(INSTD-1 downto 0);
+        signal ins_dout     :  std_ulogic_vector(EMBDWIDTH-1 downto 0);
+        signal ins_o     :  inst_rec_t;
     
     -- Program Counter If
         signal pc_cmd :  std_ulogic_vector(1 downto 0);
@@ -112,11 +112,12 @@ begin
             port map(
                 clk      => clk,
                 rst      => rst,
-                o        => ins_o,
-                cmd      => cmd,
-                addr     => addr,
-                dout     => dout,
-                inst     => inst,
+                ena      => s.en,
+                o        => ins_sta,
+                cmd      => ins_cmd,
+                addr     => ins_addr,
+                dout     => ins_dout,
+                inst     => ins_o,
                 ram_en   => ram_en,
                 ram_wren => ram_wren,
                 ram_mask => ram_mask,
@@ -146,7 +147,7 @@ begin
     -- Main Entities
         pcif : entity work.ProgramCounterIf
             port map(
-                clk => clk,
+                clk => s.o_n,
                 rst => rst,
                 en  => en,
                 cmd => pc_cmd,
@@ -156,10 +157,13 @@ begin
 
     -- Processes
     -- Logic
-    err <= reg_err or ins_o(0);
-    o <= ins_o(1) & err;
+    err <= reg_err or ins_sta(0);
+    o <= ins_sta(1) & err;
 
     pc_cmd <= en & '0';
     pc_ovr <= (others => '0');
+
+    ins_cmd <= en & '0';
+    ins_addr <= pc_out;
     
 end architecture rtl;
