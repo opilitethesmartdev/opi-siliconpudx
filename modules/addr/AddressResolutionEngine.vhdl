@@ -50,12 +50,14 @@ begin
             cd <= (others => '0');
             ip <= (others => '0');
             cp <= (others => '0');
+            o_p <= (others => '0');
         elsif rising_edge(clk) then
             fin <= '0';
             if ena = '1' then
                 ip <= unsigned(i_p);
                 if i_d = cd then
                     fin <= '1';
+                    o_p <= std_ulogic_vector(cp);
                 else
                     rd <= '1';
 

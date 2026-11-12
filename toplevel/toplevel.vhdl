@@ -75,7 +75,9 @@ architecture rtl of toplevel is
         signal pc_ovr :  unsigned(INSTD-1 downto 0);
         signal pc_out :  unsigned(INSTD-1 downto 0);
 
-
+    -- Address Resolution If
+        signal arif_en     :  std_ulogic;
+        signal arif_ins_o  :  inst_rec_t;
 
 begin
     -- State Entities
@@ -143,6 +145,24 @@ begin
                 reg_1_i    => rm_i,
                 reg_1_o    => rm_o
         );
+    
+    -- Address Resolution
+        arif : entity work.AddressResolutionIf
+            port map(
+                clk    => clk,
+                rst    => rst,
+                en     => arif_en,
+                rd_a   => rs_rd_a,
+                rd_b   => rs_rd_b,
+                addr_a => rs_addr_a,
+                addr_b => rs_addr_b,
+                din_a  => rs_dout_a,
+                din_b  => rs_dout_b,
+                ins_i  => ins_o,
+                ins_o  => arif_ins_o
+        );
+
+
 
     -- Main Entities
         pcif : entity work.ProgramCounterIf
@@ -155,6 +175,8 @@ begin
                 pc  => pc_out
         );
 
+
+
     -- Processes
     -- Logic
     err <= reg_err or ins_sta(0);
@@ -165,5 +187,7 @@ begin
 
     ins_cmd <= en & '0';
     ins_addr <= pc_out;
+
+    arif_en <= s.advp or s.o;
     
 end architecture rtl;
