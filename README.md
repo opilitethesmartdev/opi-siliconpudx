@@ -12,8 +12,8 @@ Simple 8-bit microcontroller architecure based on the WDR Paper computer ISA, ex
   - up to two levels of indirection (pointer to pointer to value)
 - 256 internal registers
   - Mirrored SRAM for parallel indirection of both parameters
-- up to 1024 instructions
-- (to be confirmed) embedded data in instruction storage
+- up to 512 instructions (to be confirmed) 
+- embedded data in instruction storage
 - External program loading from host (to be tested)
 
 ## To be implemented (post emulation):
@@ -77,7 +77,7 @@ Instructions are 28-bit long, and split into multiple parts:
 ```
 
 ## Embedded data
-The (to be confirmed) instruction storage has the size of 1024x32 bits. As such, each instruction leaves 4 bits of data unused. This can be used to have embedded data:
+The (to be confirmed) instruction storage has the size of 512x32 bits. As such, each instruction leaves 4 bits of data unused. This can be used to have embedded data:
 ```
 0x00 [28-bit instruction][4-bit data]
 0x01 [28-bit instruction][4-bit data]
@@ -86,3 +86,36 @@ The (to be confirmed) instruction storage has the size of 1024x32 bits. As such,
 ```
 These chunks of 4 bit data can be merged into 8 bit values that can be loaded into registers
 using the `ldd` command.
+
+## Pointer indirection
+Each instruction has a pointer depth per parameter, currently two bits, which allows for up to 4 levels of indirection:
+```
+| Depth |           Indirection           |
+|-------|---------------------------------|
+|   0   | Literal (as is)                 |
+|   1   | Register                        |
+|   2   | Address of register             |
+|   3   | Address of address of register  |
+|-------|---------------------------------|
+```
+This allows up to two levels of conventional pointers, aswell as assigning the value of a register to any command, 
+increasing the possibilites of the ISA by a substantial amount. For example:
+```
+inc 1 6  -- Adds 6 to register 1
+
+inc 1 >6 -- Adds the value of register 6 to register 1
+```
+And suddenly, our seemingly arithmetic-less ISA now has register addition and subtraction.
+
+**WARNING:** Note that some commands are inherently treating the parameters as register addresses. For example:
+```
+wrr 1, 5 -- Writes 5 to the register 1
+```
+In this case, the parameter `1` would inherently be a register (indirection level 1), meaning this parameters can have an extra indirection level:
+```
+0 : Register (implicit)
+1 : Address of register
+2 : Address of address of register
+3 : Address of address of address of register
+```
+Which results in *three* levels of conventional pointers, for these specific cases.
