@@ -15,7 +15,7 @@ entity RegisterBank is
         clk : in std_ulogic;
         err : out std_ulogic; -- high when mirror sram contents don't match (on reads)
         
-        cmd  : in  std_ulogic_vector(1 downto 0); --[read][write]; xor = en; and = dual read;
+        cmd  : in  std_ulogic_vector(1 downto 0); --[read][write]; xor = en
         
         -- Mirror mode
         addr : in  unsigned(REGD - 1 downto 0); 
@@ -77,7 +77,7 @@ begin
             dout => b_dout
     );
 
-    mode <= and cmd;
+    mode <= rd_a or rd_b;
 
     err <= '1' when (or (a_dout xor b_dout)) = '1' else '0';
     
