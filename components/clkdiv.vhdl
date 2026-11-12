@@ -24,7 +24,7 @@ end entity clkdiv;
 
 architecture rtl of clkdiv is
     signal cnt : unsigned(C_WIDTH - 1 downto 0);
-    signal ci : std_ulogic := '0';
+    signal ci, ci_n : std_ulogic := '0';
     
     signal clkon  : std_ulogic; -- clock on signal
     signal advp   : std_ulogic; -- pre-rising signal
@@ -60,6 +60,8 @@ begin
             end if;
         end if;
     end process;
+
+    ci_n <= not ci;
     
-    clko <= (o => ci, en => clkon, advp => advp, advn => advn);
+    clko <= (o => ci, o_n => ci_n, en => clkon, advp => advp, advn => advn);
 end architecture rtl;
