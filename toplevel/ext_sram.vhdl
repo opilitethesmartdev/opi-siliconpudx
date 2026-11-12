@@ -43,6 +43,8 @@ begin
                     addri <= addr;
                     dout <= ram(to_integer(addri)) and mask;
                 end if;
+            else
+                dout <= (others => '0');
             end if;
         end if;
     end process seq;
