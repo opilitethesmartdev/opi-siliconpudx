@@ -189,5 +189,8 @@ begin
     ins_addr <= pc_out;
 
     arif_en <= s.advp or s.o;
-    
+
+    rm_cmd  <= "00";
+    rm_addr <= (others => '0');
+    rm_i    <= (others => '0');    
 end architecture rtl;

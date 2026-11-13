@@ -35,54 +35,80 @@ entity RegisterBank is
 end entity RegisterBank;
 
 architecture rtl of RegisterBank is
-    signal mode : std_ulogic;
+    signal en, mode  : std_ulogic;
+    signal errc : std_ulogic;
 
     signal a_en   :  std_ulogic;
     signal a_wren :  std_ulogic;
-    signal a_addr :  unsigned(7 downto 0);
+    signal a_addr :  unsigned(REGD - 1 downto 0);
     signal a_din  :  std_ulogic_vector(7 downto 0);
     signal a_dout :  std_ulogic_vector(7 downto 0);
 
     signal b_en   :  std_ulogic;
     signal b_wren :  std_ulogic;
-    signal b_addr :  unsigned(7 downto 0);
+    signal b_addr :  unsigned(REGD - 1 downto 0);
     signal b_din  :  std_ulogic_vector(7 downto 0);
-    signal b_dout :  std_ulogic_vector(7 downto 0);
+    signal b_dout  :  std_ulogic_vector(7 downto 0);
+    
+    -- Debug statements (optimize away)
+    signal debug_xor_dout :  std_ulogic_vector(7 downto 0);
+    signal debug_diff_dout   :  std_ulogic;
 
-begin    
-    sram_a : entity work.sram_macro
-        generic map(
-            CONFIG => "sram256x8m8wm1_3v3"
-        )
-        port map(
-            clk  => clk,
-            en   => a_en,
-            wren => a_wren,
-            mask => (others => a_en),
-            addr => a_addr,
-            din  => a_din,
-            dout => a_dout
-    );
-    sram_b : entity work.sram_macro
-        generic map(
-            CONFIG => "sram256x8m8wm1_3v3"
-        )
-        port map(
-            clk  => clk,
-            en   => b_en,
-            wren => b_wren,
-            mask => (others => b_en),
-            addr => b_addr,
-            din  => b_din,
-            dout => b_dout
-    );
+begin   
+    -- SRAM Entities
+        sram_a : entity work.sram_macro
+            generic map(
+                CONFIG => "sram64x8m8wm1_3v3"
+            )
+            port map(
+                clk  => clk,
+                en   => a_en,
+                wren => a_wren,
+                mask => (others => a_en),
+                addr => resize(a_addr, 8),
+                din  => a_din,
+                dout => a_dout
+        );
+        sram_b : entity work.sram_macro
+            generic map(
+                CONFIG => "sram64x8m8wm1_3v3"
+            )
+            port map(
+                clk  => clk,
+                en   => b_en,
+                wren => b_wren,
+                mask => (others => b_en),
+                addr => resize(b_addr, 8),
+                din  => b_din,
+                dout => b_dout
+        );
+    
+    -- FFs
+        errenshift : entity work.n_shift1b
+            generic map( DELAY => 1 )
+            port map(
+                clk => clk,
+                rst => '0',
+                i   => en,
+                o   => errc
+        );
+
+
+        errdetff : process(clk)
+        begin
+            if rising_edge(clk) then
+                debug_xor_dout <= a_dout xor b_dout;
+                debug_diff_dout <= or (a_dout xor b_dout);
+
+                err <= '1' when (or (a_dout xor b_dout)) = '1' and ((not mode) and errc) = '1' else '0';
+            end if;
+        end process errdetff;
 
     mode <= rd_a or rd_b;
-
-    err <= '1' when (or (a_dout xor b_dout)) = '1' else '0';
+    en <= (xor cmd);
     
-    a_en <= rd_a when mode = '1' else (xor cmd);
-    b_en <= rd_b when mode = '1' else (xor cmd);
+    a_en <= rd_a when mode = '1' else en;
+    b_en <= rd_b when mode = '1' else en;
 
     a_wren <= '0' when mode = '1' else cmd(0);
     b_wren <= '0' when mode = '1' else cmd(0);
