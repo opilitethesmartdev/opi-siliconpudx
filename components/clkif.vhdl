@@ -1,7 +1,7 @@
 ----------------------------------------------------------------------------
--- Project		:	Generic
+-- Project		:	OPI-SiliconPUdx
 -- Authors		:	opilitethesmartdev
--- Description	:	Clock divider
+-- Description	:	Clock Interface
 ----------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
@@ -9,22 +9,18 @@ use ieee.numeric_std.all;
 
 use work.core_pkg.all;
 
-entity clkdiv is
-    generic(
-        CLOCKDIV : natural := 10;
-        C_WIDTH : natural := 4
-    );
+entity ClockIf is
     port(
         clki : in std_ulogic;
         rst  : in std_ulogic;
         en   : in std_ulogic;
         clko : out clk_rec_t
     );
-end entity clkdiv;
+end entity ClockIf;
 
-architecture rtl of clkdiv is
+architecture rtl of ClockIf is
     signal cnt : unsigned(C_WIDTH - 1 downto 0);
-    signal ci, ci_n : std_ulogic := '0';
+    signal ci, ci_n, clki_n : std_ulogic := '0';
     
     signal clkon  : std_ulogic; -- clock on signal
     signal advp   : std_ulogic; -- pre-rising signal
@@ -62,6 +58,7 @@ begin
     end process;
 
     ci_n <= not ci;
+    clki_n <= not clki;
     
-    clko <= (o => ci, o_n => ci_n, en => clkon, advp => advp, advn => advn);
+    clko <= (i_n => clki_n, o => ci, o_n => ci_n, en => clkon, advp => advp, advn => advn);
 end architecture rtl;

@@ -81,11 +81,7 @@ architecture rtl of toplevel is
 
 begin
     -- State Entities
-        i_clkdiv : entity work.clkdiv
-            generic map(
-                CLOCKDIV => 5,
-                C_WIDTH  => 3
-            )
+        clkif : entity work.ClockIf
             port map(
                 clki => clk,
                 rst  => rst,
@@ -149,7 +145,7 @@ begin
     -- Address Resolution
         arif : entity work.AddressResolutionIf
             port map(
-                clk    => clk,
+                clk    => s.i_n,
                 rst    => rst,
                 en     => arif_en,
                 rd_a   => rs_rd_a,
