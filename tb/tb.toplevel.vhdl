@@ -145,11 +145,11 @@ begin
         sel_ram <= '0';
 
         -- Program:
-        -- isz **0   0
-        -- jmp   3 **0
+        -- isz >>0   0
+        -- jmp   3 >>0
         -- stp 
-        -- dec **0   0
-        -- inc **4   0
+        -- dec >>0   0
+        -- inc >>4   0
         -- jmp   0   0
 
         -- Write instructions
