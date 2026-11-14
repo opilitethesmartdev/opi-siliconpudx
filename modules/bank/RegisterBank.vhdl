@@ -1,7 +1,7 @@
 ----------------------------------------------------------------------------
 -- Project		:	OPI-siliconPUdx
 -- Authors		:	opilitethesmartdev
--- Description	:	Instruction Bank
+-- Description	:	Register bank
 ----------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
@@ -9,99 +9,118 @@ use ieee.numeric_std.all;
 
 use work.core_pkg.all;
 use work.register_pkg.all;
-use work.instruction_pkg.all;
 
 entity RegisterBank is
-    port(
-        -- Fundamental signals
+    port (
         clk : in std_ulogic;
-        rst : in std_ulogic;
-        mode : in std_ulogic; -- mirror mode when 0, singular mode when 1
+        err : out std_ulogic; -- high when mirror sram contents don't match (on reads)
+        
+        cmd  : in  std_ulogic_vector(1 downto 0); --[read][write]; xor = en
+        
+        -- Mirror mode
+        addr : in  unsigned(REGD - 1 downto 0); 
+        din  : in  std_ulogic_vector(WORDWIDTH - 1 downto 0);
+        dout : out std_ulogic_vector(WORDWIDTH - 1 downto 0);
+        
+        -- Singular mode
+        rd_a : in std_ulogic;
+        rd_b : in std_ulogic;
 
-        -- Data interface
-        cmd : in std_ulogic_vector(2 downto 0); -- [sel][read][write] 
-        addr : in unsigned(REGD - 1 downto 0);  -- common for mirror mode, sram0 for singular mode
-        din  : in std_ulogic_vector(WORDWIDTH - 1 downto 0);-- only mirror mode
-        dout : out std_ulogic_vector(WORDWIDTH - 1 downto 0); -- common for mirror mode, sram0 for singular mode
-
-        -- Alternative read for sram1, only usable in mirror mode
-        addra : in unsigned(REGD - 1 downto 0);
-        douta : out std_ulogic_vector(WORDWIDTH - 1 downto 0);
-
-        iodirmask : in  std_ulogic_vector(2**MMIOD - 1 downto 0) -- read = 0
+        addr_a : in unsigned(REGD - 1 downto 0);
+        addr_b : in unsigned(REGD - 1 downto 0);
+        
+        dout_a : out std_ulogic_vector(WORDWIDTH - 1 downto 0);
+        dout_b : out std_ulogic_vector(WORDWIDTH - 1 downto 0)        
     );
-
 end entity RegisterBank;
 
 architecture rtl of RegisterBank is
-    signal regio : reg_array_t(0 to 2**MMIOD - 1) := (others => (others => '0'));
-    signal io_out : std_ulogic_vector(WORDWIDTH - 1 downto 0);
+    signal en, mode  : std_ulogic;
+    signal errc : std_ulogic;
 
-    signal rden :  std_ulogic;
-    signal wren :  std_ulogic;
-    signal reg_addr0 :  unsigned(7 downto 0);
-    signal reg_addr1 :  unsigned(7 downto 0);
-    signal reg_o0 :  std_ulogic_vector(7 downto 0);
-    signal reg_o1 :  std_ulogic_vector(7 downto 0);
+    signal a_en   :  std_ulogic;
+    signal a_wren :  std_ulogic;
+    signal a_addr :  unsigned(REGD - 1 downto 0);
+    signal a_din  :  std_ulogic_vector(7 downto 0);
+    signal a_dout :  std_ulogic_vector(7 downto 0);
 
-begin
-    sram0 : entity work.sram_macro
-        generic map(
-            CONFIG => "sram64x8m8wm1_3v3"
-        )
-        port map(
-            clk  => clk,
-            en   => rden,
-            wren => wren,
-            mask => (others => '1'),
-            addr => reg_addr0,
-            din  => din,
-            dout => reg_o0
-    );
-
-    sram1 : entity work.sram_macro
-        generic map(
-            CONFIG => "sram64x8m8wm1_3v3"
-        )
-        port map(
-            clk  => clk,
-            en   => rden,
-            wren => wren,
-            mask => (others => '1'),
-            addr => reg_addr1,
-            din  => din,
-            dout => reg_o1
-    );
-
-    seq: process(clk)
-    begin
-        if rising_edge(clk) then
-            if rst = '1' then
-                regiodefault : for rg in 2**MMIOD - 1 downto 0 loop
-                    if(iodirmask(rg) = '1') then
-                        regio(rg) <= (others => '0');
-                    end if;
-                end loop;
-            else
-                if cmd = "101" then
-                    if(iodirmask(to_integer(addr(MMIOD - 1 downto 0))) = '0') then
-                        regio(to_integer(addr(MMIOD - 1 downto 0))) <= din;
-                    end if;
-                elsif cmd = "110" then
-                    io_out <= regio(to_integer(addr(MMIOD - 1 downto 0)));
-                end if;
-            end if;
-        end if;
-    end process seq;
-
-    --rden <= (not cmd(2) and xor cmd(1 downto 0)) or mode;
-    rden <= '1' when mode = '1' or (cmd = "001" or cmd = "010") else '0';
-    wren <= '1' when mode = '0' and cmd = "001" else '0';
-    --wren <= ((nor cmd(2 downto 1)) and cmd(0)) and not mode;
-
-    dout <= (reg_o0 or reg_o1) when (mode or cmd(2)) = '0' else io_out when cmd(2) = '1' else reg_o0;
-    douta <= reg_o1 when mode = '1' else (others => '0');    
+    signal b_en   :  std_ulogic;
+    signal b_wren :  std_ulogic;
+    signal b_addr :  unsigned(REGD - 1 downto 0);
+    signal b_din  :  std_ulogic_vector(7 downto 0);
+    signal b_dout  :  std_ulogic_vector(7 downto 0);
     
-    reg_addr1 <= resize(addra, 8) when mode = '1' else resize(addr, 8);
-    reg_addr0 <= resize(addr, 8);
-end architecture rtl;
+    -- Debug statements (optimize away)
+    signal debug_xor_dout :  std_ulogic_vector(7 downto 0);
+    signal debug_diff_dout   :  std_ulogic;
+
+begin   
+    -- SRAM Entities
+        sram_a : entity work.sram_macro
+            generic map(
+                CONFIG => "sram64x8m8wm1_3v3"
+            )
+            port map(
+                clk  => clk,
+                en   => a_en,
+                wren => a_wren,
+                mask => (others => a_en),
+                addr => resize(a_addr, 8),
+                din  => a_din,
+                dout => a_dout
+        );
+        sram_b : entity work.sram_macro
+            generic map(
+                CONFIG => "sram64x8m8wm1_3v3"
+            )
+            port map(
+                clk  => clk,
+                en   => b_en,
+                wren => b_wren,
+                mask => (others => b_en),
+                addr => resize(b_addr, 8),
+                din  => b_din,
+                dout => b_dout
+        );
+    
+    -- FFs
+        errenshift : entity work.n_shift1b
+            generic map( DELAY => 1 )
+            port map(
+                clk => clk,
+                rst => '0',
+                i   => en,
+                o   => errc
+        );
+
+
+        errdetff : process(clk)
+        begin
+            if rising_edge(clk) then
+                debug_xor_dout <= a_dout xor b_dout;
+                debug_diff_dout <= or (a_dout xor b_dout);
+
+                err <= '1' when (or (a_dout xor b_dout)) = '1' and ((not mode) and errc) = '1' else '0';
+            end if;
+        end process errdetff;
+
+    mode <= rd_a or rd_b;
+    en <= (xor cmd);
+    
+    a_en <= rd_a when mode = '1' else en;
+    b_en <= rd_b when mode = '1' else en;
+
+    a_wren <= '0' when mode = '1' else cmd(0);
+    b_wren <= '0' when mode = '1' else cmd(0);
+
+    a_addr <= addr_a when mode = '1' else addr;
+    b_addr <= addr_b when mode = '1' else addr;
+
+    a_din <= (others => '0') when mode = '1' else din;
+    b_din <= (others => '0') when mode = '1' else din;
+
+    dout_a <= a_dout when mode = '1' else (others => '0');
+    dout_b <= b_dout when mode = '1' else (others => '0');
+
+    dout <= a_dout and b_dout when mode = '0' else (others => '0');
+end architecture;

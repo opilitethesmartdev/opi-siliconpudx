@@ -1,7 +1,7 @@
 ----------------------------------------------------------------------------
 -- Project		:	OPI-siliconPUdx
 -- Authors		:	opilitethesmartdev
--- Description	:	Toplevel testbench
+-- Description	:	ASIC testbench
 ----------------------------------------------------------------------------
 
 -- vhdl_ls off

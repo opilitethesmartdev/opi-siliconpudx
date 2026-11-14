@@ -9,9 +9,14 @@ use ieee.numeric_std.all;
 
 package core_pkg is
     constant WORDWIDTH : natural := 8;
+    
+    constant CLOCKDIV : natural := 5;
+    constant C_WIDTH : natural := 3;
 
     type clk_rec_t is record
+        i_n  : std_ulogic;
         o    : std_ulogic;
+        o_n  : std_ulogic;
         en   : std_ulogic;
         advp : std_ulogic;
         advn : std_ulogic;

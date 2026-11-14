@@ -1,11 +1,11 @@
 # Tiny Tapeout project information
 project:
-  title:        "OPI-SiliconPUDx"        # Project title
+  title:        "OPI-SiliconPUdx"        # Project title
   author:       "opilitethesmartdev"        # Your name
   discord:      "opilitethesmartdev"        # Your discord username, for communication and automatically assigning you a Tapeout role (optional)
   description:  "Simple 8-bit processor using minimal WDR Paper computer ISA" # One line description of what your project does
   language:     "VHDL"    # other examples include SystemVerilog, Amaranth, VHDL, etc
-  clock_hz:     100000000 # Clock frequency in Hz (or 0 if not applicable):  100 MHz
+  clock_hz:     50000000 # Clock frequency in Hz (or 0 if not applicable):  50 MHz
 
   # How many tiles your design occupies? A single tile is about 340x160 uM.
   tiles: "4x4"          # Valid values: 1x1, 1x2, 2x2, 3x2, 4x2, 3x4 or 4x4
@@ -17,17 +17,19 @@ project:
 
   source_sources: # Note: used by custom VHDL merger script (see .github\\scripts)
     - "components/ff.pkg.vhdl"
-    - "components/clkdiv.vhdl"
+    - "components/clkif.vhdl"
     #- "components/spconverter.vhdl"
     - "components/packages/core.pkg.vhdl"
     - "components/packages/instruction.pkg.vhdl"
     - "components/packages/register.pkg.vhdl"
     - "components/sram/sram.macro.vhdl"
-    - "modules/execution/ExecutionUnit.vhdl"
-    - "modules/execution/ProgramCounterIf.vhdl"
-    - "modules/address/AddressResolutionEngine.vhdl"
-    - "modules/address/AddressResolutionIf.vhdl"
-    - "modules/bank/InstructionBank.vhdl"
+    - "modules/exe/ExecutionUnit.vhdl"
+    - "modules/exe/ProgramCounterIf.vhdl"
+    - "modules/addr/AddressResolutionEngine.vhdl"
+    - "modules/addr/AddressResolutionIf.vhdl"
+    - "modules/mux/reg/RegBankMuxIf.vhdl"
+    - "modules/mux/sram/SRAMMuxIf.vhdl"
+    - "modules/bank/InstructionBankIf.vhdl"
     - "modules/bank/RegisterBank.vhdl"
     #- "modules/ProcessingElement.vhdl"
     - "toplevel/toplevel.vhdl"

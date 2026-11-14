@@ -1,11 +1,15 @@
 [libraries]
 
 lib.files = [
+  "tb/*.vhdl",
   "toplevel/*.vhdl",
   "components/*.vhdl",
   "components/**/*.vhdl",
   "modules/*.vhdl",
   "modules/**/*.vhdl",
+  "modules/**/**/*.vhdl",
+  
+  "toplevel/ext_sram.vhdl",
 ]
 
 lib.exculde = [
