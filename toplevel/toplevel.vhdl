@@ -186,7 +186,9 @@ begin
 
     arif_en <= s.advp or s.o;
 
-    rm_cmd  <= "00";
-    rm_addr <= (others => '0');
-    rm_i    <= (others => '0');    
+    rm_cmd  <= (others => en);
+    rm_addr <= (others => en);
+    rm_i    <= (others => en);  
+    
+    instruction <=( or inst2v(arif_ins_o)) or (or rm_o);
 end architecture rtl;
