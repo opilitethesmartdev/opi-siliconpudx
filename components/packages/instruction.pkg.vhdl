@@ -13,14 +13,31 @@ use work.core_pkg.all;
 package instruction_pkg is    
     constant IPTRW  : natural := 2;  
     constant ICMDW  : natural := 4;    
-    constant PARAMW : natural := WORDWIDTH; 
+    constant PARAMW : natural := 10; 
     constant PARAMS : natural := 2;
-    constant INSTW  : natural := IPTRW*PARAMS + ICMDW + PARAMW*PARAMS; --24
+    constant INSTW  : natural := IPTRW*PARAMS + ICMDW + PARAMW*PARAMS; --28
 
-    constant INSTD : natural := WORDWIDTH;
+    constant INSTD : natural := PARAMW;
+    
+    constant IBWIDTH   : natural := 32; -- Instruction Bank width
+    constant EMBDWIDTH : natural := IBWIDTH - INSTW;  -- Embedded Data width
 
-        -- Command helper types
-    type command_t is (nop, inc, dec, jmp, isz, stp);
+    -- Command helper types
+    type command_t is (
+        nop, 
+        idl,         
+        inc, 
+        dec,          
+        isz, 
+        jmp, 
+        stp,         
+        wrr, 
+        ldd,          
+        iot,  
+        izb,         
+        mtr,
+        rtm 
+        );
 
     type inst_rec_t is record
         depth0 : unsigned(IPTRW - 1 downto 0);
@@ -31,7 +48,7 @@ package instruction_pkg is
     end record;
 
     type cmd_array_t is array (0 to 2**ICMDW-1) of command_t;
-    constant COMMANDS : cmd_array_t := (nop, inc, dec, jmp, isz, stp, others => nop);
+    constant COMMANDS : cmd_array_t := (nop,idl,inc,dec,isz,jmp,stp,wrr,ldd,iot,izb,mtr,rtm,others => nop);
 
     function inst2cmd ( i : std_ulogic_vector(INSTW - 1 downto 0) ) 
         return command_t;
@@ -49,6 +66,10 @@ package instruction_pkg is
                         param0 : natural;
                         param1 : natural ) 
             return std_ulogic_vector;
+
+            
+    function INSTNULL (cmd : command_t := nop) 
+            return inst_rec_t;
 end package instruction_pkg;
 
 package body instruction_pkg is
@@ -63,11 +84,18 @@ package body instruction_pkg is
         begin
             case(i) is
                 when nop => return std_ulogic_vector(to_unsigned(0, ICMDW));
-                when inc => return std_ulogic_vector(to_unsigned(1, ICMDW));
-                when dec => return std_ulogic_vector(to_unsigned(2, ICMDW));
-                when jmp => return std_ulogic_vector(to_unsigned(3, ICMDW));
+                when idl => return std_ulogic_vector(to_unsigned(1, ICMDW));
+                when inc => return std_ulogic_vector(to_unsigned(2, ICMDW));
+                when dec => return std_ulogic_vector(to_unsigned(3, ICMDW));
                 when isz => return std_ulogic_vector(to_unsigned(4, ICMDW));
-                when stp => return std_ulogic_vector(to_unsigned(5, ICMDW));
+                when jmp => return std_ulogic_vector(to_unsigned(5, ICMDW));
+                when stp => return std_ulogic_vector(to_unsigned(6, ICMDW));
+                when wrr => return std_ulogic_vector(to_unsigned(7, ICMDW));
+                when ldd => return std_ulogic_vector(to_unsigned(8, ICMDW));
+                when iot => return std_ulogic_vector(to_unsigned(9, ICMDW));
+                when izb => return std_ulogic_vector(to_unsigned(10, ICMDW));
+                when mtr => return std_ulogic_vector(to_unsigned(11, ICMDW));
+                when rtm => return std_ulogic_vector(to_unsigned(12, ICMDW));
             end case;
     end function;
     
@@ -113,4 +141,15 @@ package body instruction_pkg is
             return  odpt0 & odpt1 & ocmd & oprm0 & oprm1;
     end function;
 
+    
+    function INSTNULL ( cmd : command_t := nop ) 
+        return inst_rec_t is
+        begin
+            return (    depth0 => (others => '0'),
+                        depth1 => (others => '0'),
+                        cmd => cmd,
+                        param0 => (others => '0'),
+                        param1 => (others => '0')
+                    );
+    end function;
 end package body;
