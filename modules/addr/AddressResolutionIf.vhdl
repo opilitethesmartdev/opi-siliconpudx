@@ -33,6 +33,8 @@ entity AddressResolutionIf is
 end entity AddressResolutionIf;
 
 architecture rtl of AddressResolutionIf is
+signal rerst, recycle  :  std_ulogic;
+
 signal en_0  :  std_ulogic;
 signal i_d_0  :  unsigned(IPTRW-1 downto 0);
 signal i_p_0  :  std_ulogic_vector(PARAMW-1 downto 0);
@@ -45,10 +47,11 @@ signal o_p_1  :  std_ulogic_vector(PARAMW-1 downto 0);
 
 
 begin
+    -- Resolution Engines
     are0 : entity work.AddressResolutionEngine
         port map(
             clk  => clk,
-            rst  => rst,
+            rst  => rerst,
             en   => en_0,
             rd   => rd_a,
             addr => addr_a,
@@ -60,7 +63,7 @@ begin
     are1 : entity work.AddressResolutionEngine
         port map(
             clk  => clk,
-            rst  => rst,
+            rst  => rerst,
             en   => en_1,
             rd   => rd_b,
             addr => addr_b,
@@ -70,20 +73,42 @@ begin
             o_p  => o_p_1
     );
 
+    -- Low-level Entities
+    endedge : entity work.edge
+        generic map(
+            polarity => "falling"
+        )
+        port map(
+            clk => clk,
+            i   => en,
+            o   => recycle
+    ); rerst <= rst or recycle;
+
+
+    -- Seq logic
+    resff : process (clk, rst)
+    begin
+        if rst = '1' then
+            ins_o <= INSTNULL;
+        elsif rising_edge(clk) then
+            if en = '1' then
+                ins_o <= v2inst(newinst(
+                        to_integer(ins_i.depth0), 
+                        to_integer(ins_i.depth1), 
+                        ins_i.cmd, 
+                        to_integer(unsigned(o_p_0)), 
+                        to_integer(unsigned(o_p_1)))
+                    );
+            end if;
+        end if;
+    end process;
+
     en_0 <= '0' when ins_i.depth0 = 0 else en;
     en_1 <= '0' when ins_i.depth1 = 0 else en;
 
     i_d_0 <= ins_i.depth0;
-    i_p_1 <= ins_i.param0;
+    i_p_0 <= ins_i.param0;
 
-    i_d_0 <= ins_i.depth1;
+    i_d_1 <= ins_i.depth1;
     i_p_1 <= ins_i.param1;
-
-    ins_o <= v2inst(newinst(
-            to_integer(ins_i.depth0), 
-            to_integer(ins_i.depth1), 
-            ins_i.cmd, 
-            to_integer(unsigned(o_p_0)), 
-            to_integer(unsigned(o_p_1)))
-        );
 end architecture rtl;

@@ -146,7 +146,7 @@ begin
 
         -- Program:
         -- isz >>0   0
-        -- jmp   3 >>0
+        -- jmp   3
         -- stp 
         -- dec >>0   0
         -- inc >>4   0
@@ -162,7 +162,7 @@ begin
             man_ram_din <= x"0" & newinst(2, 0, isz, 0, 0);
         wait for 10 ns;
             man_ram_addr <= to_unsigned(1, INSTD);  
-            man_ram_din <= x"0" & newinst(0, 2, jmp, 3, 0);
+            man_ram_din <= x"0" & newinst(0, 0, jmp, 0, 3);
         wait for 10 ns;
             man_ram_addr <= to_unsigned(2, INSTD);  
             man_ram_din <= x"0" & newinst(0, 0, stp, 0, 0);
