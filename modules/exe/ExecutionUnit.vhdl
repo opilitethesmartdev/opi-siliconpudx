@@ -18,11 +18,53 @@ entity ExecutionUnit is
         en  : in std_ulogic;
         
         -- PCIf
-        cmd : in std_ulogic_vector(1 downto 0);
-        ovr : in unsigned(INSTD - 1 downto 0)
+        pc_cmd : out std_ulogic_vector(1 downto 0);
+        pc_ovr : out unsigned(INSTD - 1 downto 0);
+
+        -- RegisterBank mirrored access
+        reg_cmd  : out std_ulogic_vector(1 downto 0); --[read][write]; xor = en
+        reg_addr : out unsigned(REGD - 1 downto 0); 
+        reg_din  : out std_ulogic_vector(WORDWIDTH - 1 downto 0);
+        reg_dout : in  std_ulogic_vector(WORDWIDTH - 1 downto 0);
+
+        -- Current instruction
+        ins_i : in inst_rec_t
     );
 end entity ExecutionUnit;
 
 architecture rtl of ExecutionUnit is
+    signal phase : unsigned(3 downto 0);
 begin
+    phaseff: process(clk)
+    begin
+        if rising_edge(clk) then
+            if en = '1' then
+                phase <= phase + 1;
+            else
+                phase <= (others => '0');
+            end if;
+        end if;
+    end process phaseff;
+
+    main: process(phase, en, ins_i)
+        variable merged : std_ulogic_vector(PARAMW * 2 - 1 downto 0);
+    begin
+        merged := ins_i.param0 & ins_i.param1;
+        
+        pc_cmd <= "10";--"01";
+        pc_ovr <= (others => '0');
+
+        if en = '1' then
+            case ins_i.cmd is
+                when jmp =>    
+                    case phase is
+                        when x"0" =>
+                            pc_cmd <= "11";
+                            pc_ovr <= resize(unsigned(merged), INSTD);
+                        when others =>
+                    end case;
+                when others =>
+            end case;
+        end if;
+    end process main;
 end rtl; -- rtl

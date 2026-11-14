@@ -79,6 +79,9 @@ architecture rtl of toplevel is
         signal arif_en     :  std_ulogic;
         signal arif_ins_o  :  inst_rec_t;
 
+    -- Execution Unit
+        signal exu_en    :  std_ulogic;
+
 begin
     -- State Entities
         clkif : entity work.ClockIf
@@ -158,8 +161,6 @@ begin
                 ins_o  => arif_ins_o
         );
 
-
-
     -- Main Entities
         pcif : entity work.ProgramCounterIf
             port map(
@@ -171,24 +172,32 @@ begin
                 pc  => pc_out
         );
 
-
+        exu : entity work.ExecutionUnit
+            port map(
+                clk      => clk,
+                rst      => rst,
+                en       => exu_en,
+                pc_cmd   => pc_cmd,
+                pc_ovr   => pc_ovr,
+                reg_cmd  => rm_cmd,
+                reg_addr => rm_addr,
+                reg_din  => rm_i,
+                reg_dout => rm_o,
+                ins_i    => arif_ins_o
+        );
 
     -- Processes
     -- Logic
     err <= reg_err or ins_sta(0);
     o <= ins_sta(1) & err;
 
-    pc_cmd <= en & '0';
-    pc_ovr <= (others => '0');
-
     ins_cmd <= en & '0';
     ins_addr <= pc_out;
 
     arif_en <= s.advp or s.o;
 
-    rm_cmd  <= (others => en);
-    rm_addr <= (others => en);
-    rm_i    <= (others => en);  
+    exu_en <= s.en and s.o_n;
+
     
     instruction <=( or inst2v(arif_ins_o)) or (or rm_o);
 end architecture rtl;
