@@ -332,3 +332,40 @@
 
         o <= shift(DELAY);
     end architecture bhv;
+
+-- N-cycle delayless signal extender
+    library ieee;
+    use ieee.std_logic_1164.all;
+
+    entity n_delay is
+        generic(
+            DELAY : positive := 2
+        );
+        port(
+            clk : in std_ulogic;
+            rst : in std_ulogic;
+            
+            i : in  std_ulogic;
+            o : out std_ulogic
+        );
+    end entity n_delay;
+
+    architecture bhv of n_delay is
+        signal shift : std_ulogic_vector(0 to DELAY) := (others => '0');
+    begin
+        seq : process (clk, rst)
+        begin
+            if rst = '1' then
+                shift <= (others => '0');
+            elsif rising_edge(clk) then
+                shift(0) <= i;
+                if DELAY > 1 then
+                    shift(1 to DELAY-1) <= shift(0 to DELAY-2);
+                elsif DELAY = 1 then
+                    shift(1) <= i;
+                end if;
+            end if;
+        end process seq;
+
+        o <= (or shift) or i;
+    end architecture bhv;

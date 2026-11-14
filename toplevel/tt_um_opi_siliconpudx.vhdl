@@ -36,26 +36,41 @@ signal addr :  std_ulogic_vector(REGD-1 downto 0);
 signal din  :  std_ulogic_vector(WORDWIDTH-1 downto 0);
 signal dout :  std_ulogic_vector(WORDWIDTH-1 downto 0);
 
+signal ram_en      :  std_ulogic;
+signal ram_wren    :  std_ulogic;
+signal ram_mask    :  std_ulogic_vector(IBWIDTH-1 downto 0);
+signal ram_addr    :  unsigned(INSTD-1 downto 0);
+signal ram_din     :  std_ulogic_vector(IBWIDTH-1 downto 0);
+signal ram_dout    :  std_ulogic_vector(IBWIDTH-1 downto 0);
+
+
 begin
 i_asic_harness : entity work.asic_harness
     port map(
-        clk  => clk,
-        rst  => rst,
-        en   => en,
-        o    => o,
-        rw   => rw,
-        addr => addr,
-        din  => din,
-        dout => dout,
+        clk         => clk,
+        rst         => rst,
+        en          => en,
+        o           => o,
+        rw          => rw,
+        addr        => addr,
+        din         => din,
+        dout        => dout,
+        ram_en      => ram_en,
+        ram_wren    => ram_wren,
+        ram_mask    => ram_mask,
+        ram_addr    => ram_addr,
+        ram_din     => ram_din,
+        ram_dout    => ram_dout,
         instruction => instruction
 );
+
 
 rst <= not rst_n;
 
 uo_out <= o & instruction & "00000";
 rw <= ui_in(7 downto 6);
-addr <= ui_in(5 downto 1);
-en <= ui_in(0) & ena;
+addr <= ui_in(5 downto 0);
+en <= '0' & ena;
 
 din <= uio_in when (rw = "00") else (others => '0');
 uio_out <= dout when (rw = "01" or rw = "11") else (others => '0');
