@@ -87,17 +87,21 @@ begin
 
     -- Seq logic
     resff : process (clk, rst)
+        variable op0, op1 : std_ulogic_vector(PARAMW-1 downto 0) := (others => '0');
     begin
         if rst = '1' then
             ins_o <= INSTNULL;
         elsif rising_edge(clk) then
             if en = '1' then
+                op0 := o_p_0 when en_0 = '1' else ins_i.param0;
+                op1 := o_p_1 when en_1 = '1' else ins_i.param1;
+
                 ins_o <= v2inst(newinst(
                         to_integer(ins_i.depth0), 
                         to_integer(ins_i.depth1), 
                         ins_i.cmd, 
-                        to_integer(unsigned(o_p_0)), 
-                        to_integer(unsigned(o_p_1)))
+                        to_integer(unsigned(op0)), 
+                        to_integer(unsigned(op1)))
                     );
             end if;
         end if;
