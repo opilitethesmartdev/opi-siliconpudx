@@ -28,35 +28,37 @@ Simple 8-bit microcontroller architecure based on the WDR Paper computer ISA, ex
 ## ISA
 **Base commands:**
 ```
-inc A, (B) -- increase register A by one (by B)
-dec A, (B) -- decrease register A by one (by B)
+inc A, (B) // increase register A by one (by B)
+dec A, (B) // decrease register A by one (by B)
 
-isz A, (B) -- check if A is equal 0 (equal B)
-           -- if false: continue
-           -- if true: skip next instruction
+isz A, (B) // check if A is equal 0 (equal B)
+           // if false: continue
+           // if true: skip next instruction
 
-jmp A      -- jump to instruction A
-stp        -- stop program
+jmp A, A   // jump to instruction A
+           // (A is 20-bit, composed from [param0][param1])
+
+stp        // stop program
 ```
 **Implicit:**
 ```
-nop        -- no command (throws error when reached)
-idl        -- do nothing (idle)
+nop        // no command (throws error when reached)
+idl        // do nothing (idle)
 ```
 **Extensions:**
 ```
-wrr A, B   -- override register A to value B
+wrr A, B   // override register A to value B
 
-ldd A, B   -- load embedded data from location A to register B
-           -- (4 bits from A and 4 bits from A + 1)
+ldd A, B   // load embedded data from location A to register B
+           // (4 bits from A and 4 bits from A + 1)
 
-iot A, B   -- toggle bit B on MMIO register A
+iot A, B   // toggle bit(s) B on MMIO register A
 
-izb A, (B) -- check if (bit B) of MMIO register A equals 0
-           -- (same behavior as isz)
+izb A, (B) // check if (bit B) of MMIO register A equals 0
+           // (same behavior as isz)
 
-mtr A, B   -- move MMIO register A to register B
-rtm A, B   -- move register A to MMIO register B
+mtr A, B   // move MMIO register A to register B
+rtm A, B   // move register A to MMIO register B
 ```
 
 ## Instruction
@@ -72,7 +74,7 @@ Instructions are 28-bit long, and split into multiple parts:
    |      |      |_________________ command (4 bit)
    |      |     
    |      |________________________ pointer depth of parameter B (2 bit)
-   |      |
+   |       
    |_______________________________ pointer depth of parameter A (2 bit)
 ```
 
@@ -101,15 +103,15 @@ Each instruction has a pointer depth per parameter, currently two bits, which al
 This allows up to two levels of conventional pointers, aswell as assigning the value of a register to any command, 
 increasing the possibilites of the ISA by a substantial amount. For example:
 ```
-inc 1 6  -- Adds 6 to register 1
+inc 1 6  // Adds 6 to register 1
 
-inc 1 >6 -- Adds the value of register 6 to register 1
+inc 1 >6 // Adds the value of register 6 to register 1
 ```
 And suddenly, our seemingly arithmetic-less ISA now has register addition and subtraction.
 
 **WARNING:** Note that some commands are inherently treating the parameters as register addresses. For example:
 ```
-wrr 1, 5 -- Writes 5 to the register 1
+wrr 1, 5 // Writes 5 to the register 1
 ```
 In this case, the parameter `1` would inherently be a register (indirection level 1), meaning this parameters can have an extra indirection level:
 ```
@@ -119,3 +121,25 @@ In this case, the parameter `1` would inherently be a register (indirection leve
 3 : Address of address of address of register
 ```
 Which results in *three* levels of conventional pointers, for these specific cases.
+
+## Implicit indirection behavior
+As explained above, some commands treat parameters differently, which can cause issues. Therefore, here is
+a table of all commands and how they use their parameters:
+```
+cmd  pr1   pr2
+---------------
+inc  reg  (lit)
+dec  reg  (lit)
+isz  reg  (lit)
+jmp  lit   ---  // Note: indirection not recommended for values over 256. Only apply indirection for param1
+                // (theoretical near-complete indirection is possible, but only 16 bits would be addressable)
+stp  ---   ---
+nop  ---   ---
+idl  ---   ---
+wrr  reg   lit
+ldd  lit   lit
+iot  reg   lit
+izb  reg   lit
+mtr  reg   reg
+rtm  reg   reg
+```
