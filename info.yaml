@@ -17,13 +17,13 @@ project:
 
   source_sources: # Note: used by custom VHDL merger script (see .github\\scripts)
     - "components/ff.pkg.vhdl"
-    - "components/clkdiv.vhdl"
+    - "components/clkif.vhdl"
     #- "components/spconverter.vhdl"
     - "components/packages/core.pkg.vhdl"
     - "components/packages/instruction.pkg.vhdl"
     - "components/packages/register.pkg.vhdl"
     - "components/sram/sram.macro.vhdl"
-    #- "modules/exe/ExecutionUnit.vhdl"
+    - "modules/exe/ExecutionUnit.vhdl"
     - "modules/exe/ProgramCounterIf.vhdl"
     - "modules/addr/AddressResolutionEngine.vhdl"
     - "modules/addr/AddressResolutionIf.vhdl"
