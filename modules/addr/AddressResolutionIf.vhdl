@@ -82,7 +82,7 @@ begin
             clk => clk,
             i   => en,
             o   => recycle
-    ); rerst <= recycle;
+    ); rerst <= rst or recycle;
 
 
     -- Seq logic
