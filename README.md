@@ -13,7 +13,7 @@ Simple 8-bit microcontroller architecure based on the WDR Paper computer ISA, ex
   - up to two levels of indirection (pointer to pointer to value)
 - 64 internal registers
   - Mirrored SRAM for parallel indirection of both parameters
-- up to 512 instructions (to be confirmed) 
+- up to 512 instructions 
 - embedded data in instruction storage
 - External program loading from host (to be tested)
 
@@ -22,6 +22,7 @@ Simple 8-bit microcontroller architecure based on the WDR Paper computer ISA, ex
   - Interfacing with free pins (GPIO)
   - Parallel 4-bit duplex protocol
   - Specialized ISA extensions
+  - Boolean & arithmetic operations
   - Possibly some cool extension modules (Interrupts, MAC, ReLU)
 - External (persistent) storage
 - Adjustment to ASIC constraints
@@ -29,15 +30,15 @@ Simple 8-bit microcontroller architecure based on the WDR Paper computer ISA, ex
 ## ISA
 **Base commands:**
 ```
-inc A, (B) // increase register A by one (by B)
-dec A, (B) // decrease register A by one (by B)
+inc A, B   // increase register A by B
+dec A, B   // decrease register A by B
 
-isz A, (B) // check if A is equal 0 (equal B)
+isz A, B   // check if A is equal equal B
            // if false: continue
            // if true: skip next instruction
 
-jmp A, A   // jump to instruction A
-           // (A is 20-bit, composed from [param0][param1])
+jmp AA     // jump to instruction A
+           // (A is 16-bit, composed from [param0][param1])
 
 stp        // stop program
 ```
@@ -50,12 +51,13 @@ idl        // do nothing (idle)
 ```
 wrr A, B   // override register A to value B
 
-ldd A, B   // load embedded data from location A to register B
-           // (4 bits from A and 4 bits from A + 1)
+lda A, B   // load embedded data from location [A][B] (16 bit) to accumulator
+atr A      // move embedded data from accumulator to register A
 
 iot A, B   // toggle bit(s) B on MMIO register A
+iop A, B   // pulse  bit(s) B on MMIO register A
 
-izb A, (B) // check if (bit B) of MMIO register A equals 0
+izb A, B   // check if bit B of MMIO register A equals 0
            // (same behavior as isz)
 
 mtr A, B   // move MMIO register A to register B
@@ -63,14 +65,12 @@ rtm A, B   // move register A to MMIO register B
 ```
 
 ## Instruction
-Instructions are 28-bit long, and split into multiple parts:
+Instructions are 24-bit long, and split into multiple parts:
 ```
-[27-26][25-24][23-20][19-10][9-0]
-   |      |      |      |     |____ parameter B (10 bit)
-   |      |      |      |           (usable as [2][8] metadata;value depending on command)
+[23-22][21-20][19-16][15-8][7-0]
+   |      |      |      |     |____ parameter B (8 bit)
    |      |      |      |     
-   |      |      |      |__________ parameter A (10 bit) 
-   |      |      |                  (usable as [2][8] metadata;value depending on command)
+   |      |      |      |__________ parameter A (8 bit) 
    |      |      |      
    |      |      |_________________ command (4 bit)
    |      |     
@@ -79,30 +79,15 @@ Instructions are 28-bit long, and split into multiple parts:
    |_______________________________ pointer depth of parameter A (2 bit)
 ```
 
-## Parameters
-Currently, we have 10 bit parameters, while only 8 bit data (excluding jump commands). Consequently, we have 2 free bits which we can use as following:
-```
-[9 - 8][7 - 0]
- |   |    |____ Parameter data
- |   |
- |   |_________ Operation config bit (depends on operation)
- |
- |_____________ Param 0: Operation config bit
-                Param 1: Validity bit      
-```
-The MS bit on the second parameter is very important - it lets us tell the function that the second parameter is to be used.
-This is very useful for the operations that change their behavior depending on whether the second parameter is present.
-
 ## Embedded data
-The (to be confirmed) instruction storage has the size of 512x32 bits. As such, each instruction leaves 4 bits of data unused. This can be used to have embedded data:
+The (to be confirmed) instruction storage has the size of 512x32 bits. As such, each instruction leaves 8 bits of data unused. This can be used to have embedded data:
 ```
-0x00 [28-bit instruction][4-bit data]
-0x01 [28-bit instruction][4-bit data]
-0x02 [28-bit instruction][4-bit data]
-0x03 [28-bit instruction][4-bit data]
+0x00 [8-bit data][24-bit instruction]
+0x01 [8-bit data][24-bit instruction]
+0x02 [8-bit data][24-bit instruction]
+0x03 [8-bit data][24-bit instruction]
 ```
-These chunks of 4 bit data can be merged into 8 bit values that can be loaded into registers
-using the `ldd` command.
+These chunks of 8 bits can be loaded into an accumulator using the `lda` command, then transferred into a register using the `atr` command.
 
 ## Pointer indirection
 Each instruction has a pointer depth per parameter, currently two bits, which allows for up to 4 levels of indirection:
@@ -152,8 +137,9 @@ stp  ---   ---
 nop  ---   ---
 idl  ---   ---
 wrr  reg   lit
-ldd  lit   lit
-iot  reg   lit
+lda  lit   lit
+iot  lit   lit
+iop  lit   lit
 izb  reg   lit
 mtr  reg   reg
 rtm  reg   reg

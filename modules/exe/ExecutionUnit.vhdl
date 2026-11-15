@@ -28,9 +28,14 @@ entity ExecutionUnit is
         reg_dout : in  std_ulogic_vector(WORDWIDTH - 1 downto 0);
 
         -- InstructionBank embedded data access        
-        rden : out std_ulogic;
-        addr : out unsigned(INSTD - 1 downto 0); 
-        dout : in  std_ulogic_vector(EMBDWIDTH - 1 downto 0);  
+        insb_rden : out std_ulogic;
+        insb_addr : out unsigned(INSTD - 1 downto 0); 
+        insb_dout : in  std_ulogic_vector(EMBDWIDTH - 1 downto 0); 
+        
+        -- Accumulator interface
+        acc_rw : out std_ulogic_vector(1 downto 0); --[read][write]; xor = en; and = soft rst
+        acc_di : out std_ulogic_vector(WORDWIDTH - 1 downto 0);
+        acc_do : in  std_ulogic_vector(WORDWIDTH - 1 downto 0);
 
         -- Current instruction
         ins_i : in inst_rec_t
@@ -56,10 +61,8 @@ begin
 
     main: process(all)
         variable merged : std_ulogic_vector(PARAMW * 2 - 1 downto 0);
-        variable param1valid : std_ulogic_vector(WORDWIDTH - 1 downto 0);
     begin
         merged := ins_i.param0 & ins_i.param1;
-        param1valid := ins_i.param1(PARAMW - 1) and ins_i.param1(WORDWIDTH - 1 downto 0);
         
         pc_cmd <= "00";
         pc_ovr <= (others => '0');
@@ -68,8 +71,13 @@ begin
         reg_addr <= (others => '0');
         reg_din  <= (others => '0');
         
-        rden  <= '0';
-        addr <= (others => '0');
+        insb_rden  <= '0';
+        insb_addr <= (others => '0');
+        
+        temp <= tempff;
+
+        acc_rw  <= "00";
+        acc_di <= (others => '0');
 
         if en = '1' then
             case ins_i.cmd is
@@ -88,11 +96,7 @@ begin
                             reg_cmd  <= "10";
                             reg_addr <= unsigned(ins_i.param0(REGD - 1 downto 0));
                         when x"3" =>
-                            if ins_i.param1(PARAMW-1) = '1' then
-                                pc_cmd <= "01" when reg_dout = ins_i.param1(WORDWIDTH - 1 downto 0) else "10";
-                            else
-                                pc_cmd <= "01" when reg_dout = x"00" else "10";
-                            end if;
+                            pc_cmd <= "01" when reg_dout = ins_i.param1 else "10";
                         when others =>
                     end case;
                 when dec =>    
@@ -108,11 +112,7 @@ begin
                         when x"3" =>
                             reg_cmd  <= "01";
                             reg_addr <= unsigned(ins_i.param0(REGD - 1 downto 0));
-                            if ins_i.param1(PARAMW-1) = '1' then
-                                reg_din <= std_ulogic_vector(unsigned(reg_dout) - unsigned(ins_i.param0(WORDWIDTH - 1 downto 0)));
-                            else
-                                reg_din <= std_ulogic_vector(unsigned(reg_dout) - 1);
-                            end if;
+                            reg_din <= std_ulogic_vector(unsigned(reg_dout) - unsigned(ins_i.param1));
                         when others =>
                     end case;
                 when inc =>    
@@ -128,32 +128,38 @@ begin
                         when x"3" =>
                             reg_cmd  <= "01";
                             reg_addr <= unsigned(ins_i.param0(REGD - 1 downto 0));
-                            if ins_i.param1(PARAMW-1) = '1' then
-                                reg_din <= std_ulogic_vector(unsigned(reg_dout) + unsigned(ins_i.param0(WORDWIDTH - 1 downto 0)));
-                            else
-                                reg_din <= std_ulogic_vector(unsigned(reg_dout) + 1);
-                            end if;
+                                reg_din <= std_ulogic_vector(unsigned(reg_dout) + unsigned(ins_i.param1));
                         when others =>
                     end case;
-                when ldd =>    
+                when lda =>    
                     case phase is
-                        when x"0" =>
-                            rden  <= '1';
-                            addr <= unsigned(ins_i.param0(INSTD - 1 downto 0));
                         when x"1" =>
-                            rden  <= '1';
-                            addr <= unsigned(ins_i.param0(INSTD - 1 downto 0)) + 1;
-
-                            temp <= dout & x"0";
+                            insb_rden  <= '1';
+                            insb_addr <= unsigned(merged(INSTD - 1 downto 0));
                         when x"2" =>
-                            rden  <= '1';
-                            temp(EMBDWIDTH - 1 downto 0) <= dout;
+                            insb_rden  <= '1';
+                            
+                            insb_addr <= unsigned(merged(INSTD - 1 downto 0));
+                            temp <= insb_dout;
                         when x"3" =>
+                            --insb_rden  <= '1';
+                            pc_cmd <= "10";
+                            acc_rw  <= "01";
+                            acc_di <= tempff;
+                        when others =>
+                    end case;
+                when atr =>    
+                    case phase is
+                        when x"1" =>
                             pc_cmd <= "10";
 
+                            acc_rw  <= "10";
+                        when x"2" =>
+                            acc_rw <= "11";
+
                             reg_cmd  <= "01";
-                            reg_addr <= unsigned(ins_i.param1(REGD - 1 downto 0));
-                            reg_din <= temp;
+                            reg_addr <= unsigned(ins_i.param0(REGD - 1 downto 0));
+                            reg_din <= std_ulogic_vector(unsigned(acc_do));
                         when others =>
                     end case;
                 when others =>

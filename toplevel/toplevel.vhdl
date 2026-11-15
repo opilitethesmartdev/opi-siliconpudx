@@ -85,6 +85,12 @@ architecture rtl of toplevel is
         signal exu_en       :  std_ulogic;
         signal exu_ins_addr :  unsigned(INSTD-1 downto 0);
 
+    -- Accumulator If
+        signal acc_rw  :  std_ulogic_vector(1 downto 0);
+        signal acc_di  :  std_ulogic_vector(WORDWIDTH-1 downto 0);
+        signal acc_do  :  std_ulogic_vector(WORDWIDTH-1 downto 0);
+
+
 begin
     -- Low level entities
         pcif_shift : entity work.n_shift1b
@@ -150,6 +156,16 @@ begin
                 ram_dout => ram_dout
         );
 
+        accif : entity work.AccumulatorIf
+            port map(
+                clk => clk,
+                rst => rst,
+                rw  => acc_rw,
+                di  => acc_di,
+                do  => acc_do
+        );
+
+
     
     -- Multiplexers
         regb_mux : entity work.RegBankMuxIf
@@ -197,19 +213,22 @@ begin
 
         exu : entity work.ExecutionUnit
             port map(
-                clk      => s.i_n,
-                rst      => rst,
-                en       => exu_en,
-                pc_cmd   => pc_cmd,
-                pc_ovr   => pc_ovr,
-                reg_cmd  => rm_cmd,
-                reg_addr => rm_addr,
-                reg_din  => rm_i,
-                reg_dout => rm_o,
-                rden     => ins_cmd(0),
-                addr     => exu_ins_addr,
-                dout     => ins_dout,
-                ins_i    => arif_ins_o
+                clk       => s.i_n,
+                rst       => rst,
+                en        => exu_en,
+                pc_cmd    => pc_cmd,
+                pc_ovr    => pc_ovr,
+                reg_cmd   => rm_cmd,
+                reg_addr  => rm_addr,
+                reg_din   => rm_i,
+                reg_dout  => rm_o,
+                insb_rden => ins_cmd(0),
+                insb_addr => exu_ins_addr,
+                insb_dout => ins_dout,
+                acc_rw    => acc_rw,
+                acc_di    => acc_di,
+                acc_do    => acc_do,
+                ins_i     => arif_ins_o
         );
 
 

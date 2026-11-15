@@ -13,9 +13,9 @@ use work.core_pkg.all;
 package instruction_pkg is    
     constant IPTRW  : natural := 2;  
     constant ICMDW  : natural := 4;    
-    constant PARAMW : natural := 10; 
+    constant PARAMW : natural := 8; 
     constant PARAMS : natural := 2;
-    constant INSTW  : natural := IPTRW*PARAMS + ICMDW + PARAMW*PARAMS; --28
+    constant INSTW  : natural := IPTRW*PARAMS + ICMDW + PARAMW*PARAMS; --24
 
     constant INSTD : natural := 9;
     
@@ -32,8 +32,10 @@ package instruction_pkg is
         jmp, 
         stp,         
         wrr, 
-        ldd,          
-        iot,  
+        lda, 
+        atr,          
+        iot,         
+        iop,  
         izb,         
         mtr,
         rtm 
@@ -46,9 +48,11 @@ package instruction_pkg is
         param0 : std_ulogic_vector(PARAMW - 1 downto 0);
         param1 : std_ulogic_vector(PARAMW - 1 downto 0);
     end record;
+    
+    type program_arr_t is array(natural range<>) of std_ulogic_vector(IBWIDTH - 1 downto 0);
 
     type cmd_array_t is array (0 to 2**ICMDW-1) of command_t;
-    constant COMMANDS : cmd_array_t := (nop,idl,inc,dec,isz,jmp,stp,wrr,ldd,iot,izb,mtr,rtm,others => nop);
+    constant COMMANDS : cmd_array_t := (nop,idl,inc,dec,isz,jmp,stp,wrr,lda,atr,iot,iop,izb,mtr,rtm,others => nop);
 
     function inst2cmd ( i : std_ulogic_vector(INSTW - 1 downto 0) ) 
         return command_t;
@@ -65,6 +69,19 @@ package instruction_pkg is
                         cmd  : command_t;
                         param0 : natural;
                         param1 : natural ) 
+            return std_ulogic_vector;
+
+    function newinst (  depth0 : natural;
+                        depth1 : natural;
+                        cmd  : command_t;
+                        param0 : std_ulogic_vector;
+                        param1 : std_ulogic_vector ) 
+            return std_ulogic_vector;
+
+    function newinst (  depth0 : natural;
+                        depth1 : natural;
+                        cmd  : command_t;
+                        params : std_ulogic_vector ) 
             return std_ulogic_vector;
 
             
@@ -91,11 +108,13 @@ package body instruction_pkg is
                 when jmp => return std_ulogic_vector(to_unsigned(5, ICMDW));
                 when stp => return std_ulogic_vector(to_unsigned(6, ICMDW));
                 when wrr => return std_ulogic_vector(to_unsigned(7, ICMDW));
-                when ldd => return std_ulogic_vector(to_unsigned(8, ICMDW));
-                when iot => return std_ulogic_vector(to_unsigned(9, ICMDW));
-                when izb => return std_ulogic_vector(to_unsigned(10, ICMDW));
-                when mtr => return std_ulogic_vector(to_unsigned(11, ICMDW));
-                when rtm => return std_ulogic_vector(to_unsigned(12, ICMDW));
+                when lda => return std_ulogic_vector(to_unsigned(8, ICMDW));
+                when atr => return std_ulogic_vector(to_unsigned(9, ICMDW));
+                when iot => return std_ulogic_vector(to_unsigned(10, ICMDW));
+                when iop => return std_ulogic_vector(to_unsigned(11, ICMDW));
+                when izb => return std_ulogic_vector(to_unsigned(12, ICMDW));
+                when mtr => return std_ulogic_vector(to_unsigned(13, ICMDW));
+                when rtm => return std_ulogic_vector(to_unsigned(14, ICMDW));
             end case;
     end function;
     
@@ -138,6 +157,46 @@ package body instruction_pkg is
             ocmd := cmd2inst(cmd);
             oprm0 := std_ulogic_vector(to_unsigned(param0, PARAMW));
             oprm1 := std_ulogic_vector(to_unsigned(param1, PARAMW));
+            return  odpt0 & odpt1 & ocmd & oprm0 & oprm1;
+    end function;
+
+    function newinst (  depth0 : natural;
+                        depth1 : natural;
+                        cmd  : command_t;
+                        param0 : std_ulogic_vector;
+                        param1 : std_ulogic_vector)
+        return std_ulogic_vector is
+            variable odpt0 : std_ulogic_vector(IPTRW - 1 downto 0);
+            variable odpt1 : std_ulogic_vector(IPTRW - 1 downto 0);
+            variable ocmd : std_ulogic_vector(ICMDW - 1 downto 0);
+            variable oprm0 : std_ulogic_vector(PARAMW - 1 downto 0);
+            variable oprm1 : std_ulogic_vector(PARAMW - 1 downto 0);
+        begin
+            odpt0 := std_ulogic_vector(to_unsigned(depth0, IPTRW));
+            odpt1 := std_ulogic_vector(to_unsigned(depth1, IPTRW));
+            ocmd := cmd2inst(cmd);
+            oprm0 := param0(PARAMW - 1 downto 0);
+            oprm1 := param1(PARAMW - 1 downto 0);
+            return  odpt0 & odpt1 & ocmd & oprm0 & oprm1;
+    end function;
+    function newinst (  depth0 : natural;
+                        depth1 : natural;
+                        cmd  : command_t;
+                        params : std_ulogic_vector)
+        return std_ulogic_vector is
+            variable param : std_ulogic_vector(params'length - 1 downto 0) := params;
+
+            variable odpt0 : std_ulogic_vector(IPTRW - 1 downto 0);
+            variable odpt1 : std_ulogic_vector(IPTRW - 1 downto 0);
+            variable ocmd : std_ulogic_vector(ICMDW - 1 downto 0);
+            variable oprm0 : std_ulogic_vector(PARAMW - 1 downto 0);
+            variable oprm1 : std_ulogic_vector(PARAMW - 1 downto 0);
+        begin
+            odpt0 := std_ulogic_vector(to_unsigned(depth0, IPTRW));
+            odpt1 := std_ulogic_vector(to_unsigned(depth1, IPTRW));
+            ocmd := cmd2inst(cmd);
+            oprm0 := param(PARAMW * 2 - 1 downto PARAMW);
+            oprm1 := param(PARAMW - 1 downto 0);
             return  odpt0 & odpt1 & ocmd & oprm0 & oprm1;
     end function;
 
