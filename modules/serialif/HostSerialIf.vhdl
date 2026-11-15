@@ -124,7 +124,7 @@ begin
                         ram_wren <= '1';
                         ram_mask <= (others => '1');
                         ram_addr <= unsigned(d_mi(HDATAW - 1 downto HDATAW - INSTD));
-                        ram_din <= d_mi(HDATAW - PARAMW downto 0);
+                        ram_din <= d_mi(HDATAW - INSTD - 1 downto 0);
                     else
                         re_cmd  <= "01";
                         re_addr <= resize(unsigned(d_mi(HDATAW - 1 downto HDATAW - HWW)), REGD);

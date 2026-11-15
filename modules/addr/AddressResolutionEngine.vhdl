@@ -36,7 +36,6 @@ architecture rtl of AddressResolutionEngine is
 
     signal cd, cdn : unsigned(IPTRW downto 0);
     signal op, opn : std_ulogic_vector(PARAMW - 1 downto 0);
-    signal op_padding : std_ulogic_vector(PARAMW - WORDWIDTH - 1 downto 0) := (others => '0');
 begin
 
     seq : process(rst,clk)
@@ -63,7 +62,7 @@ begin
         end case;
     end process fsm;
 
-    main : process(s,  cd, i_p, din, op, op_padding)
+    main : process(s,  cd, i_p, din, op)
     begin
         rd <= '0';
         addr <= (others => '0');
@@ -86,7 +85,7 @@ begin
                 rd <= '1';         
                 cdn <= cd + 1;
 
-                opn <= op_padding & din;
+                opn <= din;
             when fin => 
         end case;
     end process main;
