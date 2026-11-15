@@ -26,15 +26,11 @@ entity tt_um_opi_siliconpudx is
 end entity tt_um_opi_siliconpudx;
 
 architecture rtl of tt_um_opi_siliconpudx is
-signal instruction  :  std_ulogic;
+signal instruction, mock_out  :  std_ulogic;
 
 signal rst  :  std_ulogic;
 signal o    :  std_ulogic_vector(1 downto 0);
 signal en   :  std_ulogic_vector(1 downto 0);
-signal rw   :  std_ulogic_vector(1 downto 0);
-signal addr :  std_ulogic_vector(REGD-1 downto 0);
-signal din  :  std_ulogic_vector(WORDWIDTH-1 downto 0);
-signal dout :  std_ulogic_vector(WORDWIDTH-1 downto 0);
 
 signal ram_en      :  std_ulogic;
 signal ram_wren    :  std_ulogic;
@@ -42,6 +38,11 @@ signal ram_mask    :  std_ulogic_vector(IBWIDTH-1 downto 0);
 signal ram_addr    :  unsigned(INSTD-1 downto 0);
 signal ram_din     :  std_ulogic_vector(IBWIDTH-1 downto 0);
 signal ram_dout    :  std_ulogic_vector(IBWIDTH-1 downto 0);
+
+signal mosi        :  std_ulogic;
+signal t_si        :  std_ulogic;
+signal miso        :  std_ulogic;
+signal t_so        :  std_ulogic;
 
 
 begin
@@ -51,10 +52,10 @@ i_asic_harness : entity work.asic_harness
         rst         => rst,
         en          => en,
         o           => o,
-        rw          => rw,
-        addr        => addr,
-        din         => din,
-        dout        => dout,
+        mosi        => mosi,
+        t_si        => t_si,
+        miso        => miso,
+        t_so        => t_so,
         ram_en      => ram_en,
         ram_wren    => ram_wren,
         ram_mask    => ram_mask,
@@ -64,17 +65,25 @@ i_asic_harness : entity work.asic_harness
         instruction => instruction
 );
 
+mock_shift : entity work.n_shift1b
+    generic map(
+        DELAY => 5
+    )
+    port map(
+        clk => clk,
+        rst => rst,
+        i   => instruction,
+        o   => mock_out
+);
 
 rst <= not rst_n;
 
-uo_out <= o & instruction & "00000";
-rw <= ui_in(7 downto 6);
-addr <= ui_in(5 downto 0);
+uo_out <= mock_out & mosi & t_si & "000" & o;
+miso <= ui_in(7);
+t_so <= ui_in(6);
 en <= '0' & ena;
 
-din <= uio_in when (rw = "00") else (others => '0');
-uio_out <= dout when (rw = "01" or rw = "11") else (others => '0');
-
-uio_oe <= (others =>'1') when (rw = "01" or rw = "11") else (others => '0');
+uio_out <= (others => '0');
+uio_oe <= (others => '0');
 
 end architecture rtl;

@@ -18,7 +18,7 @@ entity InstructionBankIf is
         ena : in std_ulogic;
         o : out std_ulogic_vector(1 downto 0); -- [stp][nop]
         
-        cmd  : in  std_ulogic_vector(1 downto 0); --[read][write]; xor = en
+        cmd  : in  std_ulogic_vector(1 downto 0); --[read inst][read data]; xor = en;
         addr : in  unsigned(INSTD - 1 downto 0); 
 
         dout : out std_ulogic_vector(EMBDWIDTH - 1 downto 0);  
@@ -40,8 +40,8 @@ architecture rtl of InstructionBankIf is
 begin
     clk_n <= not clk;
 
-    en <= (or cmd);-- and ena;
-    edr <=(and cmd);-- and ena;
+    en <= (or cmd);
+    edr <= '1' when cmd(0) = '1' else '0';
     eni <= en and not edr;
 
     nopfinff : entity work.sr_ff
@@ -71,8 +71,7 @@ begin
             rst => rst,
             i   => ram_dout(INSTW - 1 downto 0),
             o   => inst_dl
-    );
-    
+    );    
 
     isnop <= '1' when v2inst(inst_dl).cmd = nop and ((eni and ena) = '1') else '0';
     isstp <= '1' when v2inst(inst_dl).cmd = stp and ((eni and ena) = '1') else '0';

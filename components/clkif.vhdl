@@ -57,7 +57,7 @@ begin
         end if;
     end process;
 
-    ci_n <= not ci;
+    ci_n <= not ci and clkon;
     clki_n <= not clki;
     
     clko <= (i_n => clki_n, o => ci, o_n => ci_n, en => clkon, advp => advp, advn => advn);

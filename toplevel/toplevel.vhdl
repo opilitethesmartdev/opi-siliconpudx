@@ -51,10 +51,10 @@ architecture rtl of toplevel is
         signal reg_o   :  std_ulogic_vector(WORDWIDTH-1 downto 0);
 
     -- Register bank (mirror mode)
-        signal rm_cmd    :  std_ulogic_vector(1 downto 0);
-        signal rm_addr   :  unsigned(REGD-1 downto 0);
+        signal rm_cmd  :  std_ulogic_vector(1 downto 0);
+        signal rm_addr :  unsigned(REGD-1 downto 0);
         signal rm_i    :  std_ulogic_vector(WORDWIDTH-1 downto 0);
-        signal rm_o   :  std_ulogic_vector(WORDWIDTH-1 downto 0);
+        signal rm_o    :  std_ulogic_vector(WORDWIDTH-1 downto 0);
     -- Register bank (singular mode)
         signal rs_rd_a   :  std_ulogic;
         signal rs_rd_b   :  std_ulogic;
@@ -64,22 +64,49 @@ architecture rtl of toplevel is
         signal rs_dout_b :  std_ulogic_vector(WORDWIDTH-1 downto 0);
 
     -- Instruction bank
-        signal ins_sta        :  std_ulogic_vector(1 downto 0);
+        signal ins_sta      :  std_ulogic_vector(1 downto 0);
         signal ins_cmd      :  std_ulogic_vector(1 downto 0);
         signal ins_addr     :  unsigned(INSTD-1 downto 0);
         signal ins_dout     :  std_ulogic_vector(EMBDWIDTH-1 downto 0);
-        signal ins_o     :  inst_rec_t;
+        signal ins_o        :  inst_rec_t;
     
     -- Program Counter If
-        signal pc_cmd :  std_ulogic_vector(1 downto 0);
-        signal pc_ovr :  unsigned(INSTD-1 downto 0);
-        signal pc_out :  unsigned(INSTD-1 downto 0);
+        signal pcif_en  :  std_ulogic;
+        signal pc_cmd   :  std_ulogic_vector(1 downto 0);
+        signal pc_ovr   :  unsigned(INSTD-1 downto 0);
+        signal pc_out   :  unsigned(INSTD-1 downto 0);
 
     -- Address Resolution If
         signal arif_en     :  std_ulogic;
+        signal arif_rst    :  std_ulogic;
         signal arif_ins_o  :  inst_rec_t;
 
+    -- Execution Unit
+        signal exu_en       :  std_ulogic;
+        signal exu_ins_addr :  unsigned(INSTD-1 downto 0);
+
 begin
+    -- Low level entities
+        pcif_shift : entity work.n_shift1b
+            generic map( DELAY => 1 )
+            port map(
+                clk => clk,
+                rst => rst,
+                i   => s.advp,
+                o   => pcif_en
+        );
+
+        arif_rstedge : entity work.edgend
+            generic map(
+                polarity => "rising"
+            )
+            port map(
+                clk => clk,
+                i   => en,
+                o   => arif_rst
+        );
+
+
     -- State Entities
         clkif : entity work.ClockIf
             port map(
@@ -146,7 +173,7 @@ begin
         arif : entity work.AddressResolutionIf
             port map(
                 clk    => s.i_n,
-                rst    => rst,
+                rst    => arif_rst,
                 en     => arif_en,
                 rd_a   => rs_rd_a,
                 rd_b   => rs_rd_b,
@@ -158,19 +185,32 @@ begin
                 ins_o  => arif_ins_o
         );
 
-
-
     -- Main Entities
         pcif : entity work.ProgramCounterIf
             port map(
-                clk => s.o_n,
+                clk => clk,
                 rst => rst,
-                en  => en,
                 cmd => pc_cmd,
                 ovr => pc_ovr,
                 pc  => pc_out
         );
 
+        exu : entity work.ExecutionUnit
+            port map(
+                clk      => s.i_n,
+                rst      => rst,
+                en       => exu_en,
+                pc_cmd   => pc_cmd,
+                pc_ovr   => pc_ovr,
+                reg_cmd  => rm_cmd,
+                reg_addr => rm_addr,
+                reg_din  => rm_i,
+                reg_dout => rm_o,
+                rden     => ins_cmd(0),
+                addr     => exu_ins_addr,
+                dout     => ins_dout,
+                ins_i    => arif_ins_o
+        );
 
 
     -- Processes
@@ -178,15 +218,13 @@ begin
     err <= reg_err or ins_sta(0);
     o <= ins_sta(1) & err;
 
-    pc_cmd <= en & '0';
-    pc_ovr <= (others => '0');
-
-    ins_cmd <= en & '0';
-    ins_addr <= pc_out;
+    ins_cmd(1) <= en;
+    ins_addr <= pc_out when ins_cmd(0) = '0' else exu_ins_addr;
 
     arif_en <= s.advp or s.o;
 
-    rm_cmd  <= "00";
-    rm_addr <= (others => '0');
-    rm_i    <= (others => '0');    
+    exu_en <= s.en and (s.o_n or s.advn);
+
+    
+    instruction <=( or inst2v(arif_ins_o)) or (or rm_o);
 end architecture rtl;

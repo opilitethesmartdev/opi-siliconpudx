@@ -1,6 +1,7 @@
 # SiliconPUdx
 
 Simple 8-bit microcontroller architecure based on the WDR Paper computer ISA, extended with pointer indirection and MMIO interfaces 
+
 **Author: opilitethesmartdev**
 
 ## Features: 
@@ -10,7 +11,7 @@ Simple 8-bit microcontroller architecure based on the WDR Paper computer ISA, ex
 - Pointer indirection:
   - Integrated address resolution interface
   - up to two levels of indirection (pointer to pointer to value)
-- 256 internal registers
+- 64 internal registers
   - Mirrored SRAM for parallel indirection of both parameters
 - up to 512 instructions (to be confirmed) 
 - embedded data in instruction storage
@@ -78,6 +79,20 @@ Instructions are 28-bit long, and split into multiple parts:
    |_______________________________ pointer depth of parameter A (2 bit)
 ```
 
+## Parameters
+Currently, we have 10 bit parameters, while only 8 bit data (excluding jump commands). Consequently, we have 2 free bits which we can use as following:
+```
+[9 - 8][7 - 0]
+ |   |    |____ Parameter data
+ |   |
+ |   |_________ Operation config bit (depends on operation)
+ |
+ |_____________ Param 0: Operation config bit
+                Param 1: Validity bit      
+```
+The MS bit on the second parameter is very important - it lets us tell the function that the second parameter is to be used.
+This is very useful for the operations that change their behavior depending on whether the second parameter is present.
+
 ## Embedded data
 The (to be confirmed) instruction storage has the size of 512x32 bits. As such, each instruction leaves 4 bits of data unused. This can be used to have embedded data:
 ```
@@ -142,4 +157,48 @@ iot  reg   lit
 izb  reg   lit
 mtr  reg   reg
 rtm  reg   reg
+```
+
+## Host Serial Interface
+A simple serial interface is provided for the host to interface with the internal memories.
+The protocol is formatted as following:
+```
+[42][41][40 - 0]
+ |   |      |_______________ Payload 
+ |   |
+ |   |______________________ Selection bit (0 for register sram, 1 for instruction sram)
+ | 
+ |__________________________ Operation bit (0 for read, 1 for write)
+```
+Given the fact that the two target SRAMs are of different layouts, the payload format differs:
+```
+Inst SRAM: [40 - 32][31 - 0]
+               |        |_____________ Payload (32 bit) (ignored when read)
+               |
+               |______________________ Address (9 bit)
+
+Reg SRAM:  [40][39 - 32][31 - 24][33 - 0]
+            |      |        |        |______ Ignored
+            |      |        |
+            |      |        |_______________ Payload (8 bit) (ignored when read)
+            |      |                                      
+            |      |________________________ Address (8 bit)
+            |                                                        
+            |_______________________________ Read from MMIO registers (when read)
+```
+The response is formatted like this:
+```
+[42 - 41][40 - 32][31 - 0]
+    |        |        |____ Response
+    |        |
+    |        |_____________ Status byte
+    |
+    |______________________ Mirror of input op/sel bits
+```
+where the status byte represents the following data:
+```
+[40][39][38][37][36][35][34][33][32]
+  |   |___|___|___|___|___|___|___|___ Reserved
+  |
+  |___________________________________ Error bit (1 when error)
 ```
