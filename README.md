@@ -1,6 +1,7 @@
 # SiliconPUdx
 
 Simple 8-bit microcontroller architecure based on the WDR Paper computer ISA, extended with pointer indirection and MMIO interfaces 
+
 **Author: opilitethesmartdev**
 
 ## Features: 
@@ -10,7 +11,7 @@ Simple 8-bit microcontroller architecure based on the WDR Paper computer ISA, ex
 - Pointer indirection:
   - Integrated address resolution interface
   - up to two levels of indirection (pointer to pointer to value)
-- 256 internal registers
+- 64 internal registers
   - Mirrored SRAM for parallel indirection of both parameters
 - up to 512 instructions (to be confirmed) 
 - embedded data in instruction storage
@@ -146,7 +147,7 @@ rtm  reg   reg
 
 ## Host Serial Interface
 A simple serial interface is provided for the host to interface with the internal memories.
-THe protocol is formatted as following:
+The protocol is formatted as following:
 ```
 [42][41][40 - 0]
  |   |      |_______________ Payload 
