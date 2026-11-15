@@ -13,7 +13,7 @@ Simple 8-bit microcontroller architecure based on the WDR Paper computer ISA, ex
   - up to two levels of indirection (pointer to pointer to value)
 - 64 internal registers
   - Mirrored SRAM for parallel indirection of both parameters
-- up to 512 instructions (to be confirmed) 
+- up to 512 instructions 
 - embedded data in instruction storage
 - External program loading from host (to be tested)
 
@@ -37,8 +37,8 @@ isz A, B   // check if A is equal equal B
            // if false: continue
            // if true: skip next instruction
 
-jmp A, A   // jump to instruction A
-           // (A is 20-bit, composed from [param0][param1])
+jmp AA     // jump to instruction A
+           // (A is 16-bit, composed from [param0][param1])
 
 stp        // stop program
 ```
@@ -65,14 +65,12 @@ rtm A, B   // move register A to MMIO register B
 ```
 
 ## Instruction
-Instructions are 28-bit long, and split into multiple parts:
+Instructions are 24-bit long, and split into multiple parts:
 ```
-[27-26][25-24][23-20][19-10][9-0]
-   |      |      |      |     |____ parameter B (10 bit)
-   |      |      |      |           (usable as [2][8] metadata;value depending on command)
+[23-22][21-20][19-16][15-8][7-0]
+   |      |      |      |     |____ parameter B (8 bit)
    |      |      |      |     
-   |      |      |      |__________ parameter A (10 bit) 
-   |      |      |                  (usable as [2][8] metadata;value depending on command)
+   |      |      |      |__________ parameter A (8 bit) 
    |      |      |      
    |      |      |_________________ command (4 bit)
    |      |     
@@ -80,20 +78,6 @@ Instructions are 28-bit long, and split into multiple parts:
    |       
    |_______________________________ pointer depth of parameter A (2 bit)
 ```
-
-## Parameters
-Currently, we have 10 bit parameters, while only 8 bit data (excluding jump commands). Consequently, we have 2 free bits which we can use as following:
-```
-[9 - 8][7 - 0]
- |   |    |____ Parameter data
- |   |
- |   |_________ Operation config bit (depends on operation)
- |
- |_____________ Param 0: Operation config bit
-                Param 1: Validity bit      
-```
-The MS bit on the second parameter is very important - it lets us tell the function that the second parameter is to be used.
-This is very useful for the operations that change their behavior depending on whether the second parameter is present.
 
 ## Embedded data
 The (to be confirmed) instruction storage has the size of 512x32 bits. As such, each instruction leaves 8 bits of data unused. This can be used to have embedded data:
@@ -103,7 +87,7 @@ The (to be confirmed) instruction storage has the size of 512x32 bits. As such, 
 0x02 [8-bit data][24-bit instruction]
 0x03 [8-bit data][24-bit instruction]
 ```
-These chunks of 8 bits loaded into an accumulator using the `lda` command, then transferred into a register using the `atr` command.
+These chunks of 8 bits can be loaded into an accumulator using the `lda` command, then transferred into a register using the `atr` command.
 
 ## Pointer indirection
 Each instruction has a pointer depth per parameter, currently two bits, which allows for up to 4 levels of indirection:
