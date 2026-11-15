@@ -78,7 +78,7 @@ begin
         if rst = '1' then
             s <= idl;
             cmdff <= "00";
-            cmdi <= (others => '0');
+            cmdiff <= (others => '0');
         elsif rising_edge(clk) then
             s <= sn;
             cmdff <= cmd;
@@ -102,6 +102,7 @@ begin
     main : process(all)
     begin
         cmd <= cmdff;
+        cmdi <= cmdiff;
 
         ram_en   <= '0';                                                
         ram_wren <= '0';                                              
