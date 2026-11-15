@@ -143,3 +143,39 @@ izb  reg   lit
 mtr  reg   reg
 rtm  reg   reg
 ```
+
+## Host Serial Interface
+A simple serial interface is provided for the host to interface with the internal memories.
+THe protocol is formatted as following:
+```
+[42][41][40 - 0]
+ |   |      |_______________ Payload 
+ |   |
+ |   |______________________ Selection bit (0 for register sram, 1 for instruction sram)
+ | 
+ |__________________________ Operation bit (0 for read, 1 for write)
+```
+Given the fact that the two target SRAMs are of different layouts, the payload format differs:
+```
+Inst SRAM: [40 - 32][31 - 0]
+               |        |_____________ Payload (32 bit) (when write)
+               |
+               |______________________ Address (9 bit)
+
+Reg SRAM:  [40][39 - 38][37 - 33][32 - 25][24 - 17][16 - 9][8 - 0]
+            |      |        |        |        |        |      |____ Payload 4 (8 bit) (when write and length  = 3)
+            |      |        |        |        |        |      
+            |      |        |        |        |        |___________ Payload 3 (8 bit) (when write and length >= 2)
+            |      |        |        |        |              
+            |      |        |        |        |____________________ Payload 2 (8 bit) (when write and length >= 1)
+            |      |        |        |                      
+            |      |        |        |_____________________________ Payload 1 (8 bit) (when write and length >= 0)
+            |      |        |                              
+            |      |        |______________________________________ Starting address (8 bit)
+            |      |                                      
+            |      |_______________________________________________ Length (3 bit, 0 to 3)
+            |                                                                               
+            |______________________________________________________ Read from MMIO registers (when read)
+```
+
+*Note: there would be a possibility*
