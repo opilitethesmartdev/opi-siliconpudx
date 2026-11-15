@@ -70,6 +70,8 @@ begin
         
         rden  <= '0';
         addr <= (others => '0');
+        
+        temp <= (others => '0');
 
         if en = '1' then
             case ins_i.cmd is
