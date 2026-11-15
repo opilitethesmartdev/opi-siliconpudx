@@ -27,6 +27,11 @@ entity ExecutionUnit is
         reg_din  : out std_ulogic_vector(WORDWIDTH - 1 downto 0);
         reg_dout : in  std_ulogic_vector(WORDWIDTH - 1 downto 0);
 
+        -- InstructionBank embedded data access        
+        rden : out std_ulogic;
+        addr : out unsigned(INSTD - 1 downto 0); 
+        dout : in  std_ulogic_vector(EMBDWIDTH - 1 downto 0);  
+
         -- Current instruction
         ins_i : in inst_rec_t
     );
@@ -34,14 +39,17 @@ end entity ExecutionUnit;
 
 architecture rtl of ExecutionUnit is
     signal phase : unsigned(3 downto 0);
+    signal temp, tempff  : std_ulogic_vector(WORDWIDTH - 1 downto 0);
 begin
     phaseff: process(clk)
     begin
         if rising_edge(clk) then
             if en = '1' then
                 phase <= phase + 1;
+                tempff <= temp;
             else
                 phase <= (others => '0');
+                tempff <= (others => '0');
             end if;
         end if;
     end process phaseff;
@@ -69,21 +77,14 @@ begin
                         when x"1" =>
                             pc_cmd <= "11";
                             pc_ovr <= resize(unsigned(merged), INSTD);
-                        --when x"1" =>
-                        --    pc_cmd <= "11";
-                        --    pc_ovr <= resize(unsigned(merged), INSTD);
                         when others =>
                     end case;
                 when isz =>    
                     case phase is
-                        --when x"0" =>
-                        --    reg_cmd  <= "10";
-                        --    reg_addr <= unsigned(ins_i.param0(REGD - 1 downto 0));
                         when x"1" =>
                             reg_cmd  <= "10";
                             reg_addr <= unsigned(ins_i.param0(REGD - 1 downto 0));
                         when x"3" =>
-                            --reg_cmd  <= "10";
                             if ins_i.param1(PARAMW-1) = '1' then
                                 pc_cmd <= "01" when reg_dout = ins_i.param1(WORDWIDTH - 1 downto 0) else "10";
                             else
@@ -109,6 +110,24 @@ begin
                             else
                                 reg_din <= std_ulogic_vector(unsigned(reg_dout) - 1);
                             end if;
+                        when others =>
+                    end case;
+                when ldd =>    
+                    case phase is
+                        when x"1" =>
+                            rden  <= '1';
+                            addr <= unsigned(ins_i.param0(INSTD - 1 downto 0));
+                        when x"2" =>
+                            rden  <= '1';
+                            addr <= unsigned(ins_i.param0(INSTD - 1 downto 0)) + 1;
+
+                            temp <= x"0" & dout;
+                        when x"3" =>
+                            pc_cmd <= "10";
+
+                            reg_cmd  <= "01";
+                            reg_addr <= unsigned(ins_i.param1(REGD - 1 downto 0));
+                            reg_din <= temp (EMBDWIDTH - 1 downto 0) & dout;
                         when others =>
                     end case;
                 when inc =>    

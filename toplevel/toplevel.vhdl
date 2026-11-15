@@ -51,10 +51,10 @@ architecture rtl of toplevel is
         signal reg_o   :  std_ulogic_vector(WORDWIDTH-1 downto 0);
 
     -- Register bank (mirror mode)
-        signal rm_cmd    :  std_ulogic_vector(1 downto 0);
-        signal rm_addr   :  unsigned(REGD-1 downto 0);
+        signal rm_cmd  :  std_ulogic_vector(1 downto 0);
+        signal rm_addr :  unsigned(REGD-1 downto 0);
         signal rm_i    :  std_ulogic_vector(WORDWIDTH-1 downto 0);
-        signal rm_o   :  std_ulogic_vector(WORDWIDTH-1 downto 0);
+        signal rm_o    :  std_ulogic_vector(WORDWIDTH-1 downto 0);
     -- Register bank (singular mode)
         signal rs_rd_a   :  std_ulogic;
         signal rs_rd_b   :  std_ulogic;
@@ -64,14 +64,14 @@ architecture rtl of toplevel is
         signal rs_dout_b :  std_ulogic_vector(WORDWIDTH-1 downto 0);
 
     -- Instruction bank
-        signal ins_sta        :  std_ulogic_vector(1 downto 0);
+        signal ins_sta      :  std_ulogic_vector(1 downto 0);
         signal ins_cmd      :  std_ulogic_vector(1 downto 0);
         signal ins_addr     :  unsigned(INSTD-1 downto 0);
         signal ins_dout     :  std_ulogic_vector(EMBDWIDTH-1 downto 0);
-        signal ins_o     :  inst_rec_t;
+        signal ins_o        :  inst_rec_t;
     
     -- Program Counter If
-        signal pcif_en :  std_ulogic;
+        signal pcif_en  :  std_ulogic;
         signal pc_cmd   :  std_ulogic_vector(1 downto 0);
         signal pc_ovr   :  unsigned(INSTD-1 downto 0);
         signal pc_out   :  unsigned(INSTD-1 downto 0);
@@ -82,7 +82,8 @@ architecture rtl of toplevel is
         signal arif_ins_o  :  inst_rec_t;
 
     -- Execution Unit
-        signal exu_en    :  std_ulogic;
+        signal exu_en       :  std_ulogic;
+        signal exu_ins_addr :  unsigned(INSTD-1 downto 0);
 
 begin
     -- Low level entities
@@ -194,27 +195,31 @@ begin
                 pc  => pc_out
         );
 
-        exu : entity work.ExecutionUnit
+        i_ExecutionUnit : entity work.ExecutionUnit
             port map(
-                clk      => s.i_n,
+                clk      => clk,
                 rst      => rst,
-                en       => exu_en,
+                en       => en,
                 pc_cmd   => pc_cmd,
                 pc_ovr   => pc_ovr,
-                reg_cmd  => rm_cmd,
-                reg_addr => rm_addr,
+                reg_cmd  => reg_cmd,
+                reg_addr => reg_addr,
                 reg_din  => rm_i,
                 reg_dout => rm_o,
+                rden     => ins_cmd(0),
+                addr     => exu_ins_addr,
+                dout     => ins_dout,
                 ins_i    => arif_ins_o
         );
+
 
     -- Processes
     -- Logic
     err <= reg_err or ins_sta(0);
     o <= ins_sta(1) & err;
 
-    ins_cmd <= en & '0';
-    ins_addr <= pc_out;
+    ins_cmd(1) <= en;
+    ins_addr <= pc_out when ins_cmd(0) = '0' else exu_ins_addr;
 
     arif_en <= s.advp or s.o;
 
