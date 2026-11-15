@@ -58,7 +58,7 @@ begin
         elsif rising_edge(clk) then
             if t_so = '1' then
                 mi_av <= '0';
-                sishift <= sishift(DW - 2 downto 0) & miso;
+                sishift <= miso & sishift(DW - 1 downto 1);
             elsif mitend = '1' then
                 mi_av <= '1';
                 d_mi <= sishift;
