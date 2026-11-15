@@ -159,24 +159,32 @@ The protocol is formatted as following:
 Given the fact that the two target SRAMs are of different layouts, the payload format differs:
 ```
 Inst SRAM: [40 - 32][31 - 0]
-               |        |_____________ Payload (32 bit) (when write)
+               |        |_____________ Payload (32 bit) (ignored when read)
                |
                |______________________ Address (9 bit)
 
-Reg SRAM:  [40][39 - 38][37 - 33][32 - 25][24 - 17][16 - 9][8 - 0]
-            |      |        |        |        |        |      |____ Payload 4 (8 bit) (when write and length  = 3)
-            |      |        |        |        |        |      
-            |      |        |        |        |        |___________ Payload 3 (8 bit) (when write and length >= 2)
-            |      |        |        |        |              
-            |      |        |        |        |____________________ Payload 2 (8 bit) (when write and length >= 1)
-            |      |        |        |                      
-            |      |        |        |_____________________________ Payload 1 (8 bit) (when write and length >= 0)
-            |      |        |                              
-            |      |        |______________________________________ Starting address (8 bit)
+Reg SRAM:  [40][39 - 32][31 - 24][33 - 0]
+            |      |        |        |______ Ignored
+            |      |        |
+            |      |        |_______________ Payload (8 bit) (ignored when read)
             |      |                                      
-            |      |_______________________________________________ Length (3 bit, 0 to 3)
-            |                                                                               
-            |______________________________________________________ Read from MMIO registers (when read)
+            |      |________________________ Address (8 bit)
+            |                                                        
+            |_______________________________ Read from MMIO registers (when read)
 ```
-
-*Note: there would be a possibility*
+The response is formatted like this:
+```
+[42 - 41][40 - 32][31 - 0]
+    |        |        |____ Response
+    |        |
+    |        |_____________ Status byte
+    |
+    |______________________ Mirror of input op/sel bits
+```
+where the status byte represents the following data:
+```
+[40][39][38][37][36][35][34][33][32]
+  |   |___|___|___|___|___|___|___|___ Reserved
+  |
+  |___________________________________ Error bit (1 when error)
+```
