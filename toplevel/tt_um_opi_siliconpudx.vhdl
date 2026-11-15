@@ -26,7 +26,7 @@ entity tt_um_opi_siliconpudx is
 end entity tt_um_opi_siliconpudx;
 
 architecture rtl of tt_um_opi_siliconpudx is
-signal instruction  :  std_ulogic;
+signal instruction, mock_out  :  std_ulogic;
 
 signal rst  :  std_ulogic;
 signal o    :  std_ulogic_vector(1 downto 0);
@@ -64,10 +64,22 @@ i_asic_harness : entity work.asic_harness
         instruction => instruction
 );
 
+mock_shift : entity work.n_shift1b
+    generic map(
+        DELAY => 5
+    )
+    port map(
+        clk => clk,
+        rst => rst,
+        i   => instruction,
+        o   => mock_out
+);
+
+
 
 rst <= not rst_n;
 
-uo_out <= o & instruction & "00000";
+uo_out <= o & mock_out & "00000";
 rw <= ui_in(7 downto 6);
 addr <= ui_in(5 downto 0);
 en <= '0' & ena;
