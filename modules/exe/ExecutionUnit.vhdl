@@ -53,7 +53,7 @@ begin
         merged := ins_i.param0 & ins_i.param1;
         param1valid := ins_i.param1(PARAMW - 1) and ins_i.param1(WORDWIDTH - 1 downto 0);
         
-        pc_cmd <= "10";--"01";
+        pc_cmd <= "00";
         pc_ovr <= (others => '0');
 
         reg_cmd  <= "00";
@@ -62,23 +62,28 @@ begin
 
         if en = '1' then
             case ins_i.cmd is
+                when nop =>
+                when stp =>
                 when jmp =>    
                     case phase is
-                        when x"0" =>
-                            pc_cmd <= "11";
-                            pc_ovr <= resize(unsigned(merged), INSTD);
                         when x"1" =>
                             pc_cmd <= "11";
                             pc_ovr <= resize(unsigned(merged), INSTD);
+                        --when x"1" =>
+                        --    pc_cmd <= "11";
+                        --    pc_ovr <= resize(unsigned(merged), INSTD);
                         when others =>
                     end case;
                 when isz =>    
                     case phase is
-                        when x"0" =>
-                            reg_cmd  <= "10";
-                            reg_addr <= unsigned(ins_i.param0(REGD - 1 downto 0));
+                        --when x"0" =>
+                        --    reg_cmd  <= "10";
+                        --    reg_addr <= unsigned(ins_i.param0(REGD - 1 downto 0));
                         when x"1" =>
                             reg_cmd  <= "10";
+                            reg_addr <= unsigned(ins_i.param0(REGD - 1 downto 0));
+                        when x"3" =>
+                            --reg_cmd  <= "10";
                             if ins_i.param1(PARAMW-1) = '1' then
                                 pc_cmd <= "01" when reg_dout = ins_i.param1(WORDWIDTH - 1 downto 0) else "10";
                             else
@@ -86,7 +91,51 @@ begin
                             end if;
                         when others =>
                     end case;
+                when dec =>    
+                    case phase is
+                        when x"1" =>
+                            pc_cmd <= "10";
+
+                            reg_cmd  <= "10";
+                            reg_addr <= unsigned(ins_i.param0(REGD - 1 downto 0));
+                        when x"2" =>
+                            reg_cmd  <= "10";
+                            reg_addr <= unsigned(ins_i.param0(REGD - 1 downto 0));
+                        when x"3" =>
+                            reg_cmd  <= "01";
+                            reg_addr <= unsigned(ins_i.param0(REGD - 1 downto 0));
+                            if ins_i.param1(PARAMW-1) = '1' then
+                                reg_din <= std_ulogic_vector(unsigned(reg_dout) - unsigned(ins_i.param0(WORDWIDTH - 1 downto 0)));
+                            else
+                                reg_din <= std_ulogic_vector(unsigned(reg_dout) - 1);
+                            end if;
+                        when others =>
+                    end case;
+                when inc =>    
+                    case phase is
+                        when x"1" =>
+                            pc_cmd <= "10";
+
+                            reg_cmd  <= "10";
+                            reg_addr <= unsigned(ins_i.param0(REGD - 1 downto 0));
+                        when x"2" =>
+                            reg_cmd  <= "10";
+                            reg_addr <= unsigned(ins_i.param0(REGD - 1 downto 0));
+                        when x"3" =>
+                            reg_cmd  <= "01";
+                            reg_addr <= unsigned(ins_i.param0(REGD - 1 downto 0));
+                            if ins_i.param1(PARAMW-1) = '1' then
+                                reg_din <= std_ulogic_vector(unsigned(reg_dout) + unsigned(ins_i.param0(WORDWIDTH - 1 downto 0)));
+                            else
+                                reg_din <= std_ulogic_vector(unsigned(reg_dout) + 1);
+                            end if;
+                        when others =>
+                    end case;
                 when others =>
+                    case phase is
+                        when x"1" => pc_cmd <= "10";
+                        when others =>
+                    end case;
             end case;
         end if;
     end process main;
