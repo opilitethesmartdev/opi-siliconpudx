@@ -40,17 +40,19 @@ entity HostSerialIf is
 end HostSerialIf ;
 
 architecture rtl of HostSerialIf is
-    type s_t is (idl, eva, op, wb, await);
+    constant padding : std_ulogic_vector(63 downto 0) := (others => '0');
+
+    type s_t is (idl, eva, opf, opr, wb, await);
     signal s, sn : s_t;
 
     signal spcrst, cycle : std_ulogic;
     signal cmdff, cmd : std_ulogic_vector(1 downto 0);
 
     signal mo_en :  std_ulogic;
-    signal d_mo  :  std_ulogic_vector(HSCW-1 downto 0);
     signal mo_fn :  std_ulogic;
     signal mi_av :  std_ulogic;
-    signal d_mi  :  std_ulogic_vector(HSCW-1 downto 0);
+    signal d_mi, d_mo   : std_ulogic_vector(HSCW-1 downto 0);
+    signal cmdi, cmdiff : std_ulogic_vector(HSCW-1 downto 0);
 
 begin
     spc : entity work.spconverter
@@ -76,26 +78,80 @@ begin
         if rst = '1' then
             s <= idl;
             cmdff <= "00";
+            cmdi <= (others => '0');
         elsif rising_edge(clk) then
             s <= sn;
             cmdff <= cmd;
+            cmdiff <= cmdi;
         end if;
     end process ff;
 
-    fsm : process(s, mi_av)
+    fsm : process(all)
     begin
         case s is
-            when idl => sn <= eva when mi_av <= '1' else idl;
-            when eva => sn <= op;
+            when idl =>   sn <= eva when mi_av <= '1' else idl;
+            when eva =>   sn <= opf;
+            when opf =>   sn <= wb;--opr when (cmdff(1) or not cmdff(0)) = '1' else wb;
+            --when opr =>   sn <= wb;
+            when wb =>    sn <= await;
+            when await => sn <= idl when mo_fn = '1' else await;
+            when others => sn <= idl;
         end case;
     end process fsm;
 
-    main : process(s, mi_av)
+    main : process(all)
     begin
+        cmd <= cmdff;
+
+        ram_en   <= '0';                                                
+        ram_wren <= '0';                                              
+        ram_mask <= (others => '0');
+        ram_addr <= (others => '0');
+        ram_din  <= (others => '0');
+
+        re_cmd  <= "00";
+        re_addr <= (others => '0');
+        re_i    <= (others => '0');
+
         case s is
             when idl =>
             when eva =>
-                cmd <= d_mi(DW downto)
+                cmd <= d_mi(HSCW - 1 downto HSCW - HCMDW);
+            when opf =>
+                if cmd(1) = '1' then
+                    if cmd(0) = '1' then
+                        ram_en <= '1';
+                        ram_wren <= '1';
+                        ram_mask <= (others => '1');
+                        ram_addr <= unsigned(d_mi(HDATAW - 1 downto HDATAW - PARAMW));
+                        ram_din <= d_mi(HDATAW - PARAMW - 1 downto 0);
+                    else
+                        re_cmd  <= "01";
+                        re_addr <= unsigned(d_mi(HDATAW - 1 downto HDATAW - HWW));
+                        re_i    <= d_mi(HDATAW - HWW - 1 downto HDATAW - HWW*2);
+                    end if;
+                else
+                    if cmd(0) = '1' then
+                        ram_en <= '1';
+                        ram_mask <= (others => '1');
+                        ram_addr <= unsigned(d_mi(HDATAW - 1 downto HDATAW - PARAMW));
+                    else
+                        re_cmd  <= "10";
+                        re_addr <= unsigned(d_mi(HDATAW - 1 downto HDATAW - HWW));
+                    end if;
+                end if;
+            when wb =>
+                if cmd(1) = '0' then
+                        mo_en <= '1';
+                    if cmd(0) = '1' then
+                        d_mo <= cmdff & '0' & x"00" & ram_dout;
+                    else
+                        d_mo <= cmdff & '0' & x"00" & re_o & padding(IBWIDTH - REGD - 1 downto 0);
+                    end if;
+                else
+                    mo_en <= '1';
+                    d_mo <= cmdff & padding(HSCW-2 - 1 downto 0);
+                end if;
         end case;
     end process main;
 end architecture rtl;

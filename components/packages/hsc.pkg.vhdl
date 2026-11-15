@@ -11,4 +11,6 @@ package hsc_pkg is
     constant HCMDW : natural := 2;
     constant HDATAW : natural := 41;
     constant HSCW : natural := HCMDW + HDATAW;
+
+    constant HWW : natural := 8;
 end package hsc_pkg;
