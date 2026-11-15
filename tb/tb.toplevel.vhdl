@@ -144,11 +144,11 @@ begin
         sel_ram <= '0';
 
         -- Program:
-        -- isz >>0   0
+        -- isz  >0   0
         -- jmp   3
-        -- stp 
-        -- dec >>0   0
-        -- inc >>4   0
+        -- stp  
+        -- dec  >0   0
+        -- inc  >4   0
         -- jmp   0   0
 
         -- Write instructions
@@ -158,7 +158,7 @@ begin
             man_ram_mask <= (others => '1');
 
             man_ram_addr <= to_unsigned(0, INSTD);  
-            man_ram_din <= x"0" & newinst(2, 0, isz, 0, 0);
+            man_ram_din <= x"0" & newinst(1, 0, isz, 0, 0);
         wait for 10 ns;
             man_ram_addr <= to_unsigned(1, INSTD);  
             man_ram_din <= x"0" & newinst(0, 0, jmp, 0, 3);
@@ -167,10 +167,10 @@ begin
             man_ram_din <= x"0" & newinst(0, 0, stp, 0, 0);
         wait for 10 ns;
             man_ram_addr <= to_unsigned(3, INSTD);  
-            man_ram_din <= x"0" & newinst(2, 0, dec, 0, 0);
+            man_ram_din <= x"0" & newinst(1, 0, dec, 0, 0);
         wait for 10 ns;
             man_ram_addr <= to_unsigned(4, INSTD);  
-            man_ram_din <= x"0" & newinst(2, 0, inc, 4, 0);
+            man_ram_din <= x"0" & newinst(1, 0, inc, 4, 0);
         wait for 10 ns;
             man_ram_addr <= to_unsigned(5, INSTD);  
             man_ram_din <= x"0" & newinst(0, 0, jmp, 0, 0);

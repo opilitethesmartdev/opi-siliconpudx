@@ -46,13 +46,19 @@ begin
         end if;
     end process phaseff;
 
-    main: process(phase, en, ins_i)
+    main: process(all)
         variable merged : std_ulogic_vector(PARAMW * 2 - 1 downto 0);
+        variable param1valid : std_ulogic_vector(WORDWIDTH - 1 downto 0);
     begin
         merged := ins_i.param0 & ins_i.param1;
+        param1valid := ins_i.param1(PARAMW - 1) and ins_i.param1(WORDWIDTH - 1 downto 0);
         
         pc_cmd <= "10";--"01";
         pc_ovr <= (others => '0');
+
+        reg_cmd  <= "00";
+        reg_addr <= (others => '0');
+        reg_din  <= (others => '0');
 
         if en = '1' then
             case ins_i.cmd is
@@ -61,6 +67,23 @@ begin
                         when x"0" =>
                             pc_cmd <= "11";
                             pc_ovr <= resize(unsigned(merged), INSTD);
+                        when x"1" =>
+                            pc_cmd <= "11";
+                            pc_ovr <= resize(unsigned(merged), INSTD);
+                        when others =>
+                    end case;
+                when isz =>    
+                    case phase is
+                        when x"0" =>
+                            reg_cmd  <= "10";
+                            reg_addr <= unsigned(ins_i.param0(REGD - 1 downto 0));
+                        when x"1" =>
+                            reg_cmd  <= "10";
+                            if ins_i.param1(PARAMW-1) = '1' then
+                                pc_cmd <= "01" when reg_dout = ins_i.param1(WORDWIDTH - 1 downto 0) else "10";
+                            else
+                                pc_cmd <= "01" when reg_dout = x"00" else "10";
+                            end if;
                         when others =>
                     end case;
                 when others =>

@@ -78,6 +78,7 @@ architecture rtl of toplevel is
 
     -- Address Resolution If
         signal arif_en     :  std_ulogic;
+        signal arif_rst    :  std_ulogic;
         signal arif_ins_o  :  inst_rec_t;
 
     -- Execution Unit
@@ -93,6 +94,17 @@ begin
                 i   => s.o_n,
                 o   => pcif_clk
         );
+
+        arif_rstedge : entity work.edgend
+            generic map(
+                polarity => "rising"
+            )
+            port map(
+                clk => clk,
+                i   => en,
+                o   => arif_rst
+        );
+
 
     -- State Entities
         clkif : entity work.ClockIf
@@ -160,7 +172,7 @@ begin
         arif : entity work.AddressResolutionIf
             port map(
                 clk    => s.i_n,
-                rst    => rst,
+                rst    => arif_rst,
                 en     => arif_en,
                 rd_a   => rs_rd_a,
                 rd_b   => rs_rd_b,
