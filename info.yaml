@@ -31,6 +31,7 @@ project:
     - "modules/mux/sram/SRAMMuxIf.vhdl"
     - "modules/serialif/spconverter.vhdl"
     - "modules/serialif/HostSerialIf.vhdl"
+    - "modules/bank/AccumulatorIf.vhdl"
     - "modules/bank/InstructionBankIf.vhdl"
     - "modules/bank/RegisterBank.vhdl"
     - "toplevel/toplevel.vhdl"
