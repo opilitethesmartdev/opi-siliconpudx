@@ -54,6 +54,7 @@ ldd A, B   // load embedded data from location A to register B
            // (4 bits from A and 4 bits from A + 1)
 
 iot A, B   // toggle bit(s) B on MMIO register A
+iop A, B   // pulse  bit(s) B on MMIO register A
 
 izb A, (B) // check if (bit B) of MMIO register A equals 0
            // (same behavior as isz)

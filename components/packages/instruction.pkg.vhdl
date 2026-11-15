@@ -33,7 +33,8 @@ package instruction_pkg is
         stp,         
         wrr, 
         ldd,          
-        iot,  
+        iot,         
+        iop,  
         izb,         
         mtr,
         rtm 
@@ -48,7 +49,7 @@ package instruction_pkg is
     end record;
 
     type cmd_array_t is array (0 to 2**ICMDW-1) of command_t;
-    constant COMMANDS : cmd_array_t := (nop,idl,inc,dec,isz,jmp,stp,wrr,ldd,iot,izb,mtr,rtm,others => nop);
+    constant COMMANDS : cmd_array_t := (nop,idl,inc,dec,isz,jmp,stp,wrr,ldd,iot,iop,izb,mtr,rtm,others => nop);
 
     function inst2cmd ( i : std_ulogic_vector(INSTW - 1 downto 0) ) 
         return command_t;
@@ -93,9 +94,10 @@ package body instruction_pkg is
                 when wrr => return std_ulogic_vector(to_unsigned(7, ICMDW));
                 when ldd => return std_ulogic_vector(to_unsigned(8, ICMDW));
                 when iot => return std_ulogic_vector(to_unsigned(9, ICMDW));
-                when izb => return std_ulogic_vector(to_unsigned(10, ICMDW));
-                when mtr => return std_ulogic_vector(to_unsigned(11, ICMDW));
-                when rtm => return std_ulogic_vector(to_unsigned(12, ICMDW));
+                when iot => return std_ulogic_vector(to_unsigned(10, ICMDW));
+                when izb => return std_ulogic_vector(to_unsigned(11, ICMDW));
+                when mtr => return std_ulogic_vector(to_unsigned(12, ICMDW));
+                when rtm => return std_ulogic_vector(to_unsigned(13, ICMDW));
             end case;
     end function;
     
