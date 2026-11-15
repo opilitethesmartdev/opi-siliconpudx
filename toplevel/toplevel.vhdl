@@ -195,11 +195,11 @@ begin
                 pc  => pc_out
         );
 
-        i_ExecutionUnit : entity work.ExecutionUnit
+        exu : entity work.ExecutionUnit
             port map(
-                clk      => clk,
+                clk      => s.i_n,
                 rst      => rst,
-                en       => en,
+                en       => exu_en,
                 pc_cmd   => pc_cmd,
                 pc_ovr   => pc_ovr,
                 reg_cmd  => rm_cmd,
@@ -223,7 +223,7 @@ begin
 
     arif_en <= s.advp or s.o;
 
-    exu_en <= s.en and s.o_n;
+    exu_en <= s.en and (s.o_n or s.advn);
 
     
     instruction <=( or inst2v(arif_ins_o)) or (or rm_o);

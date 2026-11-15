@@ -41,7 +41,7 @@ begin
     clk_n <= not clk;
 
     en <= (or cmd);
-    edr <= '1' when cmd = "01" else '0';
+    edr <= '1' when cmd(0) = '1' else '0';
     eni <= en and not edr;
 
     nopfinff : entity work.sr_ff
@@ -71,8 +71,7 @@ begin
             rst => rst,
             i   => ram_dout(INSTW - 1 downto 0),
             o   => inst_dl
-    );
-    
+    );    
 
     isnop <= '1' when v2inst(inst_dl).cmd = nop and ((eni and ena) = '1') else '0';
     isstp <= '1' when v2inst(inst_dl).cmd = stp and ((eni and ena) = '1') else '0';

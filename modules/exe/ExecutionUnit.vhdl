@@ -48,7 +48,7 @@ begin
                 phase <= phase + 1;
                 tempff <= temp;
             else
-                phase <= (others => '0');
+                phase <= (others => '1');
                 tempff <= (others => '0');
             end if;
         end if;
@@ -67,6 +67,9 @@ begin
         reg_cmd  <= "00";
         reg_addr <= (others => '0');
         reg_din  <= (others => '0');
+        
+        rden  <= '0';
+        addr <= (others => '0');
 
         if en = '1' then
             case ins_i.cmd is
@@ -112,24 +115,6 @@ begin
                             end if;
                         when others =>
                     end case;
-                when ldd =>    
-                    case phase is
-                        when x"1" =>
-                            rden  <= '1';
-                            addr <= unsigned(ins_i.param0(INSTD - 1 downto 0));
-                        when x"2" =>
-                            rden  <= '1';
-                            addr <= unsigned(ins_i.param0(INSTD - 1 downto 0)) + 1;
-
-                            temp <= x"0" & dout;
-                        when x"3" =>
-                            pc_cmd <= "10";
-
-                            reg_cmd  <= "01";
-                            reg_addr <= unsigned(ins_i.param1(REGD - 1 downto 0));
-                            reg_din <= temp (EMBDWIDTH - 1 downto 0) & dout;
-                        when others =>
-                    end case;
                 when inc =>    
                     case phase is
                         when x"1" =>
@@ -148,6 +133,27 @@ begin
                             else
                                 reg_din <= std_ulogic_vector(unsigned(reg_dout) + 1);
                             end if;
+                        when others =>
+                    end case;
+                when ldd =>    
+                    case phase is
+                        when x"0" =>
+                            rden  <= '1';
+                            addr <= unsigned(ins_i.param0(INSTD - 1 downto 0));
+                        when x"1" =>
+                            rden  <= '1';
+                            addr <= unsigned(ins_i.param0(INSTD - 1 downto 0)) + 1;
+
+                            temp <= dout & x"0";
+                        when x"2" =>
+                            rden  <= '1';
+                            temp(EMBDWIDTH - 1 downto 0) <= dout;
+                        when x"3" =>
+                            pc_cmd <= "10";
+
+                            reg_cmd  <= "01";
+                            reg_addr <= unsigned(ins_i.param1(REGD - 1 downto 0));
+                            reg_din <= temp;
                         when others =>
                     end case;
                 when others =>

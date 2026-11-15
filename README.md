@@ -79,6 +79,20 @@ Instructions are 28-bit long, and split into multiple parts:
    |_______________________________ pointer depth of parameter A (2 bit)
 ```
 
+## Parameters
+Currently, we have 10 bit parameters, while only 8 bit data (excluding jump commands). Consequently, we have 2 free bits which we can use as following:
+```
+[9 - 8][7 - 0]
+ |   |    |____ Parameter data
+ |   |
+ |   |_________ Operation config bit (depends on operation)
+ |
+ |_____________ Param 0: Operation config bit
+                Param 1: Validity bit      
+```
+The MS bit on the second parameter is very important - it lets us tell the function that the second parameter is to be used.
+This is very useful for the operations that change their behavior depending on whether the second parameter is present.
+
 ## Embedded data
 The (to be confirmed) instruction storage has the size of 512x32 bits. As such, each instruction leaves 4 bits of data unused. This can be used to have embedded data:
 ```
