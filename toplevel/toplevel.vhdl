@@ -71,7 +71,7 @@ architecture rtl of toplevel is
         signal ins_o     :  inst_rec_t;
     
     -- Program Counter If
-        signal pcif_clk :  std_ulogic;
+        signal pcif_en :  std_ulogic;
         signal pc_cmd   :  std_ulogic_vector(1 downto 0);
         signal pc_ovr   :  unsigned(INSTD-1 downto 0);
         signal pc_out   :  unsigned(INSTD-1 downto 0);
@@ -86,13 +86,13 @@ architecture rtl of toplevel is
 
 begin
     -- Low level entities
-        pcifclk_shift : entity work.n_shift1b
+        pcif_shift : entity work.n_shift1b
             generic map( DELAY => 1 )
             port map(
                 clk => clk,
                 rst => rst,
-                i   => s.o_n,
-                o   => pcif_clk
+                i   => s.advp,
+                o   => pcif_en
         );
 
         arif_rstedge : entity work.edgend
@@ -187,9 +187,8 @@ begin
     -- Main Entities
         pcif : entity work.ProgramCounterIf
             port map(
-                clk => pcif_clk,
+                clk => clk,
                 rst => rst,
-                en  => en,
                 cmd => pc_cmd,
                 ovr => pc_ovr,
                 pc  => pc_out
@@ -197,7 +196,7 @@ begin
 
         exu : entity work.ExecutionUnit
             port map(
-                clk      => clk,
+                clk      => s.i_n,
                 rst      => rst,
                 en       => exu_en,
                 pc_cmd   => pc_cmd,
