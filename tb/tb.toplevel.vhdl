@@ -56,8 +56,41 @@ architecture sim of tb_topl is
     signal dut_ram_dout :  std_ulogic_vector(IBWIDTH-1 downto 0);
 
 
-    --signal sim_inst_i : inst_rec_t;
+        --   |  Program    | Embedded
+        -- 0 | lda   0   7 | 0x67
+        -- 1 | isz  >0   0 | 
+        -- 2 | jmp   0   4 |
+        -- 3 | stp         |
+        -- 4 | dec  >0   1 |
+        -- 5 | inc  >4   1 |
+        -- 6 | jmp   0   1 |
 
+
+
+
+
+
+
+
+    constant program : program_arr_t(0 to 16) := (
+            x"01" & newinst(0, 0, lda, x"0000"),-- 0  | lda  0x0
+            x"02" & newinst(0, 0, atr, 0, 0),   -- 1  | atr  0
+            x"08" & newinst(0, 0, lda, x"0001"),-- 2  | lda  0x1
+            x"06" & newinst(0, 0, atr, 1, 0),   -- 3  | atr  1
+            x"05" & newinst(0, 0, lda, x"0002"),-- 4  | lda  0x2
+            x"00" & newinst(0, 0, atr, 2, 0),   -- 5  | atr  2
+            x"00" & newinst(0, 0, lda, x"0003"),-- 6  | lda  0x3
+            x"00" & newinst(0, 0, atr, 4, 0),   -- 7  | atr  4
+            x"00" & newinst(0, 0, lda, x"0004"),-- 8  | lda  0x4
+            x"00" & newinst(0, 0, atr, 6, 0),   -- 9  | atr  6
+            x"00" & inst2v(INSTNULL(idl)),      -- 10 | idl
+            x"00" & newinst(1, 0, isz, 0, 0),   -- 11 | isz >0  0
+            x"00" & newinst(0, 0, jmp, x"000E"),-- 12 | jmp  0xE
+            x"00" & newinst(0, 0, stp, 0, 0),   -- 13 | stp
+            x"00" & newinst(1, 0, dec, 0, 1),   -- 14 | dec >0  1
+            x"00" & newinst(1, 0, inc, 4, 1),   -- 15 | inc >4  1
+            x"00" & newinst(0, 0, jmp, x"000B") -- 16 | jmp  0xB
+        );
 
 
 begin
@@ -110,7 +143,6 @@ begin
             ram_1_din  => dut_ram_din,
             ram_1_dout => dut_ram_dout
     );
-
     
     i_ext_sram : entity work.ext_sram
         generic map(
@@ -139,85 +171,31 @@ begin
         man_ram_wren <= '0';
         man_ram_mask <= (others => '0');
         man_ram_addr <= to_unsigned(0, INSTD);  
-        man_ram_din <= x"0" & newinst(0, 0, nop, 0, 0);
+        man_ram_din <= x"00" & newinst(0, 0, nop, 0, 0);
 
         sel_ram <= '0';
-
-        --   |  Program    | Embedded
-        -- 0 | ldd   0   7 | 0x6
-        -- 1 | isz  >0   0 | 0x7
-        -- 2 | jmp   0   4 |
-        -- 3 | stp         |
-        -- 4 | dec  >0   0 |
-        -- 5 | inc  >4   0 |
-        -- 6 | jmp   0   1 |
-
-        -- Write instructions
         wait for 10 ns;
+
+        -- Write program
+        for line in 0 to program'length - 1 loop
+            --report "wrote line " & to_string(line);
             man_ram_en <= '1';
             man_ram_wren <= '1';
             man_ram_mask <= (others => '1');
-
-            man_ram_addr <= to_unsigned(0, INSTD);  
-            man_ram_din <= x"6" & newinst(0, 0, ldd, 0, 7);
+            man_ram_addr <= to_unsigned(line, INSTD);  
+            man_ram_din <= program(line);
+            wait for 10 ns;
+        end loop;
+        
+        man_ram_en <= '0';
+        man_ram_wren <= '0';
+        man_ram_mask <= (others => '0');
+        man_ram_addr <= to_unsigned(0, INSTD);  
+        man_ram_din <= x"00" & newinst(0, 0, nop, 0, 0);
         wait for 10 ns;
-            man_ram_addr <= to_unsigned(1, INSTD);  
-            man_ram_din <= x"7" & newinst(1, 0, isz, 0, 0);
-        wait for 10 ns;
-            man_ram_addr <= to_unsigned(2, INSTD);  
-            man_ram_din <= x"0" & newinst(0, 0, jmp, 0, 4);
-        wait for 10 ns;
-            man_ram_addr <= to_unsigned(3, INSTD);  
-            man_ram_din <= x"0" & newinst(0, 0, stp, 0, 0);
-        wait for 10 ns;
-            man_ram_addr <= to_unsigned(4, INSTD);  
-            man_ram_din <= x"0" & newinst(1, 0, dec, 0, 0);
-        wait for 10 ns;
-            man_ram_addr <= to_unsigned(5, INSTD);  
-            man_ram_din <= x"0" & newinst(1, 0, inc, 4, 0);
-        wait for 10 ns;
-            man_ram_addr <= to_unsigned(6, INSTD);  
-            man_ram_din <= x"0" & newinst(0, 0, jmp, 0, 1);
-        wait for 10 ns;
-            man_ram_en <= '0';
-            man_ram_wren <= '0';
-            man_ram_mask <= (others => '0');
-            man_ram_addr <= (others => '0');
-            man_ram_din <=  (others => '0');
-        wait for 10 ns;
-        -- Mux SRAM to DUT      
         sel_ram <= '1';
 
-        -- Write registers
-        wait for 10 ns;
-                re_cmd <= "01";
-            re_addr <= to_unsigned(0, REGD);  
-            re_i <= (x"01"); --0 ptr
-        wait for 10 ns;
-            re_addr <= to_unsigned(1, REGD);  
-            re_i <= (x"02"); --1 ptr
-        wait for 10 ns;
-            re_addr <= to_unsigned(2, REGD);  
-            re_i <= (x"08"); --2 lit
-        wait for 10 ns;
-            re_addr <= to_unsigned(3, REGD);  
-            re_i <= (x"00"); --3 u
-        wait for 10 ns;
-            re_addr <= to_unsigned(4, REGD);  
-            re_i <= (x"06"); --4 ptr
-        wait for 10 ns;
-            re_addr <= to_unsigned(5, REGD);  
-            re_i <= (x"00"); --5 lit
-        wait for 10 ns;
-            re_addr <= to_unsigned(6, REGD);  
-            re_i <= (x"05"); --6 ptr
-        wait for 10 ns;
-                --re_cmd <= "000";
-                re_cmd <= "00";
-                re_addr <= to_unsigned(0, REGD);  
-                re_i <= (x"00");
-        wait for 10 ns;
-        
+
         -- Execute
         wait for 10 ns;
         en <= '1';
