@@ -17,7 +17,7 @@ package instruction_pkg is
     constant PARAMS : natural := 2;
     constant INSTW  : natural := IPTRW*PARAMS + ICMDW + PARAMW*PARAMS; --28
 
-    constant INSTD : natural := PARAMW;
+    constant INSTD : natural := 9;
     
     constant IBWIDTH   : natural := 32; -- Instruction Bank width
     constant EMBDWIDTH : natural := IBWIDTH - INSTW;  -- Embedded Data width

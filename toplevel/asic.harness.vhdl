@@ -19,11 +19,11 @@ entity asic_harness is
         en : in  std_ulogic_vector(1 downto 0);
         o  : out std_ulogic_vector(1 downto 0);
 
-        rw : in std_ulogic_vector(1 downto 0);
-        addr : in std_ulogic_vector(REGD - 1 downto 0);
-
-        din  : in std_ulogic_vector(WORDWIDTH - 1 downto 0);
-        dout : out std_ulogic_vector(WORDWIDTH - 1 downto 0);
+        -- Serial Interface        
+        mosi : out std_ulogic;
+        t_si : out std_ulogic;
+        miso : in std_ulogic;
+        t_so : in std_ulogic;
 
         -- SRAM Interface
         ram_en   : out std_ulogic;
@@ -108,6 +108,25 @@ begin
             instruction => instruction
     );
 
-    
+    i_HostSerialIf : entity work.HostSerialIf
+        port map(
+            clk      => clk,
+            rst      => rst,
+            mosi     => mosi,
+            t_si     => t_si,
+            miso     => miso,
+            t_so     => t_so,
+            ram_en   => ram_en,
+            ram_wren => ram_wren,
+            ram_mask => ram_mask,
+            ram_addr => ram_addr,
+            ram_din  => ram_din,
+            ram_dout => ram_dout,
+            re_cmd   => re_cmd,
+            re_addr  => re_addr,
+            re_i     => re_i,
+            re_o     => re_o
+    );
+
 
 end architecture rtl;

@@ -114,7 +114,6 @@ begin
         re_i    <= (others => '0');
 
         case s is
-            when idl =>
             when eva =>
                 cmd <= d_mi(HSCW - 1 downto HSCW - HCMDW);
             when opf =>
@@ -123,21 +122,21 @@ begin
                         ram_en <= '1';
                         ram_wren <= '1';
                         ram_mask <= (others => '1');
-                        ram_addr <= unsigned(d_mi(HDATAW - 1 downto HDATAW - PARAMW));
-                        ram_din <= d_mi(HDATAW - PARAMW - 1 downto 0);
+                        ram_addr <= unsigned(d_mi(HDATAW - 1 downto HDATAW - INSTD));
+                        ram_din <= d_mi(HDATAW - PARAMW downto 0);
                     else
                         re_cmd  <= "01";
-                        re_addr <= unsigned(d_mi(HDATAW - 1 downto HDATAW - HWW));
+                        re_addr <= resize(unsigned(d_mi(HDATAW - 1 downto HDATAW - HWW)), REGD);
                         re_i    <= d_mi(HDATAW - HWW - 1 downto HDATAW - HWW*2);
                     end if;
                 else
                     if cmd(0) = '1' then
                         ram_en <= '1';
                         ram_mask <= (others => '1');
-                        ram_addr <= unsigned(d_mi(HDATAW - 1 downto HDATAW - PARAMW));
+                        ram_addr <= unsigned(d_mi(HDATAW - 1 downto HDATAW - INSTD));
                     else
                         re_cmd  <= "10";
-                        re_addr <= unsigned(d_mi(HDATAW - 1 downto HDATAW - HWW));
+                        re_addr <= resize(unsigned(d_mi(HDATAW - 1 downto HDATAW - HWW)), REGD);
                     end if;
                 end if;
             when wb =>
@@ -146,12 +145,13 @@ begin
                     if cmd(0) = '1' then
                         d_mo <= cmdff & '0' & x"00" & ram_dout;
                     else
-                        d_mo <= cmdff & '0' & x"00" & re_o & padding(IBWIDTH - REGD - 1 downto 0);
+                        d_mo <= cmdff & '0' & x"00" & re_o & padding(IBWIDTH - WORDWIDTH - 1 downto 0);
                     end if;
                 else
                     mo_en <= '1';
                     d_mo <= cmdff & padding(HSCW-2 - 1 downto 0);
                 end if;
+            when others =>
         end case;
     end process main;
 end architecture rtl;
