@@ -10,16 +10,16 @@ from cocotb.triggers import ClockCycles, Timer
 async def test_interface(dut):
     """Smoke-test reset and the bidirectional-pin direction control."""
 
-    clock = Clock(dut.clk, 20, unit="ns")
+    clock = Clock(dut.clk, 40, unit="ns")
     cocotb.start_soon(clock.start())
 
-    dut.ena.value = 1
     dut.ui_in.value = 0
     dut.uio_in.value = 0
     dut.rst_n.value = 0
     await ClockCycles(dut.clk, 2)
     dut.rst_n.value = 1
     await ClockCycles(dut.clk, 2)
+    dut.ena.value = 1
 
     # ui_in[7:6] selects rw. The wrapper enables the bidirectional pins
     # for modes 01 and 11, and disables them for modes 00 and 10.
