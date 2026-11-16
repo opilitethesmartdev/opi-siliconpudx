@@ -170,21 +170,17 @@ Reg SRAM:  [40][39 - 32][31 - 24][33 - 0]
             |      |                                      
             |      |________________________ Address (8 bit)
             |                                                        
-            |_______________________________ Read from MMIO registers (when read)
+            |_______________________________ MMIO selection bit (read/write from/to MMIO registers)
 ```
 The response is formatted like this:
 ```
-[42 - 41][40 - 32][31 - 0]
-    |        |        |____ Response
-    |        |
-    |        |_____________ Status byte
-    |
-    |______________________ Mirror of input op/sel bits
-```
-where the status byte represents the following data:
-```
-[40][39][38][37][36][35][34][33][32]
-  |   |___|___|___|___|___|___|___|___ Reserved
+[42][41][40 - 32][31 - 0]
+  |   |     |        |____ Response
+  |   |     |
+  |   |     |_____________ Mirror of input address
+  |   |                    (9 bit when instruction, 8+1 when register)
+  |   |
+  |   |__________________ Status bit (1 when error)
   |
-  |___________________________________ Error bit (1 when error)
+  |______________________ Mirror of input operation bit
 ```
