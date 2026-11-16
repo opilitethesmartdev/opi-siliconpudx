@@ -30,6 +30,7 @@ architecture sim of tb_spc is
     signal mo_fn :  std_ulogic;
     signal mi_av :  std_ulogic;
     signal d_mi  :  std_ulogic_vector(DW-1 downto 0);
+    signal ack   :  std_ulogic;
 
     signal data_so : std_ulogic_vector(DW-1 downto 0);
 
@@ -53,7 +54,8 @@ begin
             d_mo  => d_mo,
             mo_fn => mo_fn,
             mi_av => mi_av,
-            d_mi  => d_mi
+            d_mi  => d_mi,
+            ack   => ack
     );
 
 
@@ -62,23 +64,30 @@ begin
         -- Pull defaults
         t_so <= '0';
         miso <= '0';
+        ack  <= '0';
 
         mo_en <= '0';
         d_mo <= (others => '0');
 
-        data_so <= (others => '0');
+        data_so <= "111" & x"DEADBEEF67";
 
-        wait for 10 ns;
+        wait for 30 ns;
         t_so <= '1';
-        wait for 10 ns;
 
-        data_so <= "010" & x"DEADBEEF67";
         for i in 0 to DW - 1 loop
-            miso <= data_so(DW - 1 - i);
+            miso <= data_so(i);
             wait for 10 ns;
         end loop;
 
+        miso <= '0';
         t_so <= '0';
+        wait on mi_av;
+        
+        wait for 10 ns;
+        ack <= '1';
+        wait for 10 ns;
+        ack <= '0';
+    
         wait for 20 ns;
         mo_en <= '1';
         d_mo <= "101" & x"5555555555";
@@ -87,6 +96,11 @@ begin
         
         wait on mo_fn;
         wait for 50 ns;
+        
+        ack <= '1';
+        wait for 10 ns;
+        ack <= '0';
+        wait for 10 ns;
 
         report "Finish";
         wait for 100 ns;
