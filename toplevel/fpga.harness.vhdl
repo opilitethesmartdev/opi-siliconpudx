@@ -16,20 +16,22 @@ entity fpga_harness is
         -- Fundamental signals
         clk : in std_ulogic;
         rst : in std_ulogic;
-        en : in  std_ulogic_vector(1 downto 0);
+        en : in  std_ulogic;
         o  : out std_ulogic_vector(1 downto 0);
 
-        -- Serial Interface        
-        mosi : out std_ulogic;
-        t_si : out std_ulogic;
-        miso : in std_ulogic;
-        t_so : in std_ulogic
+        -- UART
+        rx : in  std_ulogic;
+        tx : out std_ulogic;
+
+        -- FPGA LED
+        led : out STD_ULOGIC
     );
 
 end entity fpga_harness;
 
 architecture rtl of fpga_harness is
     signal rst_n        :  std_ulogic;
+    signal ena          :  std_ulogic;
 
     -- SRAM Access Arbitration
     signal ram_sel        :  std_ulogic;
@@ -63,8 +65,11 @@ architecture rtl of fpga_harness is
     signal re_i        :  std_ulogic_vector(WORDWIDTH-1 downto 0);
     signal re_o        :  std_ulogic_vector(WORDWIDTH-1 downto 0);
 
-
-
+    signal mosi        :  std_ulogic;
+    signal t_si        :  std_ulogic;
+    signal miso        :  std_ulogic;
+    signal t_so        :  std_ulogic;
+      
 begin
     sram_muxif : entity work.SRAMMuxIf
         port map(
@@ -93,7 +98,7 @@ begin
         port map(
             clk         => clk,
             rst         => rst_n,
-            en          => en(0),
+            en          => ena,
             o           => o,
             ram_en      => ram_a_en,
             ram_wren    => ram_a_wren,
@@ -140,8 +145,34 @@ begin
             addr => ram_addr,
             din  => ram_din,
             dout => ram_dout
+        );
+
+    i_UARTSerialBridge : entity work.UARTSerialBridge
+        generic map(
+            SERIAL_W => 8,
+            CLK_HZ   => 27_000_000,
+            BAUD     => 115200
+        )
+        port map(
+            clk  => clk,
+            rst  => rst,
+            rx   => rx,
+            tx   => tx,
+            mosi => miso,
+            t_si => t_so,
+            miso => mosi,
+            t_so => t_si
     );
 
     rst_n <= not rst;
+
+    enff : entity work.t_ff
+        port map(
+            clk => clk,
+            i   => en,
+            o   => ena
+    );
+
+    led <= not ena;
 
 end architecture rtl;

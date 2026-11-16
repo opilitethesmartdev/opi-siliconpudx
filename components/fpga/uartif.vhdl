@@ -10,7 +10,7 @@ use ieee.numeric_std.all;
 entity UARTIf is
     generic(
         W      : natural := 8;
-        CLK_HZ : natural := 25_000_000;
+        CLK_HZ : natural := 27_000_000;
         BAUD   : natural := 115200
     );
     port (
