@@ -67,7 +67,7 @@ architecture rtl of asic_harness is
 
 
 begin
-    i_SRAMMuxIf : entity work.SRAMMuxIf
+    sram_muxif : entity work.SRAMMuxIf
         port map(
             sel        => ram_sel,
             ram_en     => ram_en,
@@ -88,7 +88,7 @@ begin
             ram_1_addr => ram_a_addr,
             ram_1_din  => ram_a_din,
             ram_1_dout => ram_a_dout
-    );    
+        );    
 
     i_toplevel : entity work.toplevel
         port map(
@@ -106,9 +106,9 @@ begin
             re_i        => re_i,
             re_o        => re_o,
             instruction => instruction
-    );
+        );
 
-    i_HostSerialIf : entity work.HostSerialIf
+    hscif : entity work.HostSerialIf
         port map(
             clk      => clk,
             rst      => rst,
@@ -126,7 +126,7 @@ begin
             re_addr  => re_addr,
             re_i     => re_i,
             re_o     => re_o
-    );
+        );
 
 
 end architecture rtl;
