@@ -30,7 +30,7 @@ entity spconverter is
 end entity spconverter;
 
 architecture rtl of spconverter is
-    signal mitend, miten : std_ulogic;
+    signal mitend : std_ulogic;
     signal motend, moph0 : std_ulogic;
     signal tsi_int, tsi_en : std_ulogic;
 
@@ -84,8 +84,6 @@ begin
                 i   => tsi_int,
                 o   => motend
         ); t_si <= tsi_int;
-
-
 
     seq_mo : process(rst, clk)
     begin
