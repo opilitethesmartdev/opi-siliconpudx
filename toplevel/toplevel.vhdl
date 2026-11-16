@@ -161,8 +161,8 @@ begin
                 clk => clk,
                 rst => rst,
                 rw  => acc_rw,
-                di  => acc_di,
-                do  => acc_do
+                d_i  => acc_di,
+                d_o  => acc_do
         );
 
 

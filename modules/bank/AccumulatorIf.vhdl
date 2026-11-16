@@ -17,8 +17,8 @@ entity AccumulatorIf is
         rst : in std_ulogic;
 
         rw : in  std_ulogic_vector(1 downto 0); --[read][write]; xor = en; and = soft rst
-        di : in  std_ulogic_vector(WORDWIDTH - 1 downto 0);
-        do : out std_ulogic_vector(WORDWIDTH - 1 downto 0)
+        d_i : in  std_ulogic_vector(WORDWIDTH - 1 downto 0);
+        d_o : out std_ulogic_vector(WORDWIDTH - 1 downto 0)
     ) ;
 end AccumulatorIf ;
 
@@ -29,11 +29,11 @@ begin
     begin
         if rst = '1' then
             reg <= (others => '0');
-            do  <= (others => '0');
+            d_o  <= (others => '0');
         elsif rising_edge(clk) then
             case rw is
-                when "10" => do <= reg;
-                when "01" => reg <= di;
+                when "10" => d_o <= reg;
+                when "01" => reg <= d_i;
                 when "11" => reg <= (others => '0');
                 when others =>
             end case;
