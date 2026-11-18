@@ -43,7 +43,7 @@ architecture rtl of UARTtxIf is
     signal tcnt : unsigned(W*2-1 downto 0);
 
     signal bitc, bitcff : unsigned(W/2-1 downto 0);
-    signal data, dataff : std_ulogic_vector(W-1 downto 0);
+    signal data, dataff : std_ulogic_vector(W downto 0);
 begin
     -- Clock divider
         clkdiv: process (clk, rst)
@@ -106,7 +106,7 @@ begin
             when idl   => sn <= ld when tx_en = '1' else idl;
             when ld    => sn <= st;
             when st    => sn <= w4s;
-            when sb    => sn <= done when bitcff = W-1 else w4s;
+            when sb    => sn <= done when bitcff = W else w4s;
             when w4s   => sn <= sb when tick = '1' else w4s;
             when done  => sn <= reset when ack = '1' else done;
             when others => 
@@ -127,7 +127,7 @@ begin
                 data <= (others => '0');
             when idl =>
             when ld =>
-                data <= txi_dl;
+                data <= txi_dl & '1'; -- stop bit
             when st => txn <= '0';
             when sb => 
                 txn <= dataff(to_integer(bitcff));
