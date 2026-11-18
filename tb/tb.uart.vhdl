@@ -28,51 +28,64 @@ architecture sim of tb_uart is
 
     constant TICKS   :  natural := 217; --(CLK_HZ/BAUD)
 
-    signal rx_av :  std_ulogic;
-    signal rx_o  :  std_ulogic_vector(W-1 downto 0);
-    signal rx_p  :  std_ulogic;
-    signal ack   :  std_ulogic;
+    signal rx_av  :  std_ulogic;
+    signal rx_o   :  std_ulogic_vector(W-1 downto 0);
+    signal rx_ack :  std_ulogic;
+    signal tx_en  :  std_ulogic;
+    signal tx_i   :  std_ulogic_vector(W-1 downto 0);
+    signal tx_fin :  std_ulogic;
+    signal tx_ack :  std_ulogic;
+    signal tx     :  std_ulogic;
+    signal rx     :  std_ulogic;
 
-    signal rx    :  std_ulogic;
 
-    signal payload : std_ulogic_vector(8 downto 0);
+    signal payload : std_ulogic_vector(7 downto 0);
+    signal receive : std_ulogic_vector(7 downto 0);
 
 begin
     clk <= (not clk) after 20 ns;
-    rst <= '1', '0' after 40 ns;
+    rst <= '1', '0' after 80 ns;
     
     uart_clk <= (not uart_clk) after TICKS*40 ns;
 
-    i_UARTrxIf : entity work.UARTrxIf
+    UARTif : entity work.UARTIf
         generic map(
-           -- P      => P,
             W      => W,
             CLK_HZ => CLK_HZ,
             BAUD   => BAUD
         )
         port map(
-            clk   => clk,
-            rst   => rst,
-            rx_av => rx_av,
-            rx_o  => rx_o,
-            rx_p  => rx_p,
-            ack   => ack,
-            rx    => rx
+            clk    => clk,
+            rst    => rst,
+            rx_av  => rx_av,
+            rx_o   => rx_o,
+            rx_ack => rx_ack,
+            tx_en  => tx_en,
+            tx_i   => tx_i,
+            tx_fin => tx_fin,
+            tx_ack => tx_ack,
+            tx     => tx,
+            rx     => rx
     );
+
 
     testbench : process
     begin
-        ack <= '0';
+        rx_ack <= '0';
+        tx_ack <= '0';
+
+        tx_en <= '0';
+        tx_i <= (others => '0');
 
         rx <= '1';
-        payload <= '0' & x"67";
-        --payload <= x"67" & '0';
+        payload <= x"67";
+        receive <= x"00";
 
         wait on uart_clk;
 
         rx <= '0';
 
-        for i in 0 to 8 loop
+        for i in 0 to 7 loop
             wait on uart_clk;
             rx <= payload(i);
         end loop;
@@ -83,6 +96,24 @@ begin
         rx <= '1';
 
         report "Sent";
+        wait on uart_clk;
+        tx_en <= '1';
+        tx_i  <= x"69";
+        wait for 40 ns;
+        tx_en <= '0';
+        tx_i  <= (others => '0');
+        
+        wait on tx;
+        wait on uart_clk;
+        for i in 0 to 7 loop
+            wait for (TICKS/2)*40 ns;
+            receive(i) <= tx;
+            wait for (TICKS/2)*40 ns;
+        end loop;
+        
+        report "Received: " & to_hex_string(receive);
+        tx_ack <= '1';
+        wait for 20 ns;
         wait for 400 ns;
         stop;
     end process testbench;

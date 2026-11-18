@@ -28,33 +28,42 @@ entity uart_harness is
 end entity uart_harness;
 
 architecture rtl of uart_harness is
-    type s_t is (reset, idle, apply);
+    type s_t is (reset, idle, apply, resp, await);
     signal s, sn : s_t;
 
-    signal rx_av :  std_ulogic;
-    signal rx_o  :  std_ulogic_vector(7 downto 0);
-    signal rx_p  :  std_ulogic;
-    signal ack   :  std_ulogic;
+    signal rx_av  :  std_ulogic;
+    signal rx_o   :  std_ulogic_vector(7 downto 0);
+    signal rx_ack :  std_ulogic;
+    signal tx_en  :  std_ulogic;
+    signal tx_i   :  std_ulogic_vector(7 downto 0);
+    signal tx_fin :  std_ulogic;
+    signal tx_ack :  std_ulogic;
     
     signal rst_n   :  std_ulogic;
 
     signal ledn : std_ulogic_vector(5 downto 0);
 begin
-    i_UARTrxIf : entity work.UARTrxIf
+    uartif : entity work.UARTIf
         generic map(
             W      => 8,
-            P      => 0,
             CLK_HZ => 27_000_000,
             BAUD   => 115200
         )
         port map(
-            clk   => clk,
-            rst   => rst_n,
-            rx_av => rx_av,
-            rx_o  => rx_o,
-            rx_p  => rx_p,
-            ack   => ack,
-            rx    => rx
+            clk    => clk,
+            rst    => rst_n,
+
+            rx_av  => rx_av,
+            rx_o   => rx_o,
+            rx_ack => rx_ack,
+
+            tx_en  => tx_en,
+            tx_i   => tx_i,
+            tx_fin => tx_fin,
+            tx_ack => tx_ack,
+
+            tx     => tx,
+            rx     => rx
     );
 
     ff : process(rst_n, clk)
@@ -70,24 +79,36 @@ begin
 
     fsm : process(all)
     begin
-        sn <= reset;
+        sn <= s;
         case s is
             when reset => sn <= idle;
             when idle =>  sn <= apply when rx_av = '1' else idle;
+            when apply => sn <= resp;
+            when resp  => sn <= await;
+            when await => sn <= reset when tx_fin = '1' else await;
             when others =>
         end case;
     end process fsm;
 
     main : process(all)
     begin
-        ack <= '0';
+        rx_ack <= '0';
+        tx_ack <= '0';
+        
+        tx_en <= '0';
+        tx_i <= x"00";
+
         ledn <= led;
 
         case s is
             when reset => 
-                ack <= '1';
+                rx_ack <= '1';
+                tx_ack <= '1';
             when apply =>
                 ledn <= not rx_o(5 downto 0); -- active low
+            when resp =>
+                tx_en <= '1';
+                tx_i <= x"67";
             when others =>
         end case;
     end process main;

@@ -148,22 +148,7 @@ begin
             dout => ram_dout
         );
 
-    i_UARTSerialBridge : entity work.UARTSerialBridge
-        generic map(
-            SERIAL_W => 8,
-            CLK_HZ   => 27_000_000,
-            BAUD     => 115200
-        )
-        port map(
-            clk  => clk,
-            rst  => rst,
-            rx   => rx,
-            tx   => tx,
-            mosi => miso,
-            t_si => t_so,
-            miso => mosi,
-            t_so => t_si
-    );
+
 
     rst_n <= not rst;
 

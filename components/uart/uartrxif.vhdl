@@ -1,7 +1,7 @@
 ----------------------------------------------------------------------------
 -- Project		:	Generic
 -- Authors		:	opilitethesmartdev
--- Description	:	UART Interface
+-- Description	:	UART Receiver Interface
 ----------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
@@ -10,7 +10,6 @@ use ieee.numeric_std.all;
 entity UARTrxIf is
     generic(
         W      : natural := 8;
-        P      : natural := 0;
         CLK_HZ : natural := 27_000_000;
         BAUD   : natural := 115200
     );
@@ -20,7 +19,6 @@ entity UARTrxIf is
 
         rx_av : out std_ulogic;
         rx_o  : out std_ulogic_vector(W-1 downto 0);
-        rx_p  : out std_ulogic;
         ack   : in std_ulogic;
 
         rx : in  std_ulogic
@@ -47,7 +45,7 @@ architecture rtl of UARTrxIf is
     signal rx_vt : std_ulogic;  -- valid transmission
     signal rx_fin : std_ulogic; -- operation finished
 
-    signal shift, shiftff : std_ulogic_vector(W+P - 1 downto 0);
+    signal shift, shiftff : std_ulogic_vector(W - 1 downto 0);
     signal scnt, scntff : unsigned(W/2-1 downto 0);
 
 begin
@@ -155,7 +153,6 @@ begin
         rx_fin <= '0';
         rx_av <= '0';
         rx_o  <= (others => '0');
-        rx_p <= '0';
 
         case s is
             when reset =>
@@ -163,7 +160,7 @@ begin
             when sb =>
                 scnt <= scntff + 1;
                 shift(to_integer(scntff)) <= rx;
-                if(scntff = W+P-1 -1)then
+                if(scntff = W-1 -1)then
                     rx_fin <= '1';
                 end if;
             when done =>
