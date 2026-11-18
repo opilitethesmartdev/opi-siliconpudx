@@ -1,0 +1,210 @@
+----------------------------------------------------------------------------
+-- Project		:	OPI-siliconPUdx
+-- Authors		:	opilitethesmartdev
+-- Description	:	Host UART Interface
+----------------------------------------------------------------------------
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+use work.core_pkg.all;
+use work.register_pkg.all;
+use work.instruction_pkg.all;
+
+entity HostUARTIf is
+    generic(
+        DW : natural := 43;
+        CLK_HZ : natural := 25_000_000
+    );
+    port(
+        -- Fundamental signals
+        clk : in std_ulogic;
+        rst : in std_ulogic;
+
+        -- UART Interface
+        tx : out std_ulogic;
+        rx : in  std_ulogic;
+
+        -- SRAM Interface
+        ram_en   : out std_ulogic;
+        ram_wren : out std_ulogic;
+        ram_mask : out std_ulogic_vector(IBWIDTH - 1 downto 0);
+        ram_addr : out unsigned(INSTD - 1 downto 0);
+        ram_din  : out std_ulogic_vector(IBWIDTH - 1 downto 0);
+        ram_dout : in std_ulogic_vector(IBWIDTH - 1 downto 0);
+
+        -- Register bank interface
+        re_cmd  : out std_ulogic_vector(1 downto 0);
+        re_addr : out unsigned(REGD-1 downto 0);
+        re_i : out std_ulogic_vector(WORDWIDTH-1 downto 0);
+        re_o : in  std_ulogic_vector(WORDWIDTH-1 downto 0)
+    );
+
+end entity HostUARTIf;
+
+architecture rtl of HostUARTIf is
+    -- Constants
+        constant DATA_BYTES : natural := 6;
+        constant ANS_BYTES : natural := 4;
+
+    -- FSM Definition
+        type s_t is (reset, idle, cmdp, w4d, ldd, eva, opf, opr, wrb, w4r);
+        signal s, sn : s_t;
+
+    -- Type Definitions
+        type d_arr is array(0 to DATA_BYTES-1) of std_ulogic_vector(WORDWIDTH - 1 downto 0);
+        type a_arr is array(0 to ANS_BYTES-1) of std_ulogic_vector(WORDWIDTH - 1 downto 0);
+
+        type cmd_t is (nop, rdr, rdi, wrr, wri);
+    
+    -- Arrays
+        signal db, dbff : d_arr;
+        signal ab, abff : a_arr;
+
+    -- UART Signals
+        signal rx_av  :  std_ulogic;
+        signal rx_o   :  std_ulogic_vector(7 downto 0);
+        signal rx_ack :  std_ulogic;
+
+        signal tx_en  :  std_ulogic;
+        signal tx_i   :  std_ulogic_vector(7 downto 0);
+        signal tx_fin :  std_ulogic;
+        signal tx_ack :  std_ulogic;
+    
+    -- Internal signals
+        signal cmdv : std_ulogic;
+        signal cmd, cmdff : cmd_t;
+
+        signal dc, dcff : unsigned(2 downto 0);
+        signal ac, acff : unsigned(1 downto 0);
+        signal rc, rcff : unsigned(2 downto 0);
+begin
+    -- Protocol entities
+        uart : entity work.UARTIf
+            generic map(
+                W      => 8,
+                CLK_HZ => CLK_HZ,
+                BAUD   => 115200
+            )
+            port map(
+                clk    => clk,
+                rst    => rst,
+                rx_av  => rx_av,
+                rx_o   => rx_o,
+                rx_ack => rx_ack,
+                tx_en  => tx_en,
+                tx_i   => tx_i,
+                tx_fin => tx_fin,
+                tx_ack => tx_ack,
+                tx     => tx,
+                rx     => rx
+        );
+
+    -- Main Processes
+    ff : process(rst, clk)
+    begin
+        if rst = '1' then
+            s <= reset;
+
+            cmdff <= nop;
+
+            dcff <= "00";
+            acff <= "00";
+            rcff <= "00";
+
+            dbff <= (others => x"00");
+            abff <= (others => x"00");
+        elsif rising_edge(clk) then
+            s <= sn;
+            
+            cmdff <= cmd;
+
+            dcff <= dc;
+            acff <= ac;
+            rcff <= rc;
+
+            dbff <= db;
+            abff <= ab;
+        end if;
+    end process ff;
+
+    fsm : process(all)
+    begin
+        sn <= s;
+        case s is
+            when reset => sn <= idle;
+            when idle  => sn <= cmdp when rx_av = '1' else idle;
+            when cmdp  => sn <= w4d when cmdv = '1' else idle;
+            when w4d   => sn <= ldd when rx_av = '1' else w4d;
+            when ldd   => sn <= w4d when dcff = DATA_BYTES-1 else opf;
+            --when eva   => sn <= opf;
+            when opf   => sn <= opr;
+            when opr   => sn <= wrb;
+            when wrb   => sn <= w4r;
+            when w4r   => 
+                if tx_fin = '1' then
+                    sn <= idle when acff = ANS_BYTES-1 else wrb;
+                else
+                    sn <= w4r;
+                end if;
+            when others => sn <= reset;
+        end case;
+    end process fsm;
+
+    main: process(all)
+        variable merged : std_ulogic_vector(15 downto 0);
+    begin
+        rx_ack <= '0';
+        tx_ack <= '0';
+        merged := (others => '0');
+
+        db <= dbff;
+        ab <= abff;
+        
+        cmdv <= '0';
+        cmd <= cmdff;
+
+        case s is
+            when reset =>
+                rx_ack <= '1';
+                tx_ack <= '1';
+            when idle  =>
+            when cmdp  =>
+                case rx_o is
+                    when x"FA" => cmd <= rdi;
+                    when x"FB" => cmd <= wrr;
+                    when x"FC" => cmd <= rdi;
+                    when x"FD" => cmd <= wri;
+                end case;
+
+                cmdv <= '0' when cmd = nop else '1';
+                rx_ack <= '1';
+            when w4d   =>
+            when ldd   =>
+                db(to_integer(dcff)) <= rx_o;
+                rx_ack <= '1';
+            --when eva   => 
+            when opf   =>
+                merged := dbff(0) & dbff(1);
+
+                case cmdff is
+                    when rdi =>
+                        ram_en <= '1';
+                        ram_addr <= unsigned(merged(INSTD - 1 downto 0));
+                        ram_mask <= (others => '1');
+                    when wri =>
+                        ram_en <= '1';
+                        ram_wren <= '1';
+                        ram_addr <= unsigned(merged(INSTD - 1 downto 0));
+                        ram_mask <= (others => '1');
+                        ram_din <= dbff(2) & dbff(3) & dbff(4) & dbff(5);
+                    when others =>
+                end case;
+            when opr   =>
+            when wrb   =>
+            when w4r   =>
+            when others =>
+        end case;
+    end process main;
+
+end architecture rtl;

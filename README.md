@@ -184,3 +184,25 @@ The response is formatted like this:
   |
   |______________________ Mirror of input operation bit
 ```
+
+## Host UART Interface
+Originally meant only for usage on the FPGA, the interface supports standard 115200 baud 8N1 UART, with the following protocol spec:
+```
+[CMD][A0][A1][D0][D1][D2][D3]
+```
+*Note: `[XXX]` represents a byte sent over UART*
+
+The command byte is interpreted as following:
+```
+0xFA = read  register
+0xFB = write instruction
+0xFC = read  register
+0xFD = write instruction
+```
+
+The address bytes are interpreted plainly (MSB) when operating the instruction SRAM, but have a special role when operating registers:
+```
+[A0]: Length byte (up to 4 for 4 data bytes)
+[A1]: Address byte (8-bit)
+```
+The same applies for the data bytes: they compose one line of instruction SRAM, but up to 4 separate register lines.
