@@ -17,21 +17,22 @@ entity fpga_harness is
         clk : in std_ulogic;
         rst : in std_ulogic;
         en : in  std_ulogic;
-        o  : out std_ulogic_vector(1 downto 0);
 
         -- UART
         rx : in  std_ulogic;
         tx : out std_ulogic;
 
         -- FPGA LED
-        led : out STD_ULOGIC
+        led : out std_ulogic_vector(5 downto 0)
     );
 
 end entity fpga_harness;
 
 architecture rtl of fpga_harness is
-    signal rst_n        :  std_ulogic;
-    signal ena          :  std_ulogic;
+    signal o  : std_ulogic_vector(1 downto 0);
+
+    signal rst_n       :  std_ulogic;
+    signal ena, enfe   :  std_ulogic;
 
     -- SRAM Access Arbitration
     signal ram_sel        :  std_ulogic;
@@ -65,10 +66,10 @@ architecture rtl of fpga_harness is
     signal re_i        :  std_ulogic_vector(WORDWIDTH-1 downto 0);
     signal re_o        :  std_ulogic_vector(WORDWIDTH-1 downto 0);
 
-    signal mosi        :  std_ulogic;
-    signal t_si        :  std_ulogic;
-    signal miso        :  std_ulogic;
-    signal t_so        :  std_ulogic;
+    signal mosi         :  std_ulogic;
+    signal t_si, t_siff :  std_ulogic;
+    signal miso         :  std_ulogic;
+    signal t_so, t_soff :  std_ulogic;
       
 begin
     sram_muxif : entity work.SRAMMuxIf
@@ -166,13 +167,36 @@ begin
 
     rst_n <= not rst;
 
-    enff : entity work.t_ff
+    en_edge : entity work.edge
+        generic map(
+            polarity => "falling"
+        )
         port map(
             clk => clk,
             i   => en,
+            o   => enfe
+    );
+    enff : entity work.t_ff
+        port map(
+            clk => clk,
+            i   => enfe,
             o   => ena
+    );    
+
+    tsiff : entity work.t_ff
+        port map(
+            clk => clk,
+            i   => t_so,
+            o   => t_siff
+    );
+    tsoff : entity work.t_ff
+        port map(
+            clk => clk,
+            i   => t_so,
+            o   => t_soff
     );
 
-    led <= not ena;
+
+    led <= not (ena & rst_n & o & t_soff & t_siff);
 
 end architecture rtl;
