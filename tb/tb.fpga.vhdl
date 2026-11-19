@@ -253,7 +253,7 @@ begin
             for j in 0 to 1 loop
                 db_pass <= j+2;
                 tx_en <= '1';
-                tx_i <= x"A";
+                tx_i <= x"0A";
                 wait for 40 ns;
                 tx_en <= '0';
                 tx_i <= x"00";
@@ -314,7 +314,7 @@ begin
             for j in 0 to 1 loop
                 db_pass <= j+2;
                 tx_en <= '1';
-                tx_i <= x"A";
+                tx_i <= x"0A";
                 wait for 40 ns;
                 tx_en <= '0';
                 tx_i <= x"00";
@@ -352,7 +352,6 @@ begin
                 rx_ack <= '0';
                 wait for 40 ns;
             end loop;
-
 
         report "Finish";
         wait for 400 ns;

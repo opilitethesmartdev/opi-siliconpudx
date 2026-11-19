@@ -241,6 +241,7 @@ begin
                             ab(i) <= ram_dout(8*(i+1)-1 downto 8*i);
                         end loop;
                     when rdr =>
+                            re_cmd <= "10";
                             ab(0) <= re_o;
                     when wri =>                    
                         for i in 0 to ANS_BYTES-1 loop
