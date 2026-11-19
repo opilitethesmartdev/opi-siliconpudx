@@ -110,7 +110,7 @@ begin
         tx_i <= x"00";
 
         wait for 160 ns;
-        --for i in 0 to program'length-1 loop
+        for i in 0 to program'length-1 loop
             --pln <= program(i);
 
             -- Command byte
@@ -169,7 +169,7 @@ begin
                 rx_ack <= '0';
                 wait for 40 ns;
             end loop;
-        --end loop;
+        end loop;
 
         -- Read instruction
             db_pass <= 0;
