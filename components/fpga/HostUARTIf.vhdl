@@ -231,7 +231,7 @@ begin
                     when wrr =>
                         re_cmd <= "01";
                         re_addr <= unsigned(dbff(1)(REGD-1 downto 0));
-                        re_i <= dbff(3);
+                        re_i <= dbff(2);
                     when others =>
                 end case;
             when opr   =>

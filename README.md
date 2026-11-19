@@ -138,6 +138,7 @@ nop  ---   ---
 idl  ---   ---
 wrr  reg   lit
 lda  lit   lit
+atr  lit   lit
 iot  lit   lit
 iop  lit   lit
 izb  reg   lit
@@ -206,3 +207,26 @@ The address bytes are interpreted plainly (MSB) when operating the instruction S
 [A1]: Address byte (8-bit)
 ```
 The same applies for the data bytes: they compose one line of instruction SRAM, but up to 4 separate register lines.
+
+## Command representations
+The instruction formal allows us up to 16 different instructions, of which 15 are usable (`nop` is reserved).
+The commands are represented in binary as following:
+```
+code   cmd 
+-----------
+ 0x0   nop 
+ 0x1   idl 
+ 0x2   inc 
+ 0x3   dec 
+ 0x4   isz 
+ 0x5   jmp 
+ 0x6   stp 
+ 0x7   wrr 
+ 0x8   lda 
+ 0x9   atr 
+ 0xA   iot 
+ 0xB   iop 
+ 0xC   izb 
+ 0xD   mtr 
+ 0xE   rtm 
+```
