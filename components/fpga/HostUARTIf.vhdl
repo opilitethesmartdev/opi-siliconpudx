@@ -47,7 +47,7 @@ architecture rtl of HostUARTIf is
         constant ANS_BYTES : natural := 4;
 
     -- FSM Definition
-        type s_t is (reset, idle, cmdp, w4d, ldd, eva, opf, opr, wrb, w4r);
+        type s_t is (reset, idle, cmdp, w4d, ldd, opf, opr, wrb, wrr, wrs, w4r);
         signal s, sn : s_t;
 
     -- Type Definitions
@@ -75,7 +75,7 @@ architecture rtl of HostUARTIf is
         signal cmd, cmdff : cmd_t;
 
         signal dc, dcff : unsigned(2 downto 0);
-        signal ac, acff : unsigned(1 downto 0);
+        signal ac, acff : unsigned(2 downto 0);
         signal rc, rcff : unsigned(2 downto 0);
 begin
     -- Protocol entities
@@ -108,7 +108,7 @@ begin
             cmdff <= nop;
 
             dcff <= "000";
-            acff <= "00";
+            acff <= "000";
             rcff <= "000";
 
             dbff <= (others => x"00");
@@ -129,20 +129,21 @@ begin
 
     fsm : process(all)
     begin
-        sn <= s;
+        --sn <= s;
         case s is
             when reset => sn <= idle;
             when idle  => sn <= cmdp when rx_av = '1' else idle;
             when cmdp  => sn <= w4d when cmdv = '1' else idle;
             when w4d   => sn <= ldd when rx_av = '1' else w4d;
-            when ldd   => sn <= w4d when dcff = DATA_BYTES-1 else opf;
-            --when eva   => sn <= opf;
+            when ldd   => sn <= opf when dcff = DATA_BYTES-1 else w4d;
             when opf   => sn <= opr;
             when opr   => sn <= wrb;
+            when wrr   => sn <= wrs;
+            when wrs   => sn <= wrb;
             when wrb   => sn <= w4r;
             when w4r   => 
                 if tx_fin = '1' then
-                    sn <= idle when acff = ANS_BYTES-1 else wrb;
+                    sn <= reset when acff = ANS_BYTES else wrr;
                 else
                     sn <= w4r;
                 end if;
@@ -153,45 +154,54 @@ begin
     main: process(all)
         variable merged : std_ulogic_vector(15 downto 0);
     begin
-        rx_ack <= '0';
-        tx_ack <= '0';
+        -- Defaults
+            rx_ack <= '0';
+            tx_ack <= '0';
 
-        tx_en <= '0';
-        tx_i <= (others => '0');
+            tx_en <= '0';
+            tx_i <= (others => '0');
 
-        merged := (others => '0');
+            merged := (others => '0');
 
-        db <= dbff;
-        ab <= abff;
+            db <= dbff;
+            ab <= abff;
 
-        dc <= dcff;
-        ac <= acff;
-        rc <= rcff;
-        
-        cmdv <= '0';
-        cmd <= cmdff;
-        
-        ram_en   <= '0';
-        ram_wren <= '0';
-        ram_addr <= (others => '0');
-        ram_mask <= (others => '0');
-        ram_din  <= (others => '0');
-        
-        re_cmd  <= "00";
-        re_addr <= (others => '0');
-        re_i    <= (others => '0');
+            dc <= dcff;
+            ac <= acff;
+            rc <= rcff;
+            
+            cmdv <= '0';
+            cmd <= cmdff;
+            
+            ram_en   <= '0';
+            ram_wren <= '0';
+            ram_addr <= (others => '0');
+            ram_mask <= (others => '0');
+            ram_din  <= (others => '0');
+            
+            re_cmd  <= "00";
+            re_addr <= (others => '0');
+            re_i    <= (others => '0');
 
         case s is
             when reset =>
                 rx_ack <= '1';
                 tx_ack <= '1';
+
+                db <= (others => x"00");
+                ab <= (others => x"00");
+
+                dc <= (others => '0');
+                ac <= (others => '0');
+                rc <= (others => '0');
             when idle  =>
             when cmdp  =>
                 case rx_o is
-                    when x"FA" => cmd <= rdi;
-                    when x"FB" => cmd <= wrr;
-                    when x"FC" => cmd <= rdi;
+                    when x"FA" => cmd <= rdr;
+                    when x"FB" => cmd <= rdi;
+                    when x"FC" => cmd <= wrr;
                     when x"FD" => cmd <= wri;
+                    when others => cmd <= nop;
                 end case;
 
                 cmdv <= '0' when cmd = nop else '1';
@@ -199,8 +209,8 @@ begin
             when w4d   =>
             when ldd   =>
                 db(to_integer(dcff)) <= rx_o;
+                dc <= dcff + 1;
                 rx_ack <= '1';
-            --when eva   => 
             when opf   =>
                 merged := dbff(0) & dbff(1);
 
@@ -232,8 +242,18 @@ begin
                         end loop;
                     when rdr =>
                             ab(0) <= re_o;
+                    when wri =>                    
+                        for i in 0 to ANS_BYTES-1 loop
+                            ab(i) <= (others => '1');
+                        end loop;
+                    when wrr =>                    
+                        for i in 0 to ANS_BYTES-1 loop
+                            ab(i) <= (others => '1');
+                        end loop;
                     when others =>
                 end case;
+            when wrr   =>
+                tx_ack <= '1';
             when wrb   =>
                 ac <= acff + 1;
                 tx_en <= '1';

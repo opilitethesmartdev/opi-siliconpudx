@@ -160,7 +160,7 @@ begin
             when sb =>
                 scnt <= scntff + 1;
                 shift(to_integer(scntff)) <= rx;
-                if(scntff = W-1 -1)then
+                if(scntff = W-1)then
                     rx_fin <= '1';
                 end if;
             when done =>

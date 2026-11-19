@@ -195,8 +195,8 @@ Originally meant only for usage on the FPGA, the interface supports standard 115
 The command byte is interpreted as following:
 ```
 0xFA = read  register
-0xFB = write instruction
-0xFC = read  register
+0xFB = read  instruction
+0xFC = write register
 0xFD = write instruction
 ```
 

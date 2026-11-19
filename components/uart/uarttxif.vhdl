@@ -31,7 +31,7 @@ end entity UARTtxIf;
 architecture rtl of UARTtxIf is
     constant DIV : positive := CLK_HZ / BAUD;
 
-    type s_t is (reset, idl, ld, st, sb, w4s, done);
+    type s_t is (reset, idl, ld, st, sb, w4s, w4d, done);
     signal s, sn : s_t;
     signal en  : std_ulogic;
 
@@ -39,7 +39,7 @@ architecture rtl of UARTtxIf is
 
     signal txi_dl : std_ulogic_vector(W-1 downto 0);
 
-    signal tick : std_ulogic;
+    signal tick, ti2 : std_ulogic;
     signal tcnt : unsigned(W*2-1 downto 0);
 
     signal bitc, bitcff : unsigned(W/2-1 downto 0);
@@ -53,12 +53,16 @@ begin
                 tcnt <= (others => '0');
             elsif rising_edge(clk) then
                 tick <= '0';
+                ti2  <= '0';
                 tcnt <= (others => '0');
 
                 if en = '1' then
                     if tcnt = (DIV - 1) then
                         tcnt <= (others => '0');
                         tick <= '1';
+                    elsif tcnt = (DIV/2 - 1) then
+                        tcnt <= tcnt + 1;
+                        ti2 <= '1';
                     else
                         tcnt <= tcnt + 1;
                     end if;
@@ -106,8 +110,9 @@ begin
             when idl   => sn <= ld when tx_en = '1' else idl;
             when ld    => sn <= st;
             when st    => sn <= w4s;
-            when sb    => sn <= done when bitcff = W else w4s;
+            when sb    => sn <= w4d when bitcff = W else w4s;
             when w4s   => sn <= sb when tick = '1' else w4s;
+            when w4d   => sn <= done when ti2 = '1' else w4d;
             when done  => sn <= reset when ack = '1' else done;
             when others => 
         end case;
@@ -127,7 +132,7 @@ begin
                 data <= (others => '0');
             when idl =>
             when ld =>
-                data <= txi_dl & '1'; -- stop bit
+                data <= '1' & txi_dl; -- stop bit
             when st => txn <= '0';
             when sb => 
                 txn <= dataff(to_integer(bitcff));

@@ -12,6 +12,9 @@ use work.register_pkg.all;
 use work.instruction_pkg.all;
 
 entity fpga_harness is
+    generic(
+        CLK_HZ : natural := 27_000_000
+    );
     port(
         -- Fundamental signals
         clk : in std_ulogic;
@@ -34,6 +37,7 @@ architecture rtl of fpga_harness is
     signal rst_n       :  std_ulogic;
     signal ena, enfe   :  std_ulogic;
 
+    signal i        :  std_ulogic;
     -- SRAM Access Arbitration
     signal ram_sel        :  std_ulogic;
 
@@ -105,12 +109,12 @@ begin
             re_addr     => re_addr,
             re_i        => re_i,
             re_o        => re_o,
-            instruction => open
+            instruction => i
         );
 
     uartif : entity work.HostUARTIf
         generic map(
-            CLK_HZ => 27_000_000
+            CLK_HZ => CLK_HZ
         )
         port map(
             clk      => clk,
@@ -145,8 +149,6 @@ begin
             dout => ram_dout
         );
 
-
-
     rst_n <= not rst;
 
     en_edge : entity work.edge
@@ -165,6 +167,7 @@ begin
             o   => ena
     );    
 
-    led <= not (ena & rst_n & o & "00");
+    led <= not (ena & rst_n & o & i & "0");
+    ram_sel <= ena;
 
 end architecture rtl;
