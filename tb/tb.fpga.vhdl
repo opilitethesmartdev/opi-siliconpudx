@@ -39,22 +39,22 @@ architecture sim of tb_fpga is
     signal ab_pass : integer := 0;
 
     constant program : program_arr_t(0 to 16) := (
-            x"01" & newinst(0, 0, lda, x"0000"),-- 0  | lda  0x0
-            x"02" & newinst(0, 0, atr, 0, 0),   -- 1  | atr  0
-            x"08" & newinst(0, 0, lda, x"0001"),-- 2  | lda  0x1
-            x"06" & newinst(0, 0, atr, 1, 0),   -- 3  | atr  1
-            x"05" & newinst(0, 0, lda, x"0002"),-- 4  | lda  0x2
-            x"00" & newinst(0, 0, atr, 2, 0),   -- 5  | atr  2
-            x"00" & newinst(0, 0, lda, x"0003"),-- 6  | lda  0x3
-            x"00" & newinst(0, 0, atr, 4, 0),   -- 7  | atr  4
-            x"00" & newinst(0, 0, lda, x"0004"),-- 8  | lda  0x4
-            x"00" & newinst(0, 0, atr, 6, 0),   -- 9  | atr  6
+            x"01" & newinst(0, 0, lda, x"0000"),-- 0  | lda   0x0
+            x"02" & newinst(0, 0, atr, 0, 0),   -- 1  | atr   0
+            x"08" & newinst(0, 0, lda, x"0001"),-- 2  | lda   0x1
+            x"06" & newinst(0, 0, atr, 1, 0),   -- 3  | atr   1
+            x"05" & newinst(0, 0, lda, x"0002"),-- 4  | lda   0x2
+            x"00" & newinst(0, 0, atr, 2, 0),   -- 5  | atr   2
+            x"00" & newinst(0, 0, lda, x"0003"),-- 6  | lda   0x3
+            x"00" & newinst(0, 0, atr, 4, 0),   -- 7  | atr   4
+            x"00" & newinst(0, 0, lda, x"0004"),-- 8  | lda   0x4
+            x"00" & newinst(0, 0, atr, 6, 0),   -- 9  | atr   6
             x"00" & inst2v(INSTNULL(idl)),      -- 10 | idl
-            x"00" & newinst(1, 0, isz, 0, 0),   -- 11 | isz >0  0
+            x"00" & newinst(2, 0, isz, 0, 0),   -- 11 | isz >>0  0
             x"00" & newinst(0, 0, jmp, x"000E"),-- 12 | jmp  0xE
             x"00" & newinst(0, 0, stp, 0, 0),   -- 13 | stp
-            x"00" & newinst(1, 0, dec, 0, 1),   -- 14 | dec >0  1
-            x"00" & newinst(1, 0, inc, 4, 1),   -- 15 | inc >4  1
+            x"00" & newinst(2, 0, dec, 0, 1),   -- 14 | dec >>0  1
+            x"00" & newinst(2, 0, inc, 4, 1),   -- 15 | inc >>4  1
             x"00" & newinst(0, 0, jmp, x"000B") -- 16 | jmp  0xB
         );
 
@@ -114,7 +114,7 @@ begin
             --pln <= program(i);
 
             -- Command byte
-            db_pass <= 1;
+            db_pass <= 0;
             tx_en <= '1';
             tx_i <= x"FD";
             wait for 40 ns;
@@ -128,8 +128,7 @@ begin
             wait for 40 ns;
         
             -- Address bytes
-            for j in 0 to 1 loop
-                db_pass <= j+2;
+                db_pass <= 1;
                 tx_en <= '1';
                 tx_i <= x"00";
                 wait for 40 ns;
@@ -141,14 +140,26 @@ begin
                 wait for 40 ns;
                 tx_ack <= '0';
                 wait for 40 ns;
-            end loop;
+
+                db_pass <= 2;
+                tx_en <= '1';
+                tx_i <= std_ulogic_vector(to_unsigned(i, WORDWIDTH));
+                wait for 40 ns;
+                tx_en <= '0';
+                tx_i <= x"00";
+                wait on tx_fin;
+                wait for 20 ns;
+                tx_ack <= '1';
+                wait for 40 ns;
+                tx_ack <= '0';
+                wait for 40 ns;
 
             -- Data bytes
             for j in 0 to 3 loop
                 db_pass <= j+3;
                 tx_en <= '1';
-                --tx_i <= program(i)(IBWIDTH-8*j-1 downto IBWIDTH-8*(j+1));
-                tx_i <= program(0)(IBWIDTH-8*j-1 downto IBWIDTH-8*(j+1));
+                tx_i <= program(i)(IBWIDTH-8*j-1 downto IBWIDTH-8*(j+1));
+                --tx_i <= program(0)(IBWIDTH-8*j-1 downto IBWIDTH-8*(j+1));
                 wait for 40 ns;
                 tx_en <= '0';
                 tx_i <= x"00";
@@ -161,7 +172,7 @@ begin
             end loop;
 
             for j in 0 to 3 loop
-                ab_pass <= j;
+                ab_pass <= j+1;
                 wait on rx_av;
                 wait for 40 ns;
                 rx_ack <= '1';
@@ -253,7 +264,7 @@ begin
             for j in 0 to 1 loop
                 db_pass <= j+2;
                 tx_en <= '1';
-                tx_i <= x"0A";
+                tx_i <= x"30";
                 wait for 40 ns;
                 tx_en <= '0';
                 tx_i <= x"00";
@@ -314,7 +325,7 @@ begin
             for j in 0 to 1 loop
                 db_pass <= j+2;
                 tx_en <= '1';
-                tx_i <= x"0A";
+                tx_i <= x"30";
                 wait for 40 ns;
                 tx_en <= '0';
                 tx_i <= x"00";
@@ -352,6 +363,12 @@ begin
                 rx_ack <= '0';
                 wait for 40 ns;
             end loop;
+        
+        wait for 160 ns;
+        en <= '1';
+        wait for 40 ns;
+        en <= '0';
+        wait on led(3 downto 2);
 
         report "Finish";
         wait for 400 ns;

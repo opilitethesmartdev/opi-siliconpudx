@@ -208,6 +208,11 @@ The address bytes are interpreted plainly (MSB) when operating the instruction S
 ```
 The same applies for the data bytes: they compose one line of instruction SRAM, but up to 4 separate register lines.
 
+There are also some debug commands:
+```
+0xAA = Get current PC
+```
+
 ## Command representations
 The instruction formal allows us up to 16 different instructions, of which 15 are usable (`nop` is reserved).
 The commands are represented in binary as following:
