@@ -51,8 +51,9 @@ begin
         end if;
     end process seq;
 
-    fsm : process(s, en, i_d, cd)
+    fsm : process(all)
     begin
+        sn <= s;
         case s is
             when idl => sn <= set when en = '1' else idl;
             when set => sn <= res;-- when cd > 0   else set;
@@ -62,7 +63,7 @@ begin
         end case;
     end process fsm;
 
-    main : process(s,  cd, i_p, din, op)
+    main : process(all)
     begin
         rd <= '0';
         addr <= (others => '0');
