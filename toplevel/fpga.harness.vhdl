@@ -65,11 +65,6 @@ architecture rtl of fpga_harness is
     signal re_addr     :  unsigned(REGD-1 downto 0);
     signal re_i        :  std_ulogic_vector(WORDWIDTH-1 downto 0);
     signal re_o        :  std_ulogic_vector(WORDWIDTH-1 downto 0);
-
-    signal mosi         :  std_ulogic;
-    signal t_si, t_siff :  std_ulogic;
-    signal miso         :  std_ulogic;
-    signal t_so, t_soff :  std_ulogic;
       
 begin
     sram_muxif : entity work.SRAMMuxIf
@@ -113,14 +108,15 @@ begin
             instruction => open
         );
 
-    hscif : entity work.HostSerialIf
+    uartif : entity work.HostUARTIf
+        generic map(
+            CLK_HZ => 27_000_000
+        )
         port map(
             clk      => clk,
             rst      => rst_n,
-            mosi     => mosi,
-            t_si     => t_si,
-            miso     => miso,
-            t_so     => t_so,
+            tx       => tx,
+            rx       => rx,
             ram_en   => hsc_ram_en,
             ram_wren => hsc_ram_wren,
             ram_mask => hsc_ram_mask,
@@ -132,6 +128,7 @@ begin
             re_i     => re_i,
             re_o     => re_o
         );
+
     
     i_ext_sram : entity work.ext_sram
         generic map(
@@ -168,20 +165,6 @@ begin
             o   => ena
     );    
 
-    tsiff : entity work.t_ff
-        port map(
-            clk => clk,
-            i   => t_so,
-            o   => t_siff
-    );
-    tsoff : entity work.t_ff
-        port map(
-            clk => clk,
-            i   => t_so,
-            o   => t_soff
-    );
-
-
-    led <= not (ena & rst_n & o & t_soff & t_siff);
+    led <= not (ena & rst_n & o & "00");
 
 end architecture rtl;

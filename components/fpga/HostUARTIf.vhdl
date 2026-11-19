@@ -13,7 +13,6 @@ use work.instruction_pkg.all;
 
 entity HostUARTIf is
     generic(
-        DW : natural := 43;
         CLK_HZ : natural := 25_000_000
     );
     port(
@@ -108,9 +107,9 @@ begin
 
             cmdff <= nop;
 
-            dcff <= "00";
+            dcff <= "000";
             acff <= "00";
-            rcff <= "00";
+            rcff <= "000";
 
             dbff <= (others => x"00");
             abff <= (others => x"00");
@@ -156,13 +155,31 @@ begin
     begin
         rx_ack <= '0';
         tx_ack <= '0';
+
+        tx_en <= '0';
+        tx_i <= (others => '0');
+
         merged := (others => '0');
 
         db <= dbff;
         ab <= abff;
+
+        dc <= dcff;
+        ac <= acff;
+        rc <= rcff;
         
         cmdv <= '0';
         cmd <= cmdff;
+        
+        ram_en   <= '0';
+        ram_wren <= '0';
+        ram_addr <= (others => '0');
+        ram_mask <= (others => '0');
+        ram_din  <= (others => '0');
+        
+        re_cmd  <= "00";
+        re_addr <= (others => '0');
+        re_i    <= (others => '0');
 
         case s is
             when reset =>
@@ -198,10 +215,29 @@ begin
                         ram_addr <= unsigned(merged(INSTD - 1 downto 0));
                         ram_mask <= (others => '1');
                         ram_din <= dbff(2) & dbff(3) & dbff(4) & dbff(5);
+                    when rdr =>
+                        re_cmd <= "10";
+                        re_addr <= unsigned(dbff(1)(REGD-1 downto 0));
+                    when wrr =>
+                        re_cmd <= "01";
+                        re_addr <= unsigned(dbff(1)(REGD-1 downto 0));
+                        re_i <= dbff(3);
                     when others =>
                 end case;
             when opr   =>
+                case cmdff is
+                    when rdi =>
+                        for i in 0 to ANS_BYTES-1 loop
+                            ab(i) <= ram_dout(8*(i+1)-1 downto 8*i);
+                        end loop;
+                    when rdr =>
+                            ab(0) <= re_o;
+                    when others =>
+                end case;
             when wrb   =>
+                ac <= acff + 1;
+                tx_en <= '1';
+                tx_i <= ab(to_integer(acff));
             when w4r   =>
             when others =>
         end case;
