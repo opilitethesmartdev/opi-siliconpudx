@@ -59,7 +59,7 @@ begin
         case s is
             when res => sn <= idl;
             when idl => sn <= stb when rx_av = '1' else idl;
-            when stb => sn <= w4b when dcff = EXPECTED_BYTES-1 else fin;
+            when stb => sn <= fin when dcff = EXPECTED_BYTES-1 else w4b;
             when w4b => sn <= stb when rx_av = '1' else w4b;
             when fin => sn <= res when msg_ack = '1' else fin;
         end case;
@@ -78,6 +78,7 @@ begin
                 msg_nxt <= (others => (others => '0'));
             when idl =>
             when stb =>
+                dc <= dcff + 1;
                 msg_nxt(to_integer(dcff)) <= rx_o;
                 rx_ack <= '1';
             when w4b =>
