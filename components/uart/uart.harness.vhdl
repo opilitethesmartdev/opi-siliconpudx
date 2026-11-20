@@ -28,91 +28,74 @@ entity uart_harness is
 end entity uart_harness;
 
 architecture rtl of uart_harness is
-    type s_t is (reset, idle, apply, resp, await);
-    signal s, sn : s_t;
+    signal rst_n    :  std_ulogic;
 
-    signal rx_av  :  std_ulogic;
-    signal rx_o   :  std_ulogic_vector(7 downto 0);
-    signal rx_ack :  std_ulogic;
-    signal tx_en  :  std_ulogic;
-    signal tx_i   :  std_ulogic_vector(7 downto 0);
-    signal tx_fin :  std_ulogic;
-    signal tx_ack :  std_ulogic;
-    
-    signal rst_n   :  std_ulogic;
+    signal ram_en   :  std_ulogic;
+    signal ram_wren :  std_ulogic;
+    signal ram_mask :  std_ulogic_vector(IBWIDTH-1 downto 0);
+    signal ram_addr :  unsigned(INSTD-1 downto 0);
+    signal ram_din  :  std_ulogic_vector(IBWIDTH-1 downto 0);
+    signal ram_dout :  std_ulogic_vector(IBWIDTH-1 downto 0);
+    signal re_cmd   :  std_ulogic_vector(1 downto 0);
+    signal re_addr  :  unsigned(REGD-1 downto 0);
+    signal re_i     :  std_ulogic_vector(WORDWIDTH-1 downto 0);
+    signal re_o     :  std_ulogic_vector(WORDWIDTH-1 downto 0);
 
-    signal ledn : std_ulogic_vector(5 downto 0);
+    signal re_err    :  std_ulogic;
 begin
-    uartif : entity work.UARTIf
+    i_HostUARTIf : entity work.HostUARTIf
         generic map(
-            W      => 8,
-            CLK_HZ => 27_000_000,
-            BAUD   => 115200
+            CLK_HZ => 27_000_000
         )
         port map(
-            clk    => clk,
-            rst    => rst_n,
-
-            rx_av  => rx_av,
-            rx_o   => rx_o,
-            rx_ack => rx_ack,
-
-            tx_en  => tx_en,
-            tx_i   => tx_i,
-            tx_fin => tx_fin,
-            tx_ack => tx_ack,
-
-            tx     => tx,
-            rx     => rx
+            clk      => clk,
+            rst      => rst_n,
+            tx       => tx,
+            rx       => rx,
+            ram_en   => ram_en,
+            ram_wren => ram_wren,
+            ram_mask => ram_mask,
+            ram_addr => ram_addr,
+            ram_din  => ram_din,
+            ram_dout => ram_dout,
+            re_cmd   => re_cmd,
+            re_addr  => re_addr,
+            re_i     => re_i,
+            re_o     => re_o
     );
 
-    ff : process(rst_n, clk)
-    begin
-        if rst_n = '1' then
-            s <= reset;
-            led <= (others => '1'); -- active low
-        elsif rising_edge(clk) then
-            s <= sn;
-            led <= ledn;
-        end if;
-    end process ff;
+    i_ext_sram : entity work.ext_sram
+        generic map(
+            WORDWIDTH => 32,
+            WORDDEPTH => 9
+        )
+        port map(
+            clk  => clk,
+            en   => ram_en,
+            wren => ram_wren,
+            mask => ram_mask,
+            addr => ram_addr,
+            din  => ram_din,
+            dout => ram_dout
+    );
 
-    fsm : process(all)
-    begin
-        sn <= s;
-        case s is
-            when reset => sn <= idle;
-            when idle =>  sn <= apply when rx_av = '1' else idle;
-            when apply => sn <= resp;
-            when resp  => sn <= await;
-            when await => sn <= reset when tx_fin = '1' else await;
-            when others =>
-        end case;
-    end process fsm;
+    i_RegisterBank : entity work.RegisterBank
+        port map(
+            clk    => clk,
+            err    => re_err,
+            cmd    => re_cmd,
+            addr   => re_addr,
+            din    => re_i,
+            dout   => re_o,
+            rd_a   => '0',
+            rd_b   => '0',
+            addr_a => (others => '0'),
+            addr_b => (others => '0'),
+            dout_a => open,
+            dout_b => open
+    );
 
-    main : process(all)
-    begin
-        rx_ack <= '0';
-        tx_ack <= '0';
-        
-        tx_en <= '0';
-        tx_i <= x"00";
-
-        ledn <= led;
-
-        case s is
-            when reset => 
-                rx_ack <= '1';
-                tx_ack <= '1';
-            when apply =>
-                ledn <= not rx_o(5 downto 0); -- active low
-            when resp =>
-                tx_en <= '1';
-                tx_i <= x"67";
-            when others =>
-        end case;
-    end process main;
-
+    led <= rst & rx & tx & not('0' & re_err & '0');
     rst_n <= not rst;
 
 end architecture rtl;

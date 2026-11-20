@@ -136,7 +136,7 @@ begin
             when cmdp  => sn <= w4d when cmdv = '1' else idle;
             when w4d   => sn <= ldd when rx_av = '1' else w4d;
             when ldd   => sn <= opf when dcff = DATA_BYTES-1 else w4d;
-            when opf   => sn <= opr;
+            when opf   => sn <= opr when cmdff = rdi or cmdff = rdr else reset;
             when opr   => sn <= wrb;
             when wrr   => sn <= wrs;
             when wrs   => sn <= wrb;
