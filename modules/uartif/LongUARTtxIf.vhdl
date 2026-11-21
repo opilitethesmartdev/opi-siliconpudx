@@ -29,9 +29,10 @@ entity LongUARTtxIf is
 
         -- Control interface
         msg_send : in std_ulogic;
+        msg_av   : out std_ulogic;
         msg_done : out std_ulogic;
 
-        msg : in uart_t(0 to SEND_BYTES)
+        msg : in uart_t(0 to SEND_BYTES-1)
     );
 end LongUARTtxIf ;
 
@@ -40,7 +41,7 @@ architecture rtl of LongUARTtxIf is
     signal s, sn : s_t;
 
     signal dc, dcff : unsigned(WW-1 downto 0);
-    signal msgdl, msgff, msg_nxt : uart_t(0 to SEND_BYTES);
+    signal msgdl, msgff, msg_nxt : uart_t(0 to SEND_BYTES-1);
 begin
     ff : process(rst, clk)
     begin
@@ -62,11 +63,11 @@ begin
         case s is
             when res => sn <= idl;
             when idl => sn <= ldm when msg_send = '1' else idl;
-            when ldm => sn <= str; 
-            when str => sn <= fin when dcff = SEND_BYTES - 1 else w4s;
+            when ldm => sn <= dly; 
+            when str => sn <= w4s;
             when w4s => sn <= ack when tx_fin = '1' else  w4s;
             when ack => sn <= dly;
-            when dly => sn <= str;
+            when dly => sn <= fin when dcff = SEND_BYTES else str;
             when fin => sn <= res;
         end case;
     end process fsm;
@@ -81,17 +82,21 @@ begin
         tx_i <= (others => '0');
 
         msg_done <= '0';
+        msg_av <= '0';
 
         case s is
             when res =>
                 dc <= (others => '0');
                 msg_nxt <= (others => (others => '0'));
+                tx_ack <= '1';
             when idl =>
+                msg_av <= '1';
             when ldm =>
                 msg_nxt <= msgdl;
             when str =>
                 tx_en <= '1';
                 tx_i <= msgff(to_integer(dcff));
+                dc <= dcff + 1;
             when ack =>
                 tx_ack <= '1';
             when dly =>

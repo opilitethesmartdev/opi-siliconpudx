@@ -130,6 +130,7 @@ begin
             when reset =>
                 bitc <= (others => '0');
                 data <= (others => '0');
+                txn <= '1';
             when idl =>
             when ld =>
                 data <= '1' & txi_dl; -- stop bit

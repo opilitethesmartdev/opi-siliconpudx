@@ -30,7 +30,7 @@ entity LongUARTrxIf is
         msg_av : out std_ulogic;
         msg_ack : in std_ulogic;
 
-        msg : out uart_t(0 to EXPECTED_BYTES)
+        msg : out uart_t(0 to EXPECTED_BYTES-1)
     );
 end LongUARTrxIf ;
 
@@ -39,7 +39,7 @@ architecture rtl of LongUARTrxIf is
     signal s, sn : s_t;
 
     signal dc, dcff : unsigned(WW-1 downto 0);
-    signal msg_nxt : uart_t(0 to EXPECTED_BYTES);
+    signal msg_nxt : uart_t(0 to EXPECTED_BYTES-1);
 begin
     ff : process(rst, clk)
     begin
@@ -71,6 +71,7 @@ begin
         msg_nxt <= msg;
 
         rx_ack <= '0';
+        msg_av <= '0';
 
         case s is
             when res =>
