@@ -31,17 +31,17 @@ architecture bhv of ext_sram is
     type ram_t is array(0 to 2**WORDDEPTH - 1) of std_ulogic_vector(WORDWIDTH - 1 downto 0);
 
     signal ram : ram_t := (others => x"00000000");
-    signal addri : unsigned(WORDDEPTH - 1 downto 0);
 begin
     seq: process(clk)
     begin
         if rising_edge(clk) then
             if en = '1' then
                 if wren = '1' then
-                    ram(to_integer(addr)) <= din and mask;
+                    for i in 0 to WORDWIDTH-1 loop
+                        ram(to_integer(addr))(i) <= din(i) when mask(i) = '1';
+                    end loop;
                 else
-                    addri <= addr;
-                    dout <= ram(to_integer(addri)) and mask;
+                    dout <= ram(to_integer(addr));
                 end if;
             else
                 dout <= (others => '0');
