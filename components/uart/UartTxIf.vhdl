@@ -21,8 +21,10 @@ entity UartTxIf is
         clk : in std_ulogic;
         rst : in std_ulogic;
 
+        -- UART Output
         tx : out  std_ulogic;
 
+        -- Application interface
         en  : in std_ulogic;
         i   : in std_ulogic_vector(UWW-1 downto 0);
         ack : in std_ulogic;
