@@ -339,7 +339,7 @@
 
     end architecture Behavioral;
 
--- Edge detector delay-less
+-- Edge detector delay-less with reset
     library ieee;
     use IEEE.STD_LOGIC_1164.all;
 
