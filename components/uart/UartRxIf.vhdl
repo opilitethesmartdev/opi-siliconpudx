@@ -39,7 +39,6 @@ architecture rtl of UartRxIf is
     signal rx_en : std_ulogic;
 
     signal cdr, cd : std_ulogic;
-    signal cdc : unsigned(15 downto 0);
 
     signal bc, bcff : unsigned(2 downto 0);
     signal d, dff : std_ulogic_vector(UWW-1 downto 0);
@@ -63,30 +62,20 @@ begin
                 o   => rx_en
         );
     
-    -- CLock divider
-        clkdiv : process(rst, clk)
-        begin
-            if rst = '1' then
-                cdc <= (others => '0');
-                cd <= '0';
-            elsif rising_edge(clk) then
-                cd <= '0';
+    -- Clock divider
+        clkif : entity work.UartClkIf
+            generic map(
+                CLK_HZ => CLK_HZ,
+                BAUD   => BAUD
+            )
+            port map(
+                clk => clk,
+                rst => rst,
+                en  => rx_en,
+                cx => open,
+                cy => cd
+        );
 
-                if rx_en = '1' then
-                    if cdc = (CLK_HZ / BAUD)-1 then
-                        cdc <= (others => '0');
-                    else                
-                        if cdc = ((CLK_HZ / BAUD)/2-1) then
-                            cd <= '1';
-                        end if;
-                        
-                        cdc <= cdc + 1;
-                    end if;
-                else
-                    cdc <= (others => '0');
-                end if;
-            end if;
-        end process clkdiv;
 
     -- FSM Processes
         ff: process(rst, clk)
