@@ -151,18 +151,20 @@ begin
 
     rst_n <= not rst;
 
-    en_edge : entity work.edge
+    en_edge : entity work.edger
         generic map(
             polarity => "falling"
         )
         port map(
             clk => clk,
+            rst => rst_n,
             i   => en,
             o   => enfe
     );
-    enff : entity work.t_ff
+    enff : entity work.t_ffr
         port map(
             clk => clk,
+            rst => rst_n,
             i   => enfe,
             o   => ena
     );    

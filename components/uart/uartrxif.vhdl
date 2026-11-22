@@ -29,7 +29,7 @@ end entity UARTrxIf;
 architecture rtl of UARTrxIf is
     constant DIV : positive := CLK_HZ / BAUD;
 
-    type s_t is (reset, idl, ss, wss, w4b, sb, done);
+    type s_t is (reset, idl, ss, wss, w4b, sb, w4f, sf, done);
     signal s, sn : s_t;
     signal ff_clk  : std_ulogic;
 
@@ -138,7 +138,9 @@ begin
             when w4b => 
                 sn <= sb when ti2 = '1';
             when sb => 
-                sn <= w4b when rx_fin = '0' else done;
+                sn <= w4f when scntff = W-1 else w4b;
+            when w4f => sn <= sf when ti2 = '1' else w4f;
+            when sf => sn <= done when rx = '1' else reset;
             when done =>
                 sn <= reset when ack = '1' else done;
             when others => 
@@ -160,9 +162,8 @@ begin
             when sb =>
                 scnt <= scntff + 1;
                 shift(to_integer(scntff)) <= rx;
-                if(scntff = W-1)then
-                    rx_fin <= '1';
-                end if;
+            when sf =>
+                rx_fin <= '1';
             when done =>
                 rx_av <= '1';
                 rx_o <= shiftff(W-1 downto 0);
