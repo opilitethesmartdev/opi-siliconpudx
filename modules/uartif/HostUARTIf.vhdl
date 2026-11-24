@@ -1,0 +1,220 @@
+----------------------------------------------------------------------------
+-- Project		:	OPI-siliconPUdx
+-- Authors		:	opilitethesmartdev
+-- Description	:	Multi-byte UART Receiver Interface
+----------------------------------------------------------------------------
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+use work.uart_pkg.all;
+use work.core_pkg.all;
+use work.register_pkg.all;
+use work.instruction_pkg.all;
+
+entity HostUARTIf is
+    generic(
+        CLK_HZ : natural := 27_000_000;
+        BAUD   : natural := 115200
+    );
+    port (
+        clk : in std_ulogic;
+        rst : in std_ulogic;
+        
+        rx : in  std_ulogic;
+        tx : out std_ulogic;
+
+        -- SRAM Interface
+        ram_en   : out std_ulogic;
+        ram_wren : out std_ulogic;
+        ram_mask : out std_ulogic_vector(IBWIDTH - 1 downto 0);
+        ram_addr : out unsigned(INSTD - 1 downto 0);
+        ram_din  : out std_ulogic_vector(IBWIDTH - 1 downto 0);
+        ram_dout : in std_ulogic_vector(IBWIDTH - 1 downto 0);
+
+        -- Register bank interface
+        re_cmd  : out std_ulogic_vector(1 downto 0);
+        re_addr : out unsigned(REGD-1 downto 0);
+        re_i : out std_ulogic_vector(WORDWIDTH-1 downto 0);
+        re_o : in  std_ulogic_vector(WORDWIDTH-1 downto 0)
+        
+    );
+end entity HostUARTIf;
+
+architecture rtl of HostUARTIf is
+    -- Constants
+        constant CW : natural := 6;
+        constant RBUFD : natural := 32;
+        constant TBUFD : natural := 16;
+    
+    -- FSM Signals
+        type s_t is (res, idl, lda, eva, opf, opr, wb, w4f);
+        signal s, sn : s_t;
+    
+    -- Internal signals
+        signal oprp : std_ulogic;
+    -- Sequential Stored signal
+        signal len, lenff  : unsigned(CW-1 downto 0);
+        signal msgn, msgff : uart_t(0 to RBUFD-1);
+    -- UART Rx Application If
+        signal rx_av  :  std_ulogic;
+        signal rx_o   :  std_ulogic_vector(UWW-1 downto 0);
+        signal rx_ack :  std_ulogic;
+
+    -- UART Tx Application If
+        signal tx_en  :  std_ulogic;
+        signal tx_i   :  std_ulogic_vector(UWW-1 downto 0);
+        signal tx_ack :  std_ulogic;
+        signal tx_fin :  std_ulogic;
+
+    -- Compound Rx Application If
+        signal msg_av  :  std_ulogic;
+        signal msg_len :  unsigned(CW-1 downto 0);
+        signal msg_ack :  std_ulogic;
+        signal msg     :  uart_t(0 to RBUFD-1);
+
+    -- Compound Tx Application If
+        signal str_en   :  std_ulogic;
+        signal str_len  :  unsigned(CW-1-1 downto 0);
+        signal str_buf  :  uart_t(0 to TBUFD-1);
+        signal str_ack  :  std_ulogic;
+        signal str_done :  std_ulogic;
+    
+
+begin
+    -- Protocol Interface
+        uartif : entity work.UartIf
+            generic map(
+                CLK_HZ => CLK_HZ,
+                BAUD   => BAUD
+            )
+            port map(
+                clk    => clk,
+                rst    => rst,
+                rx     => rx,
+                tx     => tx,
+                rx_av  => rx_av,
+                rx_o   => rx_o,
+                rx_ack => rx_ack,
+                tx_en  => tx_en,
+                tx_i   => tx_i,
+                tx_ack => tx_ack,
+                tx_fin => tx_fin
+        );
+    -- Compound Interfaces
+        rxif : entity work.CmdBufferUARTrxIf
+            generic map(
+                BUFD => RBUFD,
+                CW   => CW
+            )
+            port map(
+                clk     => clk,
+                rst     => rst,
+                rx_av   => rx_av,
+                rx_o    => rx_o,
+                rx_ack  => rx_ack,
+                msg_av  => msg_av,
+                msg_len => msg_len,
+                msg_ack => msg_ack,
+                msg     => msg
+        );
+        txif : entity work.StreamUARTtxIf
+            generic map(
+                BUFD => TBUFD,
+                CW   => CW
+            )
+            port map(
+                clk      => clk,
+                rst      => rst,
+                tx_en    => tx_en,
+                tx_i     => tx_i,
+                tx_ack   => tx_ack,
+                tx_fin   => tx_fin,
+                str_en   => str_en,
+                str_len  => str_len,
+                str_buf  => str_buf,
+                str_ack  => str_ack,
+                str_done => str_done
+        );
+    -- FSM Processes
+        ff: process(rst, clk)
+        begin
+            if rst = '1' then
+                s <= res;
+
+                lenff <= (others => '0');
+                msgff <= (others => (others => '0'));
+            elsif rising_edge(clk) then
+                s <= sn;
+
+                lenff <= len;
+                msgff <= msg;
+            end if;
+        end process ff;
+        
+        fsm: process(all)
+        begin
+            case s is
+                when res => sn <= idl;
+                when idl => sn <= lda when msg_av = '1' else idl;
+                when lda => sn <= eva;
+                when eva => sn <= opf;
+                when opf => sn <= opr;
+                when opr => sn <= wb when oprp = '0' else opr;
+                when wb  => sn <= w4f;
+                when w4f => sn <= res when str_done = '1' else  w4f;
+                when others => sn <= s;
+            end case;
+        end process fsm;
+        
+        main: process(all)
+            variable merge : std_ulogic_vector(WORDWIDTH*2 - 1 downto 0);
+        begin
+            merge := (others => '0'); 
+
+            len <= lenff;
+            msgn <= msgff;
+
+            case s is
+                when res => 
+                    len <= (others => '0');
+                    msgn <= (others => (others => '0'));
+                when idl => 
+                when lda => 
+                    len <= msg_len;
+                    msgn <= msg;
+                when opf => 
+                    if lenff > 5 then
+                        case msgff(0) is
+                            when x"7A" => -- inst read
+                                merge := msgff(1) & msgff(2);
+
+                                ram_en <= '1';
+                                ram_addr <= unsigned(merge(INSTD-1 downto 0));
+                            when x"7F" => -- inst write
+                                merge := msgff(1) & msgff(2);
+
+                                ram_en <= '1';
+                                ram_wren <= '1';
+                                ram_addr <= unsigned(merge(INSTD-1 downto 0));
+                                ram_din <= msgff(3) & msgff(4) & msgff(5) & msgff(6);
+                        end case;
+                    elsif lenff > 2 then
+                        case msgff(0) is
+                            when x"6A" => -- register read
+                                re_cmd <= "10";
+                                re_addr <= unsigned(msgff(1)(REGD-1 downto 0));
+                            when x"6F" => -- register write
+                                re_cmd <= "01";
+                                re_addr <= unsigned(msgff(1)(REGD-1 downto 0));
+                                re_i <= msgff(2)(WORDWIDTH-1 downto 0);
+                            when others =>
+                        end case;
+                    end if;
+                when opr => 
+                when wb  => 
+                when w4f => 
+                when others =>
+            end case;
+        end process main;
+end architecture rtl;
