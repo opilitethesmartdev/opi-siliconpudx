@@ -28,10 +28,12 @@ entity StreamUARTtxIf is
         tx_fin : in  std_ulogic;
 
         -- Application Interface
-        str_en : in std_ulogic;
+        str_en  : in std_ulogic;
         str_len : in unsigned(CW-1 - 1 downto 0);
-        str_done : out std_ulogic;
-        str_buf : in uart_t(0 to BUFD-1)
+        str_buf : in uart_t(0 to BUFD-1);
+
+        str_ack  : in std_ulogic;
+        str_done : out std_ulogic
     );
 end entity StreamUARTtxIf;
 
@@ -69,9 +71,11 @@ begin
                     when res => sn <= idl;
                     when idl => sn <= lda when str_en = '1' else idl;
                     when lda => sn <= eva;
-                    when eva => sn <= str when cff = lenff - 1 else fin;
+                    when eva => sn <= fin when (cff = lenff - 1) or (lenff = 0) else dly; 
+                    when dly => sn <= str;
                     when str => sn <= w4b;
-                    when w4b => sn <= eva when tx_fin = '1' else w4b;
+                    when w4b => sn <= str when tx_fin = '1' else w4b;
+                    when fin => sn <= res when str_ack = '1' else fin;
                     when others => sn <= s;
                 end case;
             end process fsm;
@@ -81,6 +85,12 @@ begin
                 c <= cff;
                 len <= lenff;
                 bufn <= buf;
+
+                tx_en <= '0';
+                tx_ack <= '0';
+                tx_i <= (others => '0');
+
+                str_done <= '0';
 
                 case s is
                     when res =>
@@ -92,13 +102,16 @@ begin
                         len <= str_len;
                         bufn <= str_buf;
                     when eva =>
+                        tx_ack <= '1';
+                    when dly =>
                     when str =>
                         tx_en <= '1';
                         tx_i <= buf(to_integer(cff));
 
                         c <= cff + 1;
                     when w4b =>
-                        tx_ack <= '1';
+                    when fin =>
+                        str_done <= '1';
                     when others =>
                 end case;
             end process main;
