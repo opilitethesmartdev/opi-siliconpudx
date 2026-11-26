@@ -258,11 +258,21 @@ begin
                         end case;
                     when wb  =>
                         case lenff is
+                            when to_unsigned(7, CW) =>
+                                if msgff(0) = x"FC" then -- instruction write
+                                    str_en <= '1';
+                                    str_len <= to_unsigned(1, CW-1);
+                                    str_buf <= (others => (others => '1'));
+                                end if;
                             when to_unsigned(3, CW) =>
                                 if msgff(0) = x"FD" then -- instruction read
                                     str_en <= '1';
                                     str_len <= to_unsigned(4, CW-1);
                                     str_buf <= strff;
+                                elsif msgff(0) = x"FB" then -- register write
+                                    str_en <= '1';
+                                    str_len <= to_unsigned(1, CW-1);
+                                    str_buf <= (others => (others => '1'));
                                 end if;
                             when to_unsigned(2, CW) =>
                                 if msgff(0) = x"FA" then -- register read
