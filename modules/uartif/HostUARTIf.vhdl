@@ -53,9 +53,12 @@ architecture rtl of HostUARTIf is
     
     -- Internal signals
         signal oprp : std_ulogic;
+        signal wben : std_ulogic;
     -- Sequential Stored signal
         signal len, lenff  : unsigned(CW-1 downto 0);
         signal msgn, msgff : uart_t(0 to RBUFD-1);
+        signal str, strff  : uart_t(0 to TBUFD-1);
+
     -- UART Rx Application If
         signal rx_av  :  std_ulogic;
         signal rx_o   :  std_ulogic_vector(UWW-1 downto 0);
@@ -144,11 +147,13 @@ begin
 
                 lenff <= (others => '0');
                 msgff <= (others => (others => '0'));
+                strff <= (others => (others => '0'));
             elsif rising_edge(clk) then
                 s <= sn;
 
                 lenff <= len;
-                msgff <= msg;
+                strff <= str;
+                msgff <= msgn;
             end if;
         end process ff;
         
@@ -160,7 +165,9 @@ begin
                 when lda => sn <= eva;
                 when eva => sn <= opf;
                 when opf => sn <= opr;
-                when opr => sn <= wb when oprp = '0' else opr;
+                when opr => sn <= wb  when oprp = '0' and wben = '1'
+                             else res when oprp = '0' 
+                             else opr;
                 when wb  => sn <= w4f;
                 when w4f => sn <= res when str_done = '1' else  w4f;
                 when others => sn <= s;
@@ -173,7 +180,25 @@ begin
             merge := (others => '0'); 
 
             len <= lenff;
+            str <= strff;
             msgn <= msgff;
+
+            wben <= '0';
+            oprp <= '0';
+
+            ram_en <= '0';
+            ram_wren <= '0';
+            ram_addr <= (others => '0');
+            ram_mask <= (others => '0');
+            ram_din <= (others => '0');
+
+            re_cmd <= "00";
+            re_addr <= (others => '0');
+            re_i <= (others => '0');
+
+            str_en <= '0';
+            str_len <= (others => '0');
+            str_buf <= (others => (others => '0'));
 
             case s is
                 when res => 
@@ -184,20 +209,23 @@ begin
                     len <= msg_len;
                     msgn <= msg;
                 when opf => 
-                    if lenff > 5 then
+                    if lenff > 6 then
                         case msgff(0) is
                             when x"7A" => -- inst read
                                 merge := msgff(1) & msgff(2);
 
                                 ram_en <= '1';
                                 ram_addr <= unsigned(merge(INSTD-1 downto 0));
+                                ram_mask <= (others => '1');
                             when x"7F" => -- inst write
                                 merge := msgff(1) & msgff(2);
 
                                 ram_en <= '1';
                                 ram_wren <= '1';
                                 ram_addr <= unsigned(merge(INSTD-1 downto 0));
+                                ram_mask <= (others => '1');
                                 ram_din <= msgff(3) & msgff(4) & msgff(5) & msgff(6);
+                            when others =>
                         end case;
                     elsif lenff > 2 then
                         case msgff(0) is
@@ -212,7 +240,25 @@ begin
                         end case;
                     end if;
                 when opr => 
+                    if lenff > 6 and msgff(0) = x"7A" then
+                        str(0) <= ram_dout((UWW*4)-1 downto UWW*3);
+                        str(1) <= ram_dout((UWW*3)-1 downto UWW*2);
+                        str(2) <= ram_dout((UWW*2)-1 downto UWW*1);
+                        str(3) <= ram_dout((UWW*1)-1 downto 0);
+
+                        wben <= '1';
+                    elsif lenff > 2 and msgff(0) = x"6A" then
+                        str(0) <= re_o;
+                        wben <= '1';
+                    end if;
                 when wb  => 
+                    str_en <= '1';
+                    if lenff > 6 and msgff(0) = x"7A" then
+                        str_len <= x"4";
+                    elsif lenff > 2 and msgff(0) = x"6A" then
+                        str_len <= x"1";
+                    end if;
+                    str_buf <= strff;
                 when w4f => 
                 when others =>
             end case;
