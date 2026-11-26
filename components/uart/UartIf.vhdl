@@ -22,8 +22,8 @@ entity UartIf is
         rst : in std_ulogic;
         
         -- UART Interface
-        rx: in std_ulogic;
-        tx: in std_ulogic;
+        rx: in  std_ulogic;
+        tx: out std_ulogic;
         
         --RX Application Interface
         rx_av  : out std_ulogic;

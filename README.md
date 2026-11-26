@@ -189,29 +189,18 @@ The response is formatted like this:
 ## Host UART Interface
 Originally meant only for usage on the FPGA, the interface supports standard 115200 baud 8N1 UART, with the following protocol spec:
 ```
-[CMD][A0][A1][D0][D1][D2][D3]
+[LEN][B1][B2]...[Bn]
 ```
-*Note: `[XXX]` represents a byte sent over UART*
+where `[LEN]` cannot be bigger than the synthesized buffer size (8 by default).
 
-The command byte is interpreted as following:
+In Host Communication Mode, it can be used as following:
 ```
-0xFA = read  register
-0xFB = write register
-0xFC = read  instruction
-0xFD = write instruction
+[02][FA][XX]
+[03][FB][XX][YY]
+[03][FC][XX][XX]
+[07][FD][XX][XX][YY][YY][YY][YY]
 ```
-
-The address bytes are interpreted plainly (MSB) when operating the instruction SRAM, but have a special role when operating registers:
-```
-[A0]: Length byte (up to 4 for 4 data bytes)
-[A1]: Address byte (8-bit)
-```
-The same applies for the data bytes: they compose one line of instruction SRAM, but up to 4 separate register lines.
-
-There are also some debug commands:
-```
-0xAA = Get current PC
-```
+where `[XX]` represents an address byte and `[YY]` represents a data byte.
 
 ## Command representations
 The instruction formal allows us up to 16 different instructions, of which 15 are usable (`nop` is reserved).
