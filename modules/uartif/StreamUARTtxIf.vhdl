@@ -71,7 +71,7 @@ begin
                     when res => sn <= idl;
                     when idl => sn <= lda when str_en = '1' else idl;
                     when lda => sn <= fin when (lenff = 0 or lenff > BUFD-1) else eva;
-                    when eva => sn <= fin when (cff = resize(lenff - 1, CW)) else dly; 
+                    when eva => sn <= fin when (cff = resize(lenff, CW)) else dly; 
                     when dly => sn <= str;
                     when str => sn <= w4b;
                     when w4b => sn <= eva when tx_fin = '1' else w4b;
