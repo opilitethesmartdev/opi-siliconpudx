@@ -70,7 +70,7 @@ begin
                 case s is
                     when res => sn <= idl;
                     when idl => sn <= lda when str_en = '1' else idl;
-                    when lda => sn <= fin when (str_len = 0 or str_len > BUFD-1) else eva;
+                    when lda => sn <= fin when (lenff = 0 or lenff > BUFD-1) else eva;
                     when eva => sn <= fin when (cff = resize(lenff - 1, CW)) else dly; 
                     when dly => sn <= str;
                     when str => sn <= w4b;
@@ -98,9 +98,9 @@ begin
                         len <= (others => '0');
                         bufn <= (others => (others => '0'));
                     when idl =>
-                    when lda =>
                         len <= str_len;
                         bufn <= str_buf;
+                    when lda =>
                     when eva =>
                         tx_ack <= '1';
                     when dly =>
