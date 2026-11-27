@@ -212,14 +212,14 @@ begin
                         cmdv <= '1' when --msg_len >= 2 
                                     (msg(0) = x"FA" and msg_len = 2) or
                                     (msg(0) = x"FB" and msg_len = 3) or
-                                    (msg(0) = x"FC" and msg_len = 7) or
-                                    (msg(0) = x"FD" and msg_len = 3)
+                                    (msg(0) = x"FC" and msg_len = 3) or
+                                    (msg(0) = x"FD" and msg_len = 7)
                                         -- or msg(0) = x"FE")
                                     else '0';
                     when opf =>
                         case lenff is
                             when to_unsigned(7, CW) =>
-                                if msgff(0) = x"FC" then -- instruction write
+                                if msgff(0) = x"FD" then -- instruction write
                                     ram_en <= '1';
                                     ram_wren <= '1';
                                     ram_mask <= (others => '1');
@@ -227,7 +227,7 @@ begin
                                     ram_din <= msgff(3) & msgff(4) & msgff(5) & msgff(6);
                                 end if;
                             when to_unsigned(3, CW) =>
-                                if msgff(0) = x"FD" then -- instruction read
+                                if msgff(0) = x"FC" then -- instruction read
                                     ram_en <= '1';
                                     ram_mask <= (others => '1');
                                     ram_addr <= unsigned(msg12merge(INSTD-1 downto 0));
@@ -245,7 +245,7 @@ begin
                     when opr =>
                         case lenff is
                             when to_unsigned(3, CW) =>
-                                if msgff(0) = x"FD" then -- instruction read
+                                if msgff(0) = x"FC" then -- instruction read
                                     str(0) <= ram_dout(UWW*4-1 downto UWW*3);
                                     str(1) <= ram_dout(UWW*3-1 downto UWW*2);
                                     str(2) <= ram_dout(UWW*2-1 downto UWW*1);
@@ -259,13 +259,13 @@ begin
                     when wb  =>
                         case lenff is
                             when to_unsigned(7, CW) =>
-                                if msgff(0) = x"FC" then -- instruction write
+                                if msgff(0) = x"FD" then -- instruction write
                                     str_en <= '1';
                                     str_len <= to_unsigned(1, CW-1);
                                     str_buf <= (others => (others => '1'));
                                 end if;
                             when to_unsigned(3, CW) =>
-                                if msgff(0) = x"FD" then -- instruction read
+                                if msgff(0) = x"FC" then -- instruction read
                                     str_en <= '1';
                                     str_len <= to_unsigned(4, CW-1);
                                     str_buf <= strff;
