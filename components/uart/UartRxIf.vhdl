@@ -44,7 +44,7 @@ architecture rtl of UartRxIf is
     signal d, dff : std_ulogic_vector(UWW-1 downto 0);
 begin
     -- Signal Primitives
-        rxf_edge : entity work.edgendr
+        rxf_edge : entity work.edger
             generic map(
                 polarity => "falling"
             )
