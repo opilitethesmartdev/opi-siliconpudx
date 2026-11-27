@@ -35,7 +35,7 @@ architecture rtl of UartRxIf is
     type s_t is (res, idl, w4s, ss, w4b, sb, w4f, sf, fin);
     signal s, sn : s_t;
 
-    signal rxf, rxr : std_ulogic;
+    signal rxf : std_ulogic;
     signal rx_en : std_ulogic;
 
     signal cdr, cd : std_ulogic;
@@ -58,7 +58,7 @@ begin
             port map(
                 clk => clk,
                 s   => rxf,
-                r   => rxr,
+                r   => cdr,
                 o   => rx_en
         );
     
