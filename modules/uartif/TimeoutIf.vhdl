@@ -25,7 +25,7 @@ end entity TimeoutIf;
 architecture Rtl of TimeoutIf is
     signal i : unsigned(15 downto 0);
 
-    signal ffr, ffo : std_ulogic;
+    signal ffr, ffo, alr : std_ulogic;
 begin
     srff : entity work.sr_ff
         port map(
@@ -33,7 +33,7 @@ begin
             s   => en,
             r   => ffr,
             o   => ffo
-    ); ffr <= rst or fn;
+    ); ffr <= rst or fn or alr;
 
 
     seq: process(rst, clk) 
@@ -41,16 +41,19 @@ begin
         if rst = '1' then
             i <= (others => '0');
             timeout <= '0';
+            alr <= '0';
         elsif rising_edge(clk) then
             if ffo = '1' then
                 if i = to_unsigned(TICKS, i'length)-1 then
                     timeout <= '1';
+                    alr <= '1';
                 else
                     timeout <= '0';
 
                     i <= i+1;
                 end if;
             else
+                alr <= '0';
                 timeout <= '0';
                 i <= (others => '0');
             end if;
