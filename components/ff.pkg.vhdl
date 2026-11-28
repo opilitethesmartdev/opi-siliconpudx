@@ -431,7 +431,7 @@
     end entity n_shift;
 
     architecture bhv of n_shift is
-        type arr is array (0 to DELAY) of std_ulogic_vector(WIDTH - 1 downto 0);
+        type arr is array (0 to DELAY-1) of std_ulogic_vector(WIDTH - 1 downto 0);
         signal shift : arr := (others => (others => '0'));
     begin
 
@@ -441,14 +441,14 @@
                     shift <= (others => (others => '0'));
                 elsif rising_edge(clk) then
                     shift(0) <= i;
-                    for k in 1 to DELAY loop
+                    for k in 1 to DELAY-1 loop
                         shift(k) <= shift(k - 1);
                     end loop;
                 end if;
             end process;
 
-            o <= shift(DELAY);
-        end generate seq;
+            o <= shift(DELAY-1);
+        end generate seq;        
 
         comb : if DELAY = 0 generate
             process (i) begin
