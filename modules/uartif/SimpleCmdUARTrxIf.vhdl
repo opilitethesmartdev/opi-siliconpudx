@@ -55,7 +55,7 @@ begin
     -- Timeout If
         i_TimeoutIf : entity work.TimeoutIf
             generic map(
-                TICKS => 1000
+                TICKS => 24_000
             )
             port map(
                 clk     => clk,
@@ -119,6 +119,8 @@ begin
 
             case s is
                 when res =>
+                    to_fn <= '0';
+                    
                     c <= (others => '0');
                     len <= (others => '0');
                     bufn <= (others => (others => '0'));

@@ -25,7 +25,7 @@ end entity TimeoutIf;
 architecture Rtl of TimeoutIf is
     signal i : unsigned(15 downto 0);
 
-    signal ffr, ffo, to_i : std_ulogic;
+    signal ffr, ffo : std_ulogic;
 begin
     srff : entity work.sr_ff
         port map(
@@ -33,7 +33,7 @@ begin
             s   => en,
             r   => ffr,
             o   => ffo
-    ); ffr <= rst or fn or to_i;
+    ); ffr <= rst or fn;
 
 
     seq: process(rst, clk) 
