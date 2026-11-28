@@ -152,7 +152,6 @@ begin
     rst_n <= not rst;
 
     rsths : entity work.rst_sync
-        generic map( POL => "ah")
         port map(
             clk => clk,
             ri  => rst_n,
