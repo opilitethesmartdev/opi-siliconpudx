@@ -36,13 +36,27 @@ architecture rtl of UartTxIf is
     type s_t is (res, idl, ld, sb, w4b, w4f, fn);
     signal s, sn : s_t;
 
-    signal txen : std_ulogic;
-    signal cx : std_ulogic;
+    signal cx, txen : std_ulogic;
+
+    signal idly : std_ulogic_vector(UWW-1 downto 0);
 
     signal id, idff : std_ulogic_vector((UWW+2)-1 downto 0);
     signal c, cff : unsigned(UWW-1 downto 0);
     signal txn, txff : std_ulogic;
 begin
+    -- Signal primitives
+        ishift : entity work.n_shift
+            generic map(
+                DELAY => 1,
+                WIDTH => UWW
+            )
+            port map(
+                clk => clk,
+                rst => rst,
+                i   => i,
+                o   => idly
+        );    
+
     -- Clock divider
         clkif : entity work.UartClkIf
             generic map(
@@ -56,7 +70,6 @@ begin
                 cx => cx,
                 cy => open
         );
-
 
     -- FSM Processes
         ff: process(rst, clk)
@@ -104,7 +117,7 @@ begin
                     c <= (others => '0');
                 when idl => 
                 when ld  => txen <= '1';
-                    id <= '1' & i & '0'; -- start L | data | stop H; LSB
+                    id <= '1' & idly & '0'; -- start L | data | stop H; LSB
                 when sb  => txen <= '1';
                     c <= cff + 1;
                     txn <= idff(to_integer(cff));
