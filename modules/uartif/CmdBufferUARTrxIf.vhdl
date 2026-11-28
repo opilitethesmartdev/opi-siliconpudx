@@ -8,9 +8,6 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 use work.uart_pkg.all;
-use work.core_pkg.all;
-use work.register_pkg.all;
-use work.instruction_pkg.all;
 
 entity CmdBufferUARTrxIf is
     generic(

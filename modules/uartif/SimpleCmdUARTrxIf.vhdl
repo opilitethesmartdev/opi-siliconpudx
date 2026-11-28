@@ -46,7 +46,26 @@ architecture rtl of SimpleCmdUARTrxIf is
         signal len, lenff : unsigned(CW-1 downto 0);
     
         signal bufn, buf : uart_t(0 to BUFD-1);
+
+        signal to_en :  std_ulogic;
+        signal to_fn :  std_ulogic;
+        signal timeout :  std_ulogic;
+
 begin
+    -- Timeout If
+        i_TimeoutIf : entity work.TimeoutIf
+            generic map(
+                TICKS => 1000
+            )
+            port map(
+                clk     => clk,
+                rst     => rst,
+                en      => to_en,
+                fn      => to_fn,
+                timeout => timeout
+        );
+
+
     -- FSM Processes
         ff: process(rst, clk)
         begin
@@ -73,7 +92,7 @@ begin
                 when res => sn <= idl;
                 when idl => sn <= st when rx_av = '1' else idl;
                 when st  => sn <= w4b when rxv = '1' else res;
-                when w4b => sn <= sb when rx_av = '1' else w4b;
+                when w4b => sn <= sb when rx_av = '1' or timeout = '1' else w4b;
                 when sb  => sn <= fin when cff = lenff-1 else w4b;
                 when fin => sn <= res when msg_ack = '1' else fin;
                 when others => sn <= s;
@@ -92,6 +111,9 @@ begin
             msg_av <= '0';
             msg_len <= (others => '0');
             msg <= (others => (others => '0'));
+            
+            to_en <= '0';
+            to_fn <= '0';
 
             case s is
                 when res =>
@@ -105,8 +127,10 @@ begin
 
                     rxv <= '1' when unsigned(rx_o) > 0 and unsigned(rx_o) <= to_unsigned(BUFD, UWW) else '0';
                 when w4b =>
+                    to_en <= '1';
                 when sb  =>
                     rx_ack <= '1';
+                    to_fn <= '1';
 
                     c <= cff + 1;
                     bufn(to_integer(cff)) <= rx_o;
