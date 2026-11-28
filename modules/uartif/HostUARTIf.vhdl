@@ -1,7 +1,7 @@
 ----------------------------------------------------------------------------
 -- Project		:	OPI-siliconPUdx
 -- Authors		:	opilitethesmartdev
--- Description	:	Host UART Interface
+-- Description	:	Multi-byte UART Receiver Interface
 ----------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
@@ -14,16 +14,15 @@ use work.instruction_pkg.all;
 
 entity HostUARTIf is
     generic(
-        CLK_HZ : natural := 25_000_000
+        CLK_HZ : natural := 27_000_000;
+        BAUD   : natural := 115200
     );
-    port(
-        -- Fundamental signals
+    port (
         clk : in std_ulogic;
         rst : in std_ulogic;
-
-        -- UART Interface
-        tx : out std_ulogic;
+        
         rx : in  std_ulogic;
+        tx : out std_ulogic;
 
         -- SRAM Interface
         ram_en   : out std_ulogic;
@@ -38,214 +37,252 @@ entity HostUARTIf is
         re_addr : out unsigned(REGD-1 downto 0);
         re_i : out std_ulogic_vector(WORDWIDTH-1 downto 0);
         re_o : in  std_ulogic_vector(WORDWIDTH-1 downto 0)
+        
     );
-
 end entity HostUARTIf;
 
-
 architecture rtl of HostUARTIf is
-    constant RX_BYTES : natural := 7;
-    constant TX_BYTES : natural := 4;
+    -- Constants
+        constant CW : natural := 6;
+        constant RBUFD : natural := 8;
+        constant TBUFD : natural := 8;
+    
+    -- FSM Signals
+        type s_t is (res, idl, lda, opf, opr, wb, w4f);
+        signal s, sn : s_t;
+    
+    -- Internal signals
+        signal cmdv : std_ulogic;
+    -- Sequential Stored signals
+        signal len, lenff  : unsigned(CW-1 downto 0);
+        signal msgn, msgff : uart_t(0 to RBUFD-1);
+        signal str, strff  : uart_t(0 to TBUFD-1);
 
-    type s_t is (res, idl, ldd, cmd, opf, opr, w4w, wb);
-    signal s, sn : s_t;
+    -- UART Rx Application If
+        signal rx_av  :  std_ulogic;
+        signal rx_o   :  std_ulogic_vector(UWW-1 downto 0);
+        signal rx_ack :  std_ulogic;
 
-    signal rx_av  :  std_ulogic;
-    signal rx_o   :  std_ulogic_vector(UWW-1 downto 0);
-    signal rx_ack :  std_ulogic;
-    signal tx_en  :  std_ulogic;
-    signal tx_i   :  std_ulogic_vector(UWW-1 downto 0);
-    signal tx_fin :  std_ulogic;
-    signal tx_ack :  std_ulogic;
+    -- UART Tx Application If
+        signal tx_en  :  std_ulogic;
+        signal tx_i   :  std_ulogic_vector(UWW-1 downto 0);
+        signal tx_ack :  std_ulogic;
+        signal tx_fin :  std_ulogic;
 
-    signal rx_msg_av  :  std_ulogic;
-    signal rx_msg_ack :  std_ulogic;
-    signal rx_msg     :  uart_t(0 to RX_BYTES-1);
-    signal rxff, rxn  :  uart_t(0 to RX_BYTES-1);
+    -- Compound Rx Application If
+        signal msg_av  :  std_ulogic;
+        signal msg_len :  unsigned(CW-1 downto 0);
+        signal msg_ack :  std_ulogic;
+        signal msg     :  uart_t(0 to RBUFD-1);
 
-    signal tx_msg_send :  std_ulogic;
-    signal tx_msg_av   :  std_ulogic;
-    signal tx_msg_done :  std_ulogic;
-    signal tx_msg      :  uart_t(0 to TX_BYTES-1);
-    signal txff, txn  :  uart_t(0 to TX_BYTES-1);
-
-    signal wb_skip, nowb : std_ulogic;
+    -- Compound Tx Application If
+        signal str_en   :  std_ulogic;
+        signal str_len  :  unsigned(CW-1-1 downto 0);
+        signal str_buf  :  uart_t(0 to TBUFD-1);
+        signal str_ack  :  std_ulogic;
+        signal str_done :  std_ulogic;
+    
 
 begin
-    -- UART Interface
-        uartif : entity work.UARTIf
+    -- Protocol Interface
+        uartif : entity work.UartIf
             generic map(
-                W      => UWW,
                 CLK_HZ => CLK_HZ,
-                BAUD   => 115200
+                BAUD   => BAUD
             )
             port map(
                 clk    => clk,
                 rst    => rst,
+                rx     => rx,
+                tx     => tx,
                 rx_av  => rx_av,
                 rx_o   => rx_o,
                 rx_ack => rx_ack,
                 tx_en  => tx_en,
                 tx_i   => tx_i,
-                tx_fin => tx_fin,
                 tx_ack => tx_ack,
-                tx     => tx,
-                rx     => rx
+                tx_fin => tx_fin
         );
-    -- Multi-byte UART Controllers
-        longrxif : entity work.LongUARTrxIf
+    -- Compound Interfaces
+        rxif : entity work.SimpleCmdUARTrxIf
             generic map(
-                EXPECTED_BYTES => RX_BYTES,
-                WW             => 3
+                BUFD => RBUFD,
+                CW   => CW
             )
             port map(
                 clk     => clk,
                 rst     => rst,
-                
                 rx_av   => rx_av,
                 rx_o    => rx_o,
                 rx_ack  => rx_ack,
-
-                msg_av  => rx_msg_av,
-                msg_ack => rx_msg_ack,
-                msg     => rx_msg
+                msg_av  => msg_av,
+                msg_len => msg_len,
+                msg_ack => msg_ack,
+                msg     => msg
         );
-
-
-        longtxif : entity work.LongUARTtxIf
+        txif : entity work.StreamUARTtxIf
             generic map(
-                SEND_BYTES => TX_BYTES,
-                WW         => 3
+                BUFD => TBUFD,
+                CW   => CW
             )
             port map(
                 clk      => clk,
                 rst      => rst,
-
                 tx_en    => tx_en,
                 tx_i     => tx_i,
                 tx_ack   => tx_ack,
                 tx_fin   => tx_fin,
-                
-                msg_send => tx_msg_send,
-                msg_done => tx_msg_done,
-                msg_av   => tx_msg_av,
-                msg      => tx_msg
+                str_en   => str_en,
+                str_len  => str_len,
+                str_buf  => str_buf,
+                str_ack  => str_ack,
+                str_done => str_done
         );
 
-    -- Main Process
-        ff : process(rst, clk)
-        begin
-            if rst = '1' then
-                s <= res;
-
-                rxff <= (others => (others => '0'));
-                txff <= (others => (others => '0'));
-
-                nowb <= '0';
-            elsif rising_edge(clk) then
-                s <= sn;
-                
-                rxff <= rxn;
-                txff <= txn;
-
-                nowb <= wb_skip;
-            end if;
-        end process ff;
-
-        fsm : process(all)
-        begin
-            case s is
-                when res => sn <= idl;
-                when idl => sn <= ldd when rx_msg_av = '1' else idl;
-                when ldd => sn <= cmd;
-                when cmd => sn <= opf;
-                when opf => sn <= opr when nowb = '0' else res;
-                when opr => sn <= w4w;
-                when w4w => sn <= wb when tx_msg_av = '1' else w4w;
-                when wb =>  sn <= res;
-            end case;
-        end process fsm;
-
-        main : process(all)
-            variable merged : std_ulogic_vector(UWW*2 - 1 downto 0);
-        begin
-            merged := rxff(1) & rxff(2);
-
-            rxn <= rxff;
-            txn <= txff;
-            wb_skip <= nowb;
+        -- FSM Processes
+            ff: process(rst, clk)
+            begin
+                if rst = '1' then
+                    s <= res;
+                    
+                    lenff <= (others => '0');
+                    strff <= (others => (others => '0'));
+                    msgff <= (others => (others => '0'));
+                elsif rising_edge(clk) then
+                    s <= sn;
+                    
+                    lenff <= len;
+                    strff <= str;
+                    msgff <= msgn;
+                end if;
+            end process ff;
             
-            rx_msg_ack <= '0';
-            tx_msg_send <= '0';
-            tx_msg <= (others => (others => '0'));
+            fsm: process(all)
+            begin
+                case s is
+                    when res => sn <= idl;
+                    when idl => sn <= lda when msg_av = '1' else idl;
+                    when lda => sn <= opf when cmdv = '1' else res;
+                    when opf => sn <= opr;
+                    when opr => sn <= wb;
+                    when wb  => sn <= w4f;
+                    when w4f => sn <= res when str_done = '1' else w4f;
+                    when others => sn <= s;
+                end case;
+            end process fsm;
+            
+            main: process(all)
+                variable msg12merge : std_ulogic_vector(UWW*2-1 downto 0);
+            begin
+                msg12merge := msgff(1) & msgff(2);
 
-            re_cmd  <= "00";
-            re_addr <= (others => '0');
-            re_i    <= (others => '0');
+                str <= strff;
+                len <= lenff;
+                msgn <= msgff;
 
-            ram_en   <= '0';
-            ram_wren <= '0';
-            ram_addr <= (others => '0');
-            ram_mask <= (others => '0');
-            ram_din  <= (others => '0');
+                msg_ack <= '0';
+                cmdv <= '0';
+                
+                ram_en <= '0';
+                ram_wren <= '0';
+                ram_mask <= (others => '0');
+                ram_addr <= (others => '0');
+                ram_din <= (others => '0');
 
-            case s is
-                when res =>
-                    rxn <= (others => (others => '0'));
-                    txn <= (others => (others => '0'));
-                    wb_skip <= '0';
-                when idl =>
-                when ldd =>
-                    rx_msg_ack <= '1';
-                    rxn <= rx_msg;
-                when cmd =>
-                    case rxff(0) is
-                        when x"FA" =>
-                        when x"FB" =>
-                        when x"FC" =>
-                        when x"FD" =>
-                        when others => 
-                            wb_skip <= '1';
-                    end case;
-                when opf =>
-                    case rxff(0) is
-                        when x"FA" =>
-                            re_cmd <= "10";
-                            re_addr <= unsigned(rxff(2)(REGD - 1 downto 0));
-                        when x"FB" =>
-                            re_cmd <= "01";
-                            re_addr <= unsigned(rxff(2)(REGD - 1 downto 0));
-                            re_i <= rxff(3);
-                        when x"FC" =>
-                            ram_en <= '1';
-                            ram_addr <= unsigned(merged(INSTD - 1 downto 0));
-                            ram_mask <= (others => '1');
-                        when x"FD" =>
-                            ram_en <= '1';
-                            ram_wren <= '1';
-                            ram_addr <= unsigned(merged(INSTD - 1 downto 0));
-                            ram_mask <= (others => '1');
-                            ram_din <= rxff(3) & rxff(4) & rxff(5) & rxff(6);
-                        when others =>
-                    end case;
-                when opr =>
-                    case rxff(0) is
-                        when x"FA" =>
-                            txn(0) <= re_o;
-                        when x"FB" =>
-                            txn <= (others => x"FF");
-                        when x"FC" =>
-                            for i in 0 to 3 loop
-                                txn(i) <= ram_dout(UWW*(i+1)-1 downto UWW*i);
-                            end loop;
-                        when x"FD" =>
-                            txn <= (others => x"FF");
-                        when others =>
-                    end case;
-                when w4w =>
-                when wb => 
-                    tx_msg_send <= '1';
-                    tx_msg <= txff;
-            end case;
-        end process main;
+                re_cmd <= "00";
+                re_addr <= (others => '0');
+                re_i <= (others => '0');
+                
+                str_en <= '0';
+                str_ack <= '0';
+                str_len <= (others => '0');
+                str_buf <= (others => (others => '0'));
+
+                case s is
+                    when res =>
+                        len <= (others => '0');
+                        msgn <= (others => (others => '0'));
+                        str_ack <= '1';
+                    when idl =>
+                    when lda =>
+                        msg_ack <= '1';
+                        len <= msg_len;
+                        msgn <= msg;
+
+                        cmdv <= '1' when --msg_len >= 2 
+                                    (msg(0) = x"FA" and msg_len = 2) or
+                                    (msg(0) = x"FB" and msg_len = 3) or
+                                    (msg(0) = x"FC" and msg_len = 3) or
+                                    (msg(0) = x"FD" and msg_len = 7)
+                                        -- or msg(0) = x"FE")
+                                    else '0';
+                    when opf =>
+                        case lenff is
+                            when to_unsigned(7, CW) =>
+                                if msgff(0) = x"FD" then -- instruction write
+                                    ram_en <= '1';
+                                    ram_wren <= '1';
+                                    ram_mask <= (others => '1');
+                                    ram_addr <= unsigned(msg12merge(INSTD-1 downto 0));
+                                    ram_din <= msgff(3) & msgff(4) & msgff(5) & msgff(6);
+                                end if;
+                            when to_unsigned(3, CW) =>
+                                if msgff(0) = x"FC" then -- instruction read
+                                    ram_en <= '1';
+                                    ram_mask <= (others => '1');
+                                    ram_addr <= unsigned(msg12merge(INSTD-1 downto 0));
+                                elsif msgff(0) = x"FB" then -- register write
+                                    re_cmd <= "01";
+                                    re_addr <= unsigned(msgff(1)(REGD-1 downto 0));
+                                    re_i <= msgff(2);
+                                end if;
+                            when to_unsigned(2, CW) =>
+                                if msgff(0) = x"FA" then -- register read
+                                    re_cmd <= "10";
+                                    re_addr <= unsigned(msgff(1)(REGD-1 downto 0));
+                                end if;
+                        end case;
+                    when opr =>
+                        case lenff is
+                            when to_unsigned(3, CW) =>
+                                if msgff(0) = x"FC" then -- instruction read
+                                    str(0) <= ram_dout(UWW*4-1 downto UWW*3);
+                                    str(1) <= ram_dout(UWW*3-1 downto UWW*2);
+                                    str(2) <= ram_dout(UWW*2-1 downto UWW*1);
+                                    str(3) <= ram_dout(UWW*1-1 downto 0);
+                                end if;
+                            when to_unsigned(2, CW) =>
+                                if msgff(0) = x"FA" then -- register read
+                                    str(0) <= re_o;
+                                end if;
+                        end case;
+                    when wb  =>
+                        case lenff is
+                            when to_unsigned(7, CW) =>
+                                if msgff(0) = x"FD" then -- instruction write
+                                    str_en <= '1';
+                                    str_len <= to_unsigned(1, CW-1);
+                                    str_buf <= (others => (others => '1'));
+                                end if;
+                            when to_unsigned(3, CW) =>
+                                if msgff(0) = x"FC" then -- instruction read
+                                    str_en <= '1';
+                                    str_len <= to_unsigned(4, CW-1);
+                                    str_buf <= strff;
+                                elsif msgff(0) = x"FB" then -- register write
+                                    str_en <= '1';
+                                    str_len <= to_unsigned(1, CW-1);
+                                    str_buf <= (others => (others => '1'));
+                                end if;
+                            when to_unsigned(2, CW) =>
+                                if msgff(0) = x"FA" then -- register read
+                                    str_en <= '1';
+                                    str_len <= to_unsigned(1, CW-1);
+                                    str_buf <= strff;
+                                end if;
+                        end case;
+                    when w4f =>
+                    when others =>
+                end case;
+            end process main;
 end architecture rtl;

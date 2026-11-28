@@ -34,12 +34,12 @@ end entity fpga_harness;
 architecture rtl of fpga_harness is
     signal o  : std_ulogic_vector(1 downto 0);
 
-    signal rst_n       :  std_ulogic;
-    signal ena, enfe   :  std_ulogic;
+    signal rst_n, rsts  :  std_ulogic;
+    signal ena, enfe :  std_ulogic;
 
-    signal i        :  std_ulogic;
+    signal i :  std_ulogic;
     -- SRAM Access Arbitration
-    signal ram_sel        :  std_ulogic;
+    signal ram_sel :  std_ulogic;
 
     -- Source SRAM
     signal ram_en   :  std_ulogic;
@@ -97,7 +97,7 @@ begin
     i_toplevel : entity work.toplevel
         port map(
             clk         => clk,
-            rst         => rst_n,
+            rst         => rsts,
             en          => ena,
             o           => o,
             ram_en      => ram_a_en,
@@ -118,7 +118,7 @@ begin
         )
         port map(
             clk      => clk,
-            rst      => rst_n,
+            rst      => rsts,
             tx       => tx,
             rx       => rx,
             ram_en   => hsc_ram_en,
@@ -151,25 +151,32 @@ begin
 
     rst_n <= not rst;
 
+    rsths : entity work.rst_sync
+        port map(
+            clk => clk,
+            ri  => rst_n,
+            ro  => rsts
+        );
+
     en_edge : entity work.edger
         generic map(
             polarity => "falling"
         )
         port map(
             clk => clk,
-            rst => rst_n,
+            rst => rsts,
             i   => en,
             o   => enfe
-    );
+        );
     enff : entity work.t_ffr
         port map(
             clk => clk,
-            rst => rst_n,
+            rst => rsts,
             i   => enfe,
             o   => ena
-    );    
+        );    
 
-    led <= not (ena & rst_n & o & i & "0");
+    led <= not (ena & rsts & o & i & "0");
     ram_sel <= ena;
 
 end architecture rtl;

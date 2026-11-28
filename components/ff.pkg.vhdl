@@ -339,7 +339,7 @@
 
     end architecture Behavioral;
 
--- Edge detector delay-less
+-- Edge detector delay-less with reset
     library ieee;
     use IEEE.STD_LOGIC_1164.all;
 
@@ -431,7 +431,7 @@
     end entity n_shift;
 
     architecture bhv of n_shift is
-        type arr is array (0 to DELAY) of std_ulogic_vector(WIDTH - 1 downto 0);
+        type arr is array (0 to DELAY-1) of std_ulogic_vector(WIDTH - 1 downto 0);
         signal shift : arr := (others => (others => '0'));
     begin
 
@@ -441,14 +441,14 @@
                     shift <= (others => (others => '0'));
                 elsif rising_edge(clk) then
                     shift(0) <= i;
-                    for k in 1 to DELAY loop
+                    for k in 1 to DELAY-1 loop
                         shift(k) <= shift(k - 1);
                     end loop;
                 end if;
             end process;
 
-            o <= shift(DELAY);
-        end generate seq;
+            o <= shift(DELAY-1);
+        end generate seq;        
 
         comb : if DELAY = 0 generate
             process (i) begin
@@ -531,4 +531,35 @@
         end process seq;
 
         o <= (or shift) or i;
+    end architecture bhv;
+-- Two-stage Synchronizer
+    library ieee;
+    use ieee.std_logic_1164.all;
+
+    entity sync2 is
+        port(
+            clk : in std_ulogic;
+            rst : in std_ulogic;
+            
+            i : in  std_ulogic;
+            o : out std_ulogic
+        );
+    end entity sync2;
+
+    architecture bhv of sync2 is
+        signal meta : std_ulogic := '1';
+        signal sync : std_ulogic := '1';
+    begin
+        process(clk, rst)
+        begin
+            if rst = '1' then
+                meta <= '1';
+                sync <= '1';
+            elsif rising_edge(clk) then
+                meta <= i;
+                sync <= meta;
+            end if;
+        end process;
+
+        o <= sync;
     end architecture bhv;
