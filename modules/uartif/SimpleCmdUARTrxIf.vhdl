@@ -92,7 +92,9 @@ begin
                 when res => sn <= idl;
                 when idl => sn <= st when rx_av = '1' else idl;
                 when st  => sn <= w4b when rxv = '1' else res;
-                when w4b => sn <= sb when rx_av = '1' or timeout = '1' else w4b;
+                when w4b => sn <= sb when rx_av = '1' 
+                             else res when timeout = '1' 
+                             else w4b;
                 when sb  => sn <= fin when cff = lenff-1 else w4b;
                 when fin => sn <= res when msg_ack = '1' else fin;
                 when others => sn <= s;
