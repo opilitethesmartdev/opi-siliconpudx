@@ -35,7 +35,7 @@ architecture rtl of UartRxIf is
     type s_t is (res, idl, w4s, ss, w4b, sb, w4f, sf, fin);
     signal s, sn : s_t;
 
-    signal rxf : std_ulogic;
+    signal rxs, rxf : std_ulogic;
     signal rx_en : std_ulogic;
 
     signal cdr, cd : std_ulogic;
@@ -44,6 +44,13 @@ architecture rtl of UartRxIf is
     signal d, dff : std_ulogic_vector(UWW-1 downto 0);
 begin
     -- Signal Primitives
+        rx_sync : entity work.sync2
+            port map(
+                clk => clk,
+                rst => rst,
+                i   => rx,
+                o   => rxs
+        );
         rxf_edge : entity work.edger
             generic map(
                 polarity => "falling"
@@ -51,7 +58,7 @@ begin
             port map(
                 clk => clk,
                 rst => rst,
-                i   => rx,
+                i   => rxs,
                 o   => rxf
         );
         rxen : entity work.sr_ff
