@@ -21,4 +21,6 @@ package core_pkg is
         advp : std_ulogic;
         advn : std_ulogic;
     end record;
+    
+    constant padding : std_ulogic_vector(63 downto 0) := (others => '0');
 end package core_pkg;

@@ -55,23 +55,6 @@ architecture sim of tb_topl is
     signal dut_ram_din  :  std_ulogic_vector(IBWIDTH-1 downto 0);
     signal dut_ram_dout :  std_ulogic_vector(IBWIDTH-1 downto 0);
 
-
-        --   |  Program    | Embedded
-        -- 0 | lda   0   7 | 0x67
-        -- 1 | isz  >0   0 | 
-        -- 2 | jmp   0   4 |
-        -- 3 | stp         |
-        -- 4 | dec  >0   1 |
-        -- 5 | inc  >4   1 |
-        -- 6 | jmp   0   1 |
-
-
-
-
-
-
-
-
     constant program : program_arr_t(0 to 16) := (
             x"01" & newinst(0, 0, lda, x"0000"),-- 0  | lda  0x0
             x"02" & newinst(0, 0, atr, 0, 0),   -- 1  | atr  0

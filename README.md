@@ -138,6 +138,7 @@ nop  ---   ---
 idl  ---   ---
 wrr  reg   lit
 lda  lit   lit
+atr  lit   lit
 iot  lit   lit
 iop  lit   lit
 izb  reg   lit
@@ -170,21 +171,56 @@ Reg SRAM:  [40][39 - 32][31 - 24][33 - 0]
             |      |                                      
             |      |________________________ Address (8 bit)
             |                                                        
-            |_______________________________ Read from MMIO registers (when read)
+            |_______________________________ MMIO selection bit (read/write from/to MMIO registers)
 ```
 The response is formatted like this:
 ```
-[42 - 41][40 - 32][31 - 0]
-    |        |        |____ Response
-    |        |
-    |        |_____________ Status byte
-    |
-    |______________________ Mirror of input op/sel bits
-```
-where the status byte represents the following data:
-```
-[40][39][38][37][36][35][34][33][32]
-  |   |___|___|___|___|___|___|___|___ Reserved
+[42][41][40 - 32][31 - 0]
+  |   |     |        |____ Response
+  |   |     |
+  |   |     |_____________ Mirror of input address
+  |   |                    (9 bit when instruction, 8+1 when register)
+  |   |
+  |   |__________________ Status bit (1 when error)
   |
-  |___________________________________ Error bit (1 when error)
+  |______________________ Mirror of input operation bit
+```
+
+## Host UART Interface
+Originally meant only for usage on the FPGA, the interface supports standard 115200 baud 8N1 UART, with the following protocol spec:
+```
+[LEN][B1][B2]...[Bn]
+```
+where `[LEN]` cannot be bigger than the synthesized buffer size (8 by default).
+
+In Host Communication Mode, it can be used as following:
+```
+[02][FA][XX]
+[03][FB][XX][YY]
+[03][FC][XX][XX]
+[07][FD][XX][XX][YY][YY][YY][YY]
+```
+where `[XX]` represents an address byte and `[YY]` represents a data byte.
+
+## Command representations
+The instruction formal allows us up to 16 different instructions, of which 15 are usable (`nop` is reserved).
+The commands are represented in binary as following:
+```
+code   cmd 
+-----------
+ 0x0   nop 
+ 0x1   idl 
+ 0x2   inc 
+ 0x3   dec 
+ 0x4   isz 
+ 0x5   jmp 
+ 0x6   stp 
+ 0x7   wrr 
+ 0x8   lda 
+ 0x9   atr 
+ 0xA   iot 
+ 0xB   iop 
+ 0xC   izb 
+ 0xD   mtr 
+ 0xE   rtm 
 ```

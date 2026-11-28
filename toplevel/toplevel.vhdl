@@ -31,6 +31,9 @@ entity toplevel is
             re_addr : in unsigned(REGD-1 downto 0);
             re_i : in  std_ulogic_vector(WORDWIDTH-1 downto 0);
             re_o : out std_ulogic_vector(WORDWIDTH-1 downto 0);
+        
+        -- Debug signals
+            --pc_dbg   :  unsigned(INSTD-1 downto 0);
 
         -- Mock output (prevents instruction architecture from being optimized away at synthesis)
             instruction : out std_ulogic
@@ -161,8 +164,8 @@ begin
                 clk => clk,
                 rst => rst,
                 rw  => acc_rw,
-                di  => acc_di,
-                do  => acc_do
+                d_i  => acc_di,
+                d_o  => acc_do
         );
 
 

@@ -29,6 +29,35 @@
         o <= p; 
     end architecture rtl;
 
+-- T-FlipFlop with reset
+
+    library ieee;
+    use ieee.std_logic_1164.all;
+    entity t_ffr is
+        port (
+            clk : in std_ulogic;
+            rst : in std_ulogic;
+
+            i : in std_ulogic;
+            o : out std_ulogic
+        );
+    end entity t_ffr;
+
+    architecture rtl of t_ffr is
+        signal p : std_ulogic := '0'; --previous state
+    begin
+        seq : process(clk, rst)
+        begin
+            if rst = '1' then
+                p <= '0';
+            elsif rising_edge(clk) then
+                if i = '1' then p <= not p;
+                end if;
+            end if;
+        end process seq;
+        o <= p; 
+    end architecture rtl;
+
 -- Multi-bit D-FlipFlop
 
     library ieee;
@@ -183,6 +212,67 @@
         end generate;
     end architecture Behavioral;
 
+
+-- Edge detector with reset
+    library ieee;
+    use IEEE.STD_LOGIC_1164.all;
+
+    entity edger is
+        generic (
+            polarity : string := "dual"
+        );
+        port (
+            clk : in  std_ulogic;
+            rst : in  std_ulogic;
+            
+            i : in  std_ulogic;
+            o : out std_ulogic := '0'
+        );
+    end entity edger;
+
+    architecture Behavioral of edger is
+        signal prev : std_ulogic := '0';
+    begin
+        seq_dual : if polarity = "dual" generate
+            process (rst, clk)
+            begin
+                if rst = '1' then
+                    prev <= '0';
+                    o <= '0';
+                elsif rising_edge(clk) then
+                    prev <= i;
+                    o <= i xor prev;
+                end if;
+            end process;
+        end generate;
+
+        seq_rising : if polarity = "rising" generate
+            process (rst, clk)
+            begin
+                if rst = '1' then
+                    prev <= '0';
+                    o <= '0';
+                elsif rising_edge(clk) then
+                    prev <= i;
+                    o <= i and (not prev);
+                end if;
+            end process;
+        end generate;
+
+        seq_falling : if polarity = "falling" generate
+            process (rst, clk)
+            begin
+                if rst = '1' then
+                    prev <= '0';
+                    o <= '0';
+                elsif rising_edge(clk) then
+                    prev <= i;
+                    o <= (not i) and prev;
+                end if;
+            end process;
+        end generate;
+    end architecture Behavioral;
+
 -- Edge detector delay-less
     library ieee;
     use IEEE.STD_LOGIC_1164.all;
@@ -249,6 +339,79 @@
 
     end architecture Behavioral;
 
+-- Edge detector delay-less with reset
+    library ieee;
+    use IEEE.STD_LOGIC_1164.all;
+
+    entity edgendr is
+        generic (
+            polarity : string := "dual"
+        );
+        port (
+            clk : in  std_ulogic;
+            rst : in  std_ulogic;
+            
+            i : in  std_ulogic;
+            o : out std_ulogic := '0'
+        );
+    end entity edgendr;
+
+    architecture Behavioral of edgendr is
+        signal prev : std_ulogic := '0';
+    begin
+        -- Dual edge
+            seq_dual : if polarity = "dual" generate
+                process (rst, clk) begin
+                    if rst = '1' then
+                        prev <= '0';
+                    elsif rising_edge(clk) then
+                        prev <= i;
+                    end if;
+                end process;
+            end generate;
+
+            o_dual : if polarity = "dual" generate
+                process (i, prev) begin
+                    o <= i xor prev;
+                end process;
+            end generate;
+
+        -- Rising edge
+            seq_rising : if polarity = "rising" generate
+                process (rst, clk) begin
+                    if rst = '1' then
+                        prev <= '0';
+                    elsif rising_edge(clk) then
+                        prev <= i;
+                    end if;
+                end process;
+            end generate;
+
+            o_rising : if polarity = "rising" generate
+                process (i, prev) begin
+                    o <= i and (not prev);
+                end process;
+            end generate;
+
+        -- Falling edge
+            seq_falling : if polarity = "falling" generate
+                process (rst, clk) begin
+                    if rst = '1' then
+                        prev <= '0';
+                    elsif rising_edge(clk) then
+                        prev <= i;
+                    end if;
+                end process;
+            end generate;
+
+            o_falling : if polarity = "falling" generate
+                process (i, prev) begin
+                    o <= (not i) and prev;
+                end process;
+            end generate;
+
+    end architecture Behavioral;
+
 -- Shift n-cycle signal delayer
     library ieee;
     use ieee.std_logic_1164.all;
@@ -268,7 +431,7 @@
     end entity n_shift;
 
     architecture bhv of n_shift is
-        type arr is array (0 to DELAY) of std_ulogic_vector(WIDTH - 1 downto 0);
+        type arr is array (0 to DELAY-1) of std_ulogic_vector(WIDTH - 1 downto 0);
         signal shift : arr := (others => (others => '0'));
     begin
 
@@ -278,14 +441,14 @@
                     shift <= (others => (others => '0'));
                 elsif rising_edge(clk) then
                     shift(0) <= i;
-                    for k in 1 to DELAY loop
+                    for k in 1 to DELAY-1 loop
                         shift(k) <= shift(k - 1);
                     end loop;
                 end if;
             end process;
 
-            o <= shift(DELAY);
-        end generate seq;
+            o <= shift(DELAY-1);
+        end generate seq;        
 
         comb : if DELAY = 0 generate
             process (i) begin
@@ -368,4 +531,35 @@
         end process seq;
 
         o <= (or shift) or i;
+    end architecture bhv;
+-- Two-stage Synchronizer
+    library ieee;
+    use ieee.std_logic_1164.all;
+
+    entity sync2 is
+        port(
+            clk : in std_ulogic;
+            rst : in std_ulogic;
+            
+            i : in  std_ulogic;
+            o : out std_ulogic
+        );
+    end entity sync2;
+
+    architecture bhv of sync2 is
+        signal meta : std_ulogic := '1';
+        signal sync : std_ulogic := '1';
+    begin
+        process(clk, rst)
+        begin
+            if rst = '1' then
+                meta <= '1';
+                sync <= '1';
+            elsif rising_edge(clk) then
+                meta <= i;
+                sync <= meta;
+            end if;
+        end process;
+
+        o <= sync;
     end architecture bhv;
