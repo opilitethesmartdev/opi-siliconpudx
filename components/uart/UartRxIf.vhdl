@@ -106,11 +106,11 @@ begin
                 when res => sn <= idl;
                 when idl => sn <= w4s when rxf = '1' else idl;
                 when w4s => sn <= ss when cd = '1' else w4s;
-                when ss  => sn <= w4b when rx = '0' else res;
+                when ss  => sn <= w4b when rxs = '0' else res;
                 when w4b => sn <= sb when cd = '1' else w4b;
                 when sb  => sn <= w4f when bcff = UWW - 1 else w4b;
                 when w4f => sn <= sf when cd = '1' else w4f;
-                when sf  => sn <= fin when rx = '1' else res;
+                when sf  => sn <= fin when rxs = '1' else res;
                 when fin => sn <= res when ack = '1' else fin;
                 when others => sn <= s;
             end case;
@@ -137,7 +137,7 @@ begin
                 when w4b =>
                 when sb  =>
                     bc <= bcff + 1;
-                    d(to_integer(bcff)) <= rx;
+                    d(to_integer(bcff)) <= rxs;
                 when w4f =>
                 when sf  =>
                     cdr <= '1';
